@@ -1,0 +1,130 @@
+/* Admin Dashboard Overrides */
+#header {
+  background: var(--trendz-blue);
+}
+
+div.breadcrumbs {
+  background: var(--trendz-blue-light);
+}
+
+.object-tools a:link, .object-tools a:visited {
+  background: var(--trendz-gold);
+  color: var(--trendz-gray) !important;
+}
+
+.object-tools a:hover {
+  background: var(--trendz-gold-dark);
+}
+
+/* Login Page */
+.login .form-row input {
+  border: 2px solid var(--trendz-blue);
+}
+
+.login .submit-row input {
+  background: var(--trendz-blue);
+  color: white !important;
+}
+
+/* Change Form */
+#changelist-filter h2 {
+  background: var(--trendz-blue) !important;
+  color: white !important;
+}
+
+/* Dashboard */
+#content-main .module {
+  border: 1px solid #ddd;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+/* Buttons */
+input[type=submit], input[type=button] {
+  background: var(--trendz-gold);
+  color: var(--trendz-gray) !important;
+  font-weight: bold;
+}
+
+/* Import-Export Buttons Styling */
+.import_export {
+    margin-bottom: 15px;
+}
+
+.import_export a {
+    background: var(--trendz-gold);
+    color: var(--trendz-dark) !important;
+    padding: 8px 15px;
+    border-radius: 4px;
+    font-weight: bold;
+    margin-right: 10px;
+}
+
+.import_export a:hover {
+    background: var(--trendz-gold-dark);
+}
+
+/* Excel/CSV Export Format Buttons */
+.export-formats {
+    margin-top: 10px;
+}
+
+.export-formats a {
+    background: var(--trendz-blue-light);
+    color: white !important;
+    padding: 5px 10px;
+    margin-right: 5px;
+    border-radius: 3px;
+    font-size: 0.9em;
+}
+
+/* Import-Export Buttons */
+.import_export {
+    margin: 15px 0;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 4px;
+    border-left: 4px solid #FFD700;
+}
+
+.import-link, .export-link {
+    display: inline-block;
+    padding: 8px 15px;
+    margin-right: 10px;
+    background: #002366;
+    color: white !important;
+    border-radius: 4px;
+    font-weight: bold;
+}
+
+.import-link:hover, .export-link:hover {
+    background: #0044cc;
+}
+
+/* Excel/CSV Format Buttons */
+.export-formats {
+    margin-top: 10px;
+}
+
+.export-formats a {
+    display: inline-block;
+    padding: 5px 10px;
+    margin-right: 5px;
+    background: #FFD700;
+    color: #333 !important;
+    border-radius: 3px;
+    font-size: 0.9em;
+}
+
+/* Product List Enhancements */
+#result_list th {
+    background: #002366;
+    color: white;
+}
+
+#result_list tr:hover td {
+    background: #f0f8ff;
+}
+
+.field-is_active img {
+    filter: invert(75%) sepia(90%) saturate(500%) hue-rotate(50deg);
+}

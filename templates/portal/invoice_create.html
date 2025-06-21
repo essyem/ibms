@@ -1,0 +1,106 @@
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>{% if object %}Edit{% else %}Create{% endif %} Invoice</h2>
+    
+    <form method="post" id="invoice-form">
+        {% csrf_token %}
+        
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">Customer Details</div>
+                    <div class="card-body">
+                        {{ form.as_p }}
+                    </div>
+                </div>
+            </div>
+            
+            
+        <div class="card mb-4">
+            <div class="card-header">Products</div>
+            <div class="card-body">
+                <table class="table" id="products-table">
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th>Quantity</th>
+                            <th>Unit Price</th>
+                            <th>Total</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="product-rows">
+                        <!-- Product rows will be added here -->
+                    </tbody>
+                </table>
+                
+                <button type="button" class="btn btn-primary" id="add-product">
+                    <i class="fas fa-plus"></i> Add Product
+                </button>
+            </div>
+        </div>
+        
+        
+    </form>
+</div>
+
+<div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">Invoice Summary</div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label>Invoice Number:</label>
+                            <input type="text" class="form-control" value="{{ invoice_number|default:'Auto-generated' }}" disabled>
+                        </div>
+                        <div class="form-group">
+                            <label>Subtotal:</label>
+                            <input type="text" class="form-control" id="subtotal" value="0.00" disabled>
+                        </div>
+                        <div class="form-group">
+                            <label>Tax:</label>
+                            <input type="number" class="form-control" id="tax" value="0.00" step="0.01" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label>Total:</label>
+                            <input type="text" class="form-control" id="total" value="0.00" disabled>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-12">
+                <button type="submit" class="btn btn-primary">Save Invoice</button>
+                <a href="{% url 'invoice_list' %}" class="btn btn-secondary">Cancel</a>
+            </div>
+        </div>
+    
+<!-- Template for new product row -->
+<template id="product-row-template">
+    <tr>
+        <td>
+            <select class="form-control product-select" name="product">
+                {% for product in products %}
+                    <option value="{{ product.id }}" 
+                            data-price="{{ product.selling_price }}">
+                        {{ product.name }} ({{ product.sku }})
+                    </option>
+                {% empty %}
+                    <option value="">No products available</option>
+                {% endfor %}
+            </select>
+        </td>
+        <td><input type="number" class="form-control quantity" name="quantity" value="1" min="1"></td>
+        <td><input type="number" class="form-control unit-price" name="unit_price" step="0.01" min="0"></td>
+        <td><input type="text" class="form-control total" name="total" value="0.00" disabled></td>
+        <td><button type="button" class="btn btn-danger remove-product"><i class="fas fa-trash"></i></button></td>
+    </tr>
+</template>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'portal/js/invoice.js' %}"></script>
+{% endblock %}

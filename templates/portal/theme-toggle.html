@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Day/Dark/System Theme Toggle Example</title>
+  <style>
+    :root {
+      --bg: #fff;
+      --text: #222;
+    }
+    [data-theme="dark"] {
+      --bg: #181a1b;
+      --text: #f2f2f2;
+    }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      transition: background 0.2s, color 0.2s;
+    }
+    .theme-toggle {
+      position: fixed;
+      top: 1rem; right: 1rem;
+      background: var(--bg);
+      color: var(--text);
+      border: 1px solid #ccc;
+      border-radius: 2rem;
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+      z-index: 2000;
+      font-weight: bold;
+    }
+    .theme-toggle select {
+      background: none;
+      color: inherit;
+      border: none;
+      outline: none;
+      font: inherit;
+      margin-left: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="theme-toggle">
+    Theme:
+    <select id="themeSelect">
+      <option value="system">System</option>
+      <option value="light">Day</option>
+      <option value="dark">Dark</option>
+    </select>
+  </div>
+  <h1>Hello, World!</h1>
+  <p>This is a day/dark/system toggle example.</p>
+  <script>
+    const themeSelect = document.getElementById('themeSelect');
+    // Detect initial setting
+    function getSystemTheme() {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    function setTheme(theme) {
+      if (theme === 'system') {
+        document.documentElement.removeAttribute('data-theme');
+      } else {
+        document.documentElement.setAttribute('data-theme', theme);
+      }
+    }
+    // Load saved theme or use system
+    const savedTheme = localStorage.getItem('theme') || 'system';
+    themeSelect.value = savedTheme;
+    setTheme(savedTheme);
+    // Listen to select changes
+    themeSelect.addEventListener('change', () => {
+      localStorage.setItem('theme', themeSelect.value);
+      setTheme(themeSelect.value);
+    });
+    // Listen for system theme changes if system mode is selected
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+      if (themeSelect.value === 'system') setTheme('system');
+    });
+  </script>
+</body>
+</html>

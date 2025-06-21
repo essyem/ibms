@@ -1,0 +1,43 @@
+.icon-picker-container {
+    position: relative;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.icon-preview i {
+    font-size: 24px;
+    color: #002366;
+}
+
+.toggle-picker {
+    background: #FFD700;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.icon-grid {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    background: white;
+    padding: 10px;
+    border: 1px solid #ddd;
+    z-index: 1000;
+    width: 200px;
+}
+
+.icon-grid i {
+    cursor: pointer;
+    padding: 5px;
+    font-size: 20px;
+}
+
+.icon-grid i:hover {
+    color: #FFD700;
+}

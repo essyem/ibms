@@ -1,0 +1,45 @@
+/* Form input styling */
+.trendz-form input[type="text"],
+.trendz-form input[type="email"],
+.trendz-form input[type="tel"],
+.trendz-form select,
+.trendz-form textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 16px;
+    margin-bottom: 5px;
+    background-color: #fff;
+}
+
+.trendz-form textarea {
+    min-height: 120px;
+    resize: vertical;
+}
+
+.trendz-form select {
+    height: 40px;
+}
+
+/* Checkbox styling */
+.trendz-checkbox input[type="checkbox"] {
+    margin-right: 8px;
+}
+
+/* Error message styling */
+.trendz-input-group .errorlist {
+    color: #e74c3c;
+    font-size: 14px;
+    margin-top: 5px;
+    list-style: none;
+    padding-left: 0;
+}
+
+/* Make sure form fields are visible */
+.trendz-input-group input,
+.trendz-input-group select,
+.trendz-input-group textarea {
+    display: block;
+    width: 100%;
+}

@@ -1,0 +1,165 @@
+<!-- templates/portal/invoice_pdf.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Invoice #{{ invoice.invoice_number }}</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 1cm;
+            @frame header {
+                -pdf-frame-content: header;
+                top: 0.5cm;
+                margin-left: 1cm;
+                margin-right: 1cm;
+                height: 2cm;
+            }
+            @frame footer {
+                -pdf-frame-content: footer;
+                bottom: 0.5cm;
+                margin-left: 1cm;
+                margin-right: 1cm;
+                height: 1cm;
+            }
+        }
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        .company-info {
+            float: left;
+            width: 40%;
+        }
+        .invoice-info {
+            float: right;
+            text-align: right;
+            width: 40%;
+        }
+        .clearfix {
+            clear: both;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .totals {
+            float: right;
+            width: 30%;
+            margin-top: 20px;
+        }
+        .footer {
+            text-align: center;
+            font-size: 0.8em;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div id="header">
+        <div class="header">
+            <h1>INVOICE</h1>
+        </div>
+        <div class="company-info">
+            <h3>Your Company Name</h3>
+            <p>123 Business Street<br>
+            City, State 10001<br>
+            Phone: (123) 456-7890<br>
+            Email: info@yourcompany.com</p>
+        </div>
+        <div class="invoice-info">
+            <p><strong>Invoice #:</strong> {{ invoice.invoice_number }}</p>
+            <p><strong>Date:</strong> {{ invoice.date|date:"F d, Y" }}</p>
+            <p><strong>Due Date:</strong> {{ invoice.due_date|date:"F d, Y" }}</p>
+        </div>
+        <div class="clearfix"></div>
+    </div>
+
+    <!-- Customer Info -->
+    <div>
+        <h3>Bill To:</h3>
+        <p>{{ invoice.customer.company_name|default:invoice.customer.user.get_full_name }}<br>
+        {{ invoice.customer.delivery_address }}<br>
+        Phone: {{ invoice.customer.phone }}<br>
+        Tax Number: {{ invoice.customer.tax_number|default:"-" }}</p>
+    </div>
+
+    <!-- Invoice Items -->
+    <table>
+        <thead>
+            <tr>
+                <th>Product</th>
+                <th>SKU</th>
+                <th>Quantity</th>
+                <th>Unit Price</th>
+                <th>Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in invoice.items.all %}
+            <tr>
+                <td>{{ item.product.name }}</td>
+                <td>{{ item.product.sku }}</td>
+                <td>{{ item.quantity }}</td>
+                <td>${{ item.unit_price }}</td>
+                <td>${{ item.total }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Totals -->
+    <div class="totals">
+        <table>
+            <tr>
+                <th>Subtotal:</th>
+                <td>${{ invoice.subtotal }}</td>
+            </tr>
+            <tr>
+                <th>Tax:</th>
+                <td>${{ invoice.tax }}</td>
+            </tr>
+            <tr>
+                <th>Total:</th>
+                <td>${{ invoice.total }}</td>
+            </tr>
+        </table>
+    </div>
+    <div class="clearfix"></div>
+
+    <div class="bank-details">
+        <h4>Bank Transfer Details</h4>
+        <p>Bank: Your Bank Name<br>
+        Account #: 123456789<br>
+        SWIFT/BIC: YOURBANKXXX</p>
+    </div>
+
+    <!-- Notes -->
+    {% if invoice.notes %}
+    <div>
+        <h3>Notes:</h3>
+        <p>{{ invoice.notes }}</p>
+    </div>
+    {% endif %}
+
+    <!-- Footer -->
+    <div id="footer">
+        <p class="footer">Thank you for your business! | Terms: Payment due within {{ invoice.due_date|timeuntil:invoice.date }}</p>
+    </div>
+</body>
+</html>
