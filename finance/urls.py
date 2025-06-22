@@ -21,5 +21,4 @@ urlpatterns = [
     path('transactions/<int:pk>/html2pdf/', views.TransactionHTML2PDFView.as_view(), name='transaction_html2pdf'),
     path('transactions/<int:pk>/html-utils/', views.TransactionHTMLUtilsView.as_view(), name='transaction_html_utils'),
     '''
-
 ]

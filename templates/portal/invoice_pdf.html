@@ -126,19 +126,25 @@
     <!-- Totals -->
     <div class="totals">
         <table>
-            <tr>
-                <th>Subtotal:</th>
-                <td>${{ invoice.subtotal }}</td>
-            </tr>
-            <tr>
-                <th>Tax:</th>
-                <td>${{ invoice.tax }}</td>
-            </tr>
-            <tr>
-                <th>Total:</th>
-                <td>${{ invoice.total }}</td>
-            </tr>
-        </table>
+        <tr>
+            <th>Subtotal:</th>
+            <td>${{ invoice.subtotal }}</td>
+        </tr>
+        <tr>
+            <th>Tax:</th>
+            <td>${{ invoice.tax }}</td>
+        </tr>
+        {% if invoice.discount_amount > 0 %}
+        <tr>
+            <th>Discount ({{ invoice.discount_value }}{% if invoice.discount_type == 'percent' %}%{% else %}${% endif %}):</th>
+            <td>-${{ invoice.discount_amount }}</td>
+        </tr>
+        {% endif %}
+        <tr>
+            <th>Grand Total:</th>
+            <td>${{ invoice.grand_total }}</td>
+        </tr>
+    </table>
     </div>
     <div class="clearfix"></div>
 

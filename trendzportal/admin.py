@@ -8,28 +8,68 @@ from django.contrib.admin import AdminSite
 from portal.resources import ProductResource
 from django.utils.translation import gettext_lazy as _
 from portal.models import (CartItem, Product, Category, Order, Customer, 
-    Review, Cart, ProductEnquiry, Invoice)
+        Review, Cart, ProductEnquiry, Invoice, InvoiceItem)
 from django.utils.html import format_html
 from django import forms
 from django.urls import reverse, path
 from portal.views import InvoicePDFView  # Make sure this import is correct
 
+class InvoiceItemInline(admin.TabularInline):
 
-# admin.py
+    """Inline admin for InvoiceItem to allow adding items directly in Invoice admin."""
+    model = InvoiceItem
+    extra = 1
+    readonly_fields = ('cost_price', 'total')
+    
+    
+    def get_formset(self, request, obj=None, **kwargs):
+        formset = super().get_formset(request, obj, **kwargs)
+        formset.form.base_fields['selling_price'].widget.attrs['readonly'] = False
+        formset.form.base_fields['selling_price'].widget.attrs['disabled'] = False
+        return formset
+
+
 @admin.register(Invoice)
 class InvoiceAdmin(admin.ModelAdmin):
-    list_display = ('invoice_number', 'customer', 'date', 'due_date', 'status', 'total', 'pdf_actions')
-    list_filter = ('status', 'date', 'customer')
-    search_fields = ('invoice_number', 'customer__company_name')
-    readonly_fields = ('subtotal', 'tax', 'total', 'invoice_number')
+    inlines = [InvoiceItemInline]
+    list_display = ('invoice_number', 'customer', 'date', 'due_date', 'status', 'grand_total', 'pdf_actions')
     fieldsets = (
         (None, {
-            'fields': ('invoice_number', 'customer', 'date', 'due_date', 'status')
+            'fields': ('customer', 'due_date', 'status', 'notes')
         }),
         ('Financials', {
-            'fields': ('subtotal', 'tax', 'total', 'notes')
+            'fields': ('subtotal', 'tax', 'grand_total'),
+            'classes': ('collapse',)
         }),
     )
+    readonly_fields = ('date', 'subtotal', 'tax', 'grand_total')
+    list_filter = ('status', 'date', 'due_date')
+    search_fields = ('invoice_number', 'customer__name', 'notes')
+    date_hierarchy = 'date'
+    ordering = ('-date',)
+    actions = ['mark_as_paid', 'mark_as_unpaid']
+    
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        obj.update_totals()  # Ensure totals are recalculated after save
+    
+    def get_readonly_fields(self, request, obj=None):
+        if obj:  # Editing existing invoice
+            return self.readonly_fields + ('tax',)
+        return self.readonly_fields
+    
+    def save_formset(self, request, form, formset, change):
+        instances = formset.save(commit=False)
+        for instance in instances:
+            if isinstance(instance, InvoiceItem) and not instance.selling_price:
+                # Set selling price from product if not specified
+                instance.selling_price = instance.product.selling_price
+            instance.save()
+        formset.save_m2m()
+
+    class Media:
+        js = ('admin/js/invoice_items.js', 
+              'admin/js/invoice_admin.js')
     
     def pdf_actions(self, obj):
         return format_html(
@@ -48,40 +88,29 @@ class InvoiceAdmin(admin.ModelAdmin):
             path('<int:pk>/pdf/download/',
                 self.admin_site.admin_view(InvoicePDFView.as_view()),
                 name='invoice_pdf_download'),
-        ]
+     ]
         return custom_urls + urls
-        
-# Define choices for icons
-ICON_CHOICES = [
-    ('fa-microchip', 'Microchip'),
-    ('fa-server', 'Server'),
-    ('fa-laptop', 'Laptop'),
-    ('fa-network-wired', 'Network'),
-    ('fa-hdd', 'Hard Drive'),
-]
 
-class CategoryAdminForm(forms.ModelForm):
-    class Meta:
-        model = Category
-        fields = '__all__'
-        widgets = {
-            'icon': forms.TextInput(attrs={
-                'placeholder': 'e.g. fa-microchip'
-            })
-        }
-# First try standard import, fallback to dummy class if package not installed
-try:
-    from import_export.admin import ImportExportModelAdmin
-    from import_export import resources
+    
+@admin.register(InvoiceItem)
+class InvoiceItemAdmin(admin.ModelAdmin):
+    list_display = ('invoice', 'product', 'quantity', 'selling_price', 'cost_price', 'total')
+    list_filter = ('invoice__status', 'product__category')
+    search_fields = ('invoice__invoice_number', 'product__name')
+    fieldsets = (
+        (None, {
+            'fields': ('invoice_number', 'product', 'quantity', 'selling_price', 'cost_price')         
+        }),
+        ('Financials', {
+            'fields': ('total',),
+            'classes': ('collapse',)
+        }),
+    )
+    readonly_fields = ('total',)
+    def total(self, obj):
+        return obj.quantity * obj.selling_price if obj.selling_price else 0
+    total.short_description = 'Total'
 
-    class ProductResource(resources.ModelResource):
-        class Meta:
-            model = Product
-            fields = ('id', 'name', 'category__name', 'sku', 'price', 'stock', 'warranty_period')
-            
-except ImportError:
-    ImportExportModelAdmin = admin.ModelAdmin
-    print("django-import-export not installed, using standard admin")
 
 
 class ProductResource(resources.ModelResource):
@@ -99,8 +128,85 @@ class ProductResource(resources.ModelResource):
         report_skipped = True
 
 # admin.py - modify the ProductAdmin
+
+ICON_CHOICES = [
+    ('fa-microchip', 'Microchip'),
+    ('fa-server', 'Server'),
+    ('fa-laptop', 'Laptop'),
+    ('fa-network-wired', 'Network'),
+    ('fa-hdd', 'Hard Drive'),
+]
+
+# ...existing code...
+
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
+    list_display = ('name', 'category', 'sku', 'cost_price', 'selling_price', 'stock', 'warranty_period', 'is_active', 'profit_display', 'margin_display')
+    list_editable = ('cost_price', 'selling_price', 'stock', 'is_active')
+    search_fields = ('name', 'sku', 'description')
+    list_filter = ('category', 'is_active')
+    list_per_page = 25
+
+    fieldsets = (
+        (None, {
+            'fields': ('category', 'name', 'sku', 'description')
+        }),
+        ('Pricing', {
+            'fields': ('cost_price', 'selling_price', 'profit_display', 'margin_display')
+        }),
+        ('Inventory', {
+            'fields': ('stock', 'barcode', 'warranty_period')
+        }),
+        ('Media', {
+            'fields': ('image',)
+        }),
+        ('Status', {
+            'fields': ('is_active',)
+        }),
+    )
+
+    readonly_fields = ('profit_display', 'margin_display')
+
+    def profit_display(self, obj):
+        profit = obj.profit_amount()
+        return f"${profit:.2f}" if profit is not None else "-"
+    profit_display.short_description = "Profit"
+
+    def margin_display(self, obj):
+        margin = obj.profit_margin()
+        return f"{margin:.2f}%" if margin is not None else "-"
+    margin_display.short_description = "Margin"
+
+    def get_readonly_fields(self, request, obj=None):
+        return super().get_readonly_fields(request, obj) + ('profit_display', 'margin_display')
+
+# ...existing code...
+
+
+class CategoryAdminForm(forms.ModelForm):
+    """Form for Category admin (placeholder)."""
+    pass
+    class Meta:
+        model = Category
+        fields = '__all__'
+        widgets = {
+            'icon': forms.TextInput(attrs={
+                'placeholder': 'e.g. fa-microchip'
+            })
+        }
+# First try standard import, fallback to dummy class if package not installed
+try:
+    from import_export.admin import ImportExportModelAdmin
+    from import_export import resources
+
+    class ProductResource(resources.ModelResource):
+        class Meta:
+            model = Product
+            fields = ('id', 'name', 'category__name', 'sku', 'price', 'stock', 'warranty_period')
+
+except ImportError:
+    ImportExportModelAdmin = admin.ModelAdmin
+    print("django-import-export not installed, using standard admin")
     list_display = ('name', 'sku', 'cost_price', 'selling_price', 'profit_display', 'margin_display')
     list_editable = ('cost_price', 'selling_price')
     
@@ -139,30 +245,6 @@ class ProductAdmin(admin.ModelAdmin):
         # Make profit fields read-only
         return super().get_readonly_fields(request, obj) + ('profit_display', 'margin_display')
 
-'''
-@admin.register(Product)
-class ProductAdmin(admin.ModelAdmin):
-    list_display = ('name', 'sku', 'cost_price', 'selling_price', 'profit_amount', 'profit_margin')
-    list_editable = ('cost_price', 'selling_price')
-    readonly_fields = ('profit_amount', 'profit_margin')
-    fieldsets = (
-        (None, {
-            'fields': ('category', 'name', 'sku', 'description')
-        }),
-        ('Pricing', {
-            'fields': ('cost_price', 'selling_price', 'profit_amount', 'profit_margin')
-        }),
-        ('Inventory', {
-            'fields': ('stock', 'barcode', 'warranty_period')
-        }),
-        ('Media', {
-            'fields': ('image',)
-        }),
-        ('Status', {
-            'fields': ('is_active',)
-        }),
-    )
-'''
 
 class ProductAdmin(ImportExportModelAdmin):
     resource_class = ProductResource

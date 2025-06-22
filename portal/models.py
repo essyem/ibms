@@ -4,6 +4,7 @@ from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator
 from django.core.mail import send_mail
 from django.core.exceptions import ValidationError
+from django.db.models import Sum
 
 class Customer(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='customer')
@@ -21,10 +22,7 @@ class Customer(models.Model):
         return f"{self.company_name or self.user.username}"
     pass
 
-    # models.py - add these new models
 
-
-    pass
 
 class Invoice(models.Model):
     INVOICE_STATUS = [
@@ -36,38 +34,96 @@ class Invoice(models.Model):
     
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
     invoice_number = models.CharField(max_length=20, unique=True)
-    date = models.DateField(auto_now_add=True)
+    date = models.DateField(auto_now_add=True, editable=False)
     due_date = models.DateField()
     status = models.CharField(max_length=20, choices=INVOICE_STATUS, default='draft')
     notes = models.TextField(blank=True)
     subtotal = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     tax = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     total = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    discount_type = models.CharField(
+        max_length=10,
+        choices=[('percent', 'Percentage'), ('amount', 'Fixed Amount')],
+        default='percent',
+        blank=True
+    )
+    discount_value = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0,
+        validators=[MinValueValidator(0)]
+    )
+    discount_amount = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0,
+        editable=False
+    )
+    grand_total = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=0,
+        editable=False
+    )
+
+    def update_totals(self):
+        # Calculate subtotal
+        self.subtotal = self.items.aggregate(
+            total=Sum('total')
+        )['total'] or 0
+        
+        # Calculate discount
+        if self.discount_type == 'percent':
+            self.discount_amount = (self.subtotal + self.tax) * (self.discount_value / 100)
+        else:
+            self.discount_amount = min(self.discount_value, self.subtotal + self.tax)
+        
+        # Calculate grand total
+        self.grand_total = (self.subtotal + self.tax) - self.discount_amount
+        self.save(update_fields=['subtotal', 'discount_amount', 'grand_total'])
+    
+    def update_totals(self):
+        self.subtotal = self.items.aggregate(
+            total=Sum('total')
+        )['total'] or 0
+        self.total = self.subtotal + self.tax
+        self.save(update_fields=['subtotal', 'total'])
 
     def __str__(self):
         return f"Invoice #{self.invoice_number} - {self.customer}"
+    
 
+# models.py
 class InvoiceItem(models.Model):
     invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE, related_name='items')
     product = models.ForeignKey('Product', on_delete=models.PROTECT)
     quantity = models.PositiveIntegerField(default=1)
-    unit_price = models.DecimalField(max_digits=10, decimal_places=2)
-    total = models.DecimalField(max_digits=10, decimal_places=2)
+    cost_price = models.DecimalField(
+        max_digits=10, 
+        decimal_places=2, 
+        editable=False)  # Captured at time of sale
+    selling_price = models.DecimalField(
+        max_digits=10, 
+        decimal_places=2,
+        editable=True)  # Editable for discounts
+    total = models.DecimalField(max_digits=10, decimal_places=2, editable=False)
 
     def save(self, *args, **kwargs):
-        self.total = self.quantity * self.unit_price
+        # Auto-capture cost price when first created
+        if not self.pk:
+            self.cost_price = self.product.cost_price
+        
+        # Calculate total
+        self.total = self.quantity * self.selling_price
+        
         super().save(*args, **kwargs)
         
-        # Update invoice totals
-        self.invoice.subtotal = self.invoice.items.aggregate(
-            total=models.Sum('total')
-        )['total'] or 0
-        self.invoice.total = self.invoice.subtotal + self.invoice.tax
-        self.invoice.save()
+        # Update parent invoice totals
+        self.invoice.update_totals()
 
     def __str__(self):
-        return f"{self.quantity} x {self.product.name} - {self.total}"
-    
+        return f"{self.quantity}x {self.product.name} @ {self.selling_price}"
+
 
 class Review(models.Model):
     RATINGS = [(i, str(i)) for i in range(1, 6)]
@@ -156,28 +212,9 @@ class Product(models.Model):
                 'selling_price': "Selling price is required"
             })
         
-'''
-class Product(models.Model):
-    category = models.ForeignKey(Category, on_delete=models.CASCADE)
-    name = models.CharField(max_length=200)
-    sku = models.CharField(max_length=50, unique=True)
-    barcode = models.CharField( 
-    max_length=50, 
-    unique=True, 
-    blank=True, 
-    null=True,
-    help_text="Barcode number (UPC, EAN, etc.)"
-    )
-    description = models.TextField()
-    price = models.DecimalField(max_digits=10, decimal_places=2)
-    stock = models.PositiveIntegerField()
-    image = models.ImageField(upload_to='products/')
-    is_active = models.BooleanField(default=True)
-    warranty_period = models.PositiveIntegerField(help_text="In months")
-
     def __str__(self):
-        return self.name
-'''
+        return f"{self.name} ({self.sku}) - {self.category.name}"
+    
 class Cart(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)

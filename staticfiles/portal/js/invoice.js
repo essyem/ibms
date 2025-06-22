@@ -22,21 +22,32 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     // Handle product selection
-    productRows.addEventListener('change', function(e) {
-        if (e.target.classList.contains('product-select')) {
-            const row = e.target.closest('tr');
-            const productId = e.target.value;
-            const unitPriceInput = row.querySelector('.unit-price');
-            
-            // Fetch product details
-            fetch(`/api/products/${productId}/`)
-                .then(response => response.json())
-                .then(data => {
-                    unitPriceInput.value = data.selling_price;
-                    calculateRowTotal(row);
-                    calculateTotals();
-                });
-        }
+    // static/portal/js/invoice.js - update the product selection handler
+productRows.addEventListener('change', function(e) {
+    if (e.target.classList.contains('product-select')) {
+        const row = e.target.closest('tr');
+        const productId = e.target.value;
+        const unitPriceInput = row.querySelector('.unit-price');
+        
+        // Fetch product details - ensure URL matches your endpoint
+        fetch(`/api/products/${productId}/`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Product data:', data); // Debug log
+                unitPriceInput.value = data.selling_price;
+                calculateRowTotal(row);
+                calculateTotals();
+            })
+            .catch(error => {
+                console.error('Error fetching product:', error);
+                alert('Error loading product details. Please try again.');
+            });
+    }
     });
     
     // Handle quantity/price changes

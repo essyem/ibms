@@ -10,14 +10,35 @@ from django.contrib import messages
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
-from django.urls import reverse
+from django.urls import reverse, path
 from django.template.loader import get_template
 from xhtml2pdf import pisa
 from io import BytesIO
 from django.http import HttpResponse
 from django.http import Http404
 from django.conf import settings
+from django.utils.html import format_html
 
+
+class InvoicePDFView(View):
+    def pdf_actions(self, obj):
+        return format_html(
+            '<a class="button" href="{}" target="_blank">PDF</a>&nbsp;'
+            '<a class="button" href="{}" download>Download</a>',
+            reverse('admin:invoice_pdf', args=[obj.pk]),
+            reverse('admin:invoice_pdf_download', args=[obj.pk])
+        )
+    pdf_actions.short_description = 'Actions'
+    def get_urls(self):
+        urls = super().get_urls()
+        custom_urls = [
+            path('<int:pk>/pdf/',
+                self.admin_site.admin_view(InvoicePDFView.as_view()),
+                name='invoice_pdf'),
+            path('<int:pk>/pdf/download/',
+                self.admin_site.admin_view(InvoicePDFView.as_view()),
+                name='invoice_pdf_download'),
+     ]
 # Invoice PDF generation view
 class InvoicePDFView(View):
     def get(self, request, *args, **kwargs):
@@ -40,7 +61,7 @@ class InvoicePDFView(View):
             response['Content-Disposition'] = content
             return response
         return HttpResponse("Error generating PDF", status=400)
-
+        return custom_urls + urls
 # Ensure you have the necessary imports for your views
 class InvoiceCreateView(CreateView):
     model = Invoice
