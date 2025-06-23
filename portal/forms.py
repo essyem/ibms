@@ -1,5 +1,7 @@
 from django import forms
-from .models import ProductEnquiry, Invoice, InvoiceItem, Product
+from .models import(ProductEnquiry, Invoice, InvoiceItem, 
+    Product)
+
 
 
 class InvoiceForm(forms.ModelForm):
@@ -11,10 +13,26 @@ class InvoiceForm(forms.ModelForm):
             'notes': forms.Textarea(attrs={'rows': 3}),
         }
 
-# forms.py
+# portal/forms.py
 from django import forms
-from .models import InvoiceItem, Product
+from .models import InvoiceItem
 
+class InvoiceItemForm(forms.ModelForm):
+    class Meta:
+        model = InvoiceItem
+        fields = ['product', 'quantity', 'selling_price']
+        
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['selling_price'].widget.attrs.update({
+            'step': '0.01',
+            'min': '0.01'
+        })
+        
+        if self.instance and self.instance.product:
+            self.fields['selling_price'].initial = self.instance.product.selling_price
+
+'''
 class InvoiceItemForm(forms.ModelForm):
     product = forms.ModelChoiceField(
         queryset=Product.objects.all(),
@@ -29,27 +47,14 @@ class InvoiceItemForm(forms.ModelForm):
             'selling_price': forms.NumberInput(attrs={'step': '0.01'}),  # Changed unit_price to selling_price
         }
 
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Set initial selling_price from product if available
-        if self.instance.pk and self.instance.product:
-            self.fields['selling_price'].initial = self.instance.selling_price
-
-'''
-class InvoiceItemForm(forms.ModelForm):
-    product = forms.ModelChoiceField(
-        queryset=Product.objects.all(),
-        widget=forms.Select(attrs={'class': 'product-select'})
-    )
-    
-    class Meta:
-        model = InvoiceItem
-        fields = ['product', 'quantity', 'unit_price']
-        widgets = {
-            'quantity': forms.NumberInput(attrs={'min': 1}),
-            'unit_price': forms.NumberInput(attrs={'step': '0.01'}),
-        }
-
+        self.fields['selling_price'].widget.attrs.update({
+            'readonly': False,
+            'disabled': False,
+            'step': '0.01'
+        })
 '''
 
 class InvoiceAdminForm(forms.ModelForm):

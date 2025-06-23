@@ -12,22 +12,131 @@ from portal.models import (CartItem, Product, Category, Order, Customer,
 from django.utils.html import format_html
 from django import forms
 from django.urls import reverse, path
+from django.views import View  # Add this import for View
 from portal.views import InvoicePDFView  # Make sure this import is correct
+from django.shortcuts import get_object_or_404  # <-- Add this import
+from django.template.loader import get_template  # <-- Add this import
+from django.http import HttpResponse  # <-- Add this import
+from io import BytesIO  # <-- Add this import
+import uuid
+from django.db.models import Sum
+from portal.forms import InvoiceItemForm  # Ensure this import is correct
+from xhtml2pdf import pisa  # <-- Add this import
+
 
 class InvoiceItemInline(admin.TabularInline):
-
-    """Inline admin for InvoiceItem to allow adding items directly in Invoice admin."""
     model = InvoiceItem
+    form = InvoiceItemForm  # Removed because InvoiceItemForm is not defined
     extra = 1
+    fields = ('product', 'quantity', 'selling_price', 'cost_price', 'total')
     readonly_fields = ('cost_price', 'total')
-    
     
     def get_formset(self, request, obj=None, **kwargs):
         formset = super().get_formset(request, obj, **kwargs)
-        formset.form.base_fields['selling_price'].widget.attrs['readonly'] = False
-        formset.form.base_fields['selling_price'].widget.attrs['disabled'] = False
+        formset.form.base_fields['selling_price'].widget.attrs.update({
+            'step': '0.01',
+            'min': '0.01'
+        })
         return formset
 
+@admin.register(Invoice)
+class InvoiceAdmin(admin.ModelAdmin):
+    inlines = [InvoiceItemInline]
+    list_display = ('invoice_number', 'customer', 'date', 'due_date', 'status', 'grand_total', 'pdf_actions')
+    fieldsets = (
+        (None, {
+            'fields': ('customer', 'due_date', 'status', 'notes')
+        }),
+        ('Pricing', {
+            'fields': (
+                ('subtotal', 'tax'),
+                ('discount_type', 'discount_value', 'discount_amount'),
+                ('total', 'grand_total')
+            ),
+            'classes': ('wide',)
+        }),
+    )
+    readonly_fields = ('date', 'subtotal', 'tax', 'discount_amount', 'total', 'grand_total')
+    list_filter = ('status', 'date', 'due_date')
+    search_fields = ('invoice_number', 'customer__name', 'notes')
+    date_hierarchy = 'date'
+    ordering = ('-date',)
+    actions = ['mark_as_paid', 'mark_as_unpaid']
+    
+    def save_model(self, request, obj, form, change):
+        if not change and not obj.invoice_number:
+            obj.invoice_number = str(uuid.uuid4())  # Temporary unique ID
+        super().save_model(request, obj, form, change)
+        obj.update_totals()
+    
+    def get_readonly_fields(self, request, obj=None):
+        if obj:  # Editing existing invoice
+            return self.readonly_fields + ('tax',)
+        return self.readonly_fields
+    
+    def save_formset(self, request, form, formset, change):
+        instances = formset.save(commit=False)
+        for instance in instances:
+            if isinstance(instance, InvoiceItem):
+                if instance.product and not instance.selling_price:
+                    instance.selling_price = instance.product.selling_price
+                instance.save()
+        formset.save_m2m()
+        form.instance.update_totals()
+
+    class Media:
+        js = (
+            'admin/js/invoice_items.js',
+            'admin/js/invoice_admin.js',
+        )
+    
+    def pdf_actions(self, obj):
+        return format_html(
+            '<a class="button" href="{}" target="_blank">PDF</a>&nbsp;'
+            '<a class="button" href="{}" download>Download</a>',
+            reverse('admin:invoice_pdf', args=[obj.pk]),
+            reverse('admin:invoice_pdf_download', args=[obj.pk])
+        )
+    pdf_actions.short_description = 'Actions'
+    
+    def get_urls(self):
+        urls = super().get_urls()
+        custom_urls = [
+            path('<int:pk>/pdf/',
+                self.admin_site.admin_view(InvoicePDFView.as_view()),
+                name='invoice_pdf'),
+        ]
+        return custom_urls + urls
+    
+    def pdf_actions(self, obj):
+        return format_html(
+            '<a class="button" href="{}" target="_blank">View PDF</a>&nbsp;'
+            '<a class="button" href="{}?download=true" target="_blank">Download PDF</a>',
+            reverse('admin:invoice_pdf', args=[obj.pk]),
+            reverse('admin:invoice_pdf', args=[obj.pk])
+        )
+
+    
+#Admin configuration for TRENDZ Trading Portal'''
+
+'''
+# portal/admin.py
+class InvoiceItemInline(admin.TabularInline):
+    model = InvoiceItem
+    extra = 1
+    fields = ('product', 'quantity', 'selling_price', 'cost_price', 'total')
+    readonly_fields = ('cost_price', 'total')
+    
+    def get_formset(self, request, obj=None, **kwargs):
+        formset = super().get_formset(request, obj, **kwargs)
+        formset.form.base_fields['selling_price'].widget.attrs.update({
+            'step': '0.01',
+            'min': '0.01'
+        })
+        return formset
+    
+    
+    
 
 @admin.register(Invoice)
 class InvoiceAdmin(admin.ModelAdmin):
@@ -90,26 +199,36 @@ class InvoiceAdmin(admin.ModelAdmin):
                 name='invoice_pdf_download'),
      ]
         return custom_urls + urls
-
+'''
     
 @admin.register(InvoiceItem)
+# portal/admin.py
 class InvoiceItemAdmin(admin.ModelAdmin):
-    list_display = ('invoice', 'product', 'quantity', 'selling_price', 'cost_price', 'total')
+    list_display = ('invoice', 'product_name', 'quantity', 'selling_price', 'cost_price', 'total_amount')
     list_filter = ('invoice__status', 'product__category')
     search_fields = ('invoice__invoice_number', 'product__name')
     fieldsets = (
         (None, {
-            'fields': ('invoice_number', 'product', 'quantity', 'selling_price', 'cost_price')         
+            'fields': ('invoice', 'product', 'quantity', 'selling_price')
         }),
         ('Financials', {
-            'fields': ('total',),
+            'fields': ('cost_price', 'total'),
             'classes': ('collapse',)
         }),
     )
-    readonly_fields = ('total',)
-    def total(self, obj):
-        return obj.quantity * obj.selling_price if obj.selling_price else 0
-    total.short_description = 'Total'
+    readonly_fields = ('cost_price', 'total')
+    
+    def product_name(self, obj):
+        return obj.product.name if obj.product else "No Product"
+    product_name.short_description = 'Product'
+    
+    def total_amount(self, obj):
+        return obj.total if obj.product else "N/A"
+    total_amount.short_description = 'Total'
+    
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('product', 'invoice')
+
 
 
 
@@ -137,8 +256,49 @@ ICON_CHOICES = [
     ('fa-hdd', 'Hard Drive'),
 ]
 
-# ...existing code...
+# portal/admin.py
+class InvoicePDFView(View):
+    def get(self, request, *args, **kwargs):
+        invoice = get_object_or_404(Invoice, pk=self.kwargs['pk'])
+        download = 'download' in request.GET  # Check for ?download=true
+        
+        # PDF generation code
+        template = get_template('portal/invoice_pdf.html')
+        html = template.render({'invoice': invoice})
+        result = BytesIO()
+        pdf = pisa.pisaDocument(BytesIO(html.encode("UTF-8")), result)
+        
+        if not pdf.err:
+            response = HttpResponse(result.getvalue(), content_type='application/pdf')
+            filename = f"Invoice_{invoice.invoice_number}.pdf"
+            content = "attachment" if download else "inline"
+            response['Content-Disposition'] = f'{content}; filename="{filename}"'
+            return response
+        return HttpResponse("Error generating PDF", status=400)
 
+'''
+'
+@admin.register(Invoice)
+class InvoiceAdmin(admin.ModelAdmin):
+    # ... other code ...
+    
+    def get_urls(self):
+        urls = super().get_urls()
+        custom_urls = [
+            path('<int:pk>/pdf/',
+                self.admin_site.admin_view(InvoicePDFView.as_view()),
+                name='invoice_pdf'),
+        ]
+        return custom_urls + urls
+    
+    def pdf_actions(self, obj):
+        return format_html(
+            '<a class="button" href="{}" target="_blank">View PDF</a>&nbsp;'
+            '<a class="button" href="{}?download=true" target="_blank">Download PDF</a>',
+            reverse('admin:invoice_pdf', args=[obj.pk]),
+            reverse('admin:invoice_pdf', args=[obj.pk])
+        )
+'''
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
     list_display = ('name', 'category', 'sku', 'cost_price', 'selling_price', 'stock', 'warranty_period', 'is_active', 'profit_display', 'margin_display')
@@ -180,7 +340,7 @@ class ProductAdmin(admin.ModelAdmin):
     def get_readonly_fields(self, request, obj=None):
         return super().get_readonly_fields(request, obj) + ('profit_display', 'margin_display')
 
-# ...existing code...
+
 
 
 class CategoryAdminForm(forms.ModelForm):
@@ -331,3 +491,7 @@ admin.site.register(CartItem)
 admin.site.site_header = "TRENDZ Trading Administration"
 admin.site.site_title = "TRENDZ Admin Portal"
 admin.site.index_title = "Welcome to TRENDZ Admin"
+
+from django.utils.html import format_html
+
+

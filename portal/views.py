@@ -61,7 +61,6 @@ class InvoicePDFView(View):
             response['Content-Disposition'] = content
             return response
         return HttpResponse("Error generating PDF", status=400)
-        return custom_urls + urls
 # Ensure you have the necessary imports for your views
 class InvoiceCreateView(CreateView):
     model = Invoice

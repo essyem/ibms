@@ -1,10 +1,13 @@
 # models.py
+from datetime import timezone
 from django.db import models
 from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator
 from django.core.mail import send_mail
 from django.core.exceptions import ValidationError
 from django.db.models import Sum
+import uuid
+from django.utils import timezone   
 
 class Customer(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='customer')
@@ -24,6 +27,8 @@ class Customer(models.Model):
 
 
 
+
+
 class Invoice(models.Model):
     INVOICE_STATUS = [
         ('draft', 'Draft'),
@@ -32,8 +37,13 @@ class Invoice(models.Model):
         ('cancelled', 'Cancelled'),
     ]
     
-    customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
-    invoice_number = models.CharField(max_length=20, unique=True)
+    customer = models.ForeignKey('Customer', on_delete=models.CASCADE)
+    invoice_number = models.CharField(
+        max_length=50,
+        unique=True,
+        blank=True,
+        default=uuid.uuid4  # Temporary unique value
+    )
     date = models.DateField(auto_now_add=True, editable=False)
     due_date = models.DateField()
     status = models.CharField(max_length=20, choices=INVOICE_STATUS, default='draft')
@@ -66,11 +76,28 @@ class Invoice(models.Model):
         editable=False
     )
 
+    def save(self, *args, **kwargs):
+        if not self.invoice_number or len(str(self.invoice_number)) > 36:  # UUID length
+            # Generate final invoice number
+            last_invoice = Invoice.objects.order_by('-id').first()
+            last_num = 0
+            if last_invoice and last_invoice.invoice_number:
+                try:
+                    last_num = int(last_invoice.invoice_number.split('-')[-1])
+                except (ValueError, IndexError):
+                    pass
+            self.invoice_number = f"INV-{timezone.now().year}-{last_num + 1:04d}"
+        super().save(*args, **kwargs)
+        self.update_totals()  # Ensure totals are updated after save
+
     def update_totals(self):
-        # Calculate subtotal
+        # Calculate subtotal from items
         self.subtotal = self.items.aggregate(
             total=Sum('total')
         )['total'] or 0
+        
+        # Calculate total before discount
+        self.total = self.subtotal + self.tax
         
         # Calculate discount
         if self.discount_type == 'percent':
@@ -80,20 +107,42 @@ class Invoice(models.Model):
         
         # Calculate grand total
         self.grand_total = (self.subtotal + self.tax) - self.discount_amount
-        self.save(update_fields=['subtotal', 'discount_amount', 'grand_total'])
-    
-    def update_totals(self):
-        self.subtotal = self.items.aggregate(
-            total=Sum('total')
-        )['total'] or 0
-        self.total = self.subtotal + self.tax
-        self.save(update_fields=['subtotal', 'total'])
+        
+        # Update only the calculated fields
+        update_fields = ['subtotal', 'total', 'discount_amount', 'grand_total']
+        if self.pk:  # Only update if already saved
+            Invoice.objects.filter(pk=self.pk).update(
+                **{field: getattr(self, field) for field in update_fields}
+            )
 
     def __str__(self):
         return f"Invoice #{self.invoice_number} - {self.customer}"
-    
 
-# models.py
+# portal/models.py
+class InvoiceItem(models.Model):
+    invoice = models.ForeignKey('Invoice', on_delete=models.CASCADE, related_name='items')
+    product = models.ForeignKey(
+        'Product', 
+        on_delete=models.PROTECT,
+        null=True,  # Allow null temporarily
+        blank=True  # Allow blank in forms
+    )
+    quantity = models.PositiveIntegerField(default=1)
+    selling_price = models.DecimalField(max_digits=10, decimal_places=2)
+    cost_price = models.DecimalField(max_digits=10, decimal_places=2, editable=False)
+    total = models.DecimalField(max_digits=10, decimal_places=2, editable=False)
+
+    def save(self, *args, **kwargs):
+        if self.product:
+            if not self.selling_price:
+                self.selling_price = self.product.selling_price
+            self.cost_price = self.product.cost_price
+        self.total = self.quantity * self.selling_price
+        super().save(*args, **kwargs)
+        self.invoice.update_totals()
+
+'''
+
 class InvoiceItem(models.Model):
     invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE, related_name='items')
     product = models.ForeignKey('Product', on_delete=models.PROTECT)
@@ -109,6 +158,21 @@ class InvoiceItem(models.Model):
     total = models.DecimalField(max_digits=10, decimal_places=2, editable=False)
 
     def save(self, *args, **kwargs):
+        if not self.pk:  # New instance
+            if not self.selling_price:
+                self.selling_price = self.product.selling_price
+            self.cost_price = self.product.cost_price
+        
+        self.total = self.quantity * self.selling_price
+        super().save(*args, **kwargs)
+        
+        # Update parent invoice
+        self.invoice.update_totals()
+
+    def __str__(self):
+        return f"{self.quantity}x {self.product.name} @ {self.selling_price}"
+
+    def save(self, *args, **kwargs):
         # Auto-capture cost price when first created
         if not self.pk:
             self.cost_price = self.product.cost_price
@@ -120,9 +184,10 @@ class InvoiceItem(models.Model):
         
         # Update parent invoice totals
         self.invoice.update_totals()
+    '''
 
-    def __str__(self):
-        return f"{self.quantity}x {self.product.name} @ {self.selling_price}"
+    
+    
 
 
 class Review(models.Model):
@@ -179,7 +244,7 @@ class Product(models.Model):
     barcode = models.CharField(
         max_length=50, 
         unique=True, 
-        blank=True, 
+        blank=True,     
         null=True,
         help_text="Barcode number (UPC, EAN, etc.)"
     )
