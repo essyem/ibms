@@ -6,15 +6,24 @@ from portal import views
 from portal.views import (ProductSearchView, product_search_fallback,
     InvoiceCreateView, InvoiceUpdateView, InvoiceDetailView, 
     InvoiceListView, get_product_details, InvoicePDFView)
-
-
+'''
+from procurement.views import (SupplierListView, PurchasePaymentCreateView, 
+    PurchaseOrderDetailView, SupplierCreateView, PurchaseOrderCreateView,
+    PurchaseOrderCreateView)
+'''
 urlpatterns = [
     # Admin URL
     path('admin/', admin.site.urls),
     path('', include('portal.urls')),
     #path('admin/login/', admin.site.login, name='admin-login'),
     #path('admin/logout/', admin.site.logout, name='admin-logout'),
-    # Custom URLs
+
+
+    # Procurement URLs
+    #path('procurement/', include('procurement.urls')),
+    
+  
+    # Portal URLs
     path('', views.home, name='home'),
     path('profile/', views.profile, name='profile'),
     path('register/', views.register, name='register'),

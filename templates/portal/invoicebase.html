@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Trendz Sales{% endblock %}</title>
+    {% load static %}
+    {% block extra_css %}{% endblock %}
+    <!-- For better number formatting  -->
+</head>
+	<style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    :root {
+      --gradient: linear-gradient(45deg, #ff3366, #ff6b6b, #4834d4, #686de0);
+      --glass-bg: rgba(255, 255, 255, 0.05);
+      --border: 1px solid rgba(255, 255, 255, 0.1);
+      --shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+      --section-bg: rgba(15, 15, 15, 0.7);
+      --highlight: rgba(255, 255, 255, 0.1);
+    }
+
+    body {
+      background: #0a0a0a;
+      min-height: 100vh;
+      color: white;
+    }
+
+    /* Navbar Styles */
+    .navbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      padding: 1.2rem 5%;
+      backdrop-filter: blur(12px);
+      background: var(--glass-bg);
+      border-bottom: var(--border);
+      z-index: 1000;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: var(--shadow);
+    }
+
+    .navbar.scrolled {
+      padding: 0.8rem 5%;
+      background: rgba(10, 10, 10, 0.95);
+    }
+
+    .navbar-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .logo {
+      font-size: 1.8rem;
+      font-weight: 700;
+      background: var(--gradient);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: gradient 8s linear infinite;
+      background-size: 300%;
+      text-decoration: none;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 2.5rem;
+      list-style: none;
+    }
+
+    .nav-links a {
+      color: white;
+      text-decoration: none;
+      font-weight: 500;
+      position: relative;
+      padding: 0.5rem 0;
+      transition: all 0.3s ease;
+      font-size: 1.05rem;
+    }
+
+    .nav-links a::before,
+    .nav-links a::after {
+      content: '';
+      position: absolute;
+      height: 2px;
+      background: var(--gradient);
+      background-size: 300%;
+      transition: width 0.3s ease;
+    }
+
+    .nav-links a::before {
+      top: -4px;
+      left: 0;
+      width: 0;
+    }
+
+    .nav-links a::after {
+      bottom: -4px;
+      right: 0;
+      width: 0;
+    }
+
+    .nav-links a:hover {
+      color: #fff;
+      text-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
+    }
+
+    .nav-links a:hover::before,
+    .nav-links a:hover::after {
+      width: 100%;
+    }
+
+    /* Main Content Container */
+    .main-container {
+      padding: 120px 5% 80px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    /* Section Styling */
+    .section {
+      margin: 5rem 0;
+      position: relative;
+    }
+
+    .section-header {
+      text-align: center;
+      margin-bottom: 4rem;
+    }
+
+    .section-header h1 {
+      font-size: 4rem;
+      font-weight: 800;
+      margin-bottom: 1rem;
+      background: var(--gradient);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: gradient 8s linear infinite;
+      background-size: 300%;
+    }
+
+    .section-header p {
+      font-size: 1.2rem;
+      opacity: 0.8;
+      max-width: 700px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+
+    /* Card Grid System */
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 2rem;
+    }
+
+    .card {
+      background: var(--glass-bg);
+      backdrop-filter: blur(12px);
+      border: var(--border);
+      border-radius: 16px;
+      padding: 2rem;
+      transition: all 0.4s ease;
+      box-shadow: var(--shadow);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.03));
+      z-index: -1;
+    }
+
+    .card.highlight {
+      background: rgba(72, 52, 212, 0.1);
+      border: 1px solid rgba(72, 52, 212, 0.3);
+    }
+
+    .card.highlight::after {
+      content: '★';
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      color: #ff6b6b;
+      font-size: 1.2rem;
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 15px 30px rgba(31, 38, 135, 0.5);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .card h3 {
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+      background: var(--gradient);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-size: 300%;
+      animation: gradient 8s linear infinite;
+    }
+
+    .card p {
+      opacity: 0.9;
+      line-height: 1.7;
+      font-size: 0.95rem;
+    }
+
+    /* Footer */
+    .footer {
+      background: rgba(10, 10, 10, 0.95);
+      padding: 3rem 5%;
+      border-top: var(--border);
+      margin-top: 5rem;
+    }
+
+    .footer-container {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 2rem;
+    }
+
+    .footer-logo {
+      font-size: 1.8rem;
+      margin-bottom: 1rem;
+    }
+
+    .footer-links h4 {
+      margin-bottom: 1.5rem;
+      font-size: 1.2rem;
+    }
+
+    .footer-links ul {
+      list-style: none;
+    }
+
+    .footer-links li {
+      margin-bottom: 0.8rem;
+    }
+
+    .footer-links a {
+      color: rgba(255, 255, 255, 0.7);
+      text-decoration: none;
+      transition: color 0.3s ease;
+    }
+
+    .footer-links a:hover {
+      color: white;
+    }
+
+    .copyright {
+      text-align: center;
+      margin-top: 3rem;
+      padding-top: 2rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      opacity: 0.7;
+    }
+
+    @keyframes gradient {
+      0% {
+        background-position: 0% 50%;
+      }
+      50% {
+        background-position: 100% 50%;
+      }
+      100% {
+        background-position: 0% 50%;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .section-header h1 {
+        font-size: 2.5rem;
+      }
+      
+      .card-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .nav-links {
+        display: none;
+      }
+    }
+ 
+    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+    .card { background: #6e2b2b96; padding: 20px; border-radius: 8px; }
+    table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+    th, td { padding: 12px; text-align: left; border-bottom: 1px solid #f7f7f7; }
+    .danger { color: #dc3545; font-weight: bold; }
+    .alerts tr:nth-child(even) { background-color: #6e2b2b96; }
+    .hyperlink { color: #ffffff; text-decoration: none; }
+    .badge { padding: 5px 10px; border-radius: 12px; color: #fff; }
+    .badge.completed { background-color: #28a745; }
+    .badge.active { background-color: #007bff; }
+    .badge.upcoming { background-color: #ffc107; }
+    .view-all { display: block; margin-top: 10px; color: #ffffff; text-decoration: underline; }
+    .success-message { color: #28a745; font-weight: bold; }
+    .button { background-color: #007bff; color: #fff; padding: 8px 12px; border-radius: 4px; text-decoration: none; }
+    .button:hover { background-color: #0056b3; }
+    .table-container { margin-top: 20px; }
+    .table-container table { background: #6e2b2b96; }
+    .table-container th { background: #6e2b2b96; color: #ffffff; }
+    .table-container th, .table-container td { border: 1px solid #f7f7f7; }
+    .table-container th { font-weight: bold; }
+    .table-container td a { color: #ffffff; text-decoration: none; }
+    .table-container td a:hover { text-decoration: underline; }
+    .table-container td { color: #ffffff; }
+    .table-container td.danger { color: #dc3545; font-weight: bold; }
+    .table-container td.danger a { color: #dc3545; }
+    .table-container td.danger a:hover { text-decoration: underline; }
+    .table-container td a.button { background-color: #28a745; }
+    .table-container td a.button:hover { background-color: #218838; }
+    .table-container td a.button:visited { color: #ffffff; }
+    .table-container td a.button:visited:hover { color: #ffffff; }
+    .table-container td a.button:focus { outline: none; box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.5); }
+    .table-container td a.button:focus:hover { background-color: #0056b3; }
+    .table-container td a.button:focus:visited { color: #ffffff; }
+    .table-container td a.button:focus:visited:hover { color: #ffffff; }
+    .table-container td a.button:focus:active { background-color: #004085; }
+    .table-container td a.button:focus:active:hover { background-color: #002752; }
+    .table-container td a.button:focus:active:visited { color: #ffffff; }
+    .table-container td a.button:focus:active:visited:hover { color: #ffffff; }
+    </style>
+
+<body>
+    <nav class="navbar">
+        <div class="navbar-container">
+            <a href="{% url 'invoice_list' %}" class="logo">Invoice list</a>
+            <ul class="nav-links">
+                <li><a href="{% url 'invoice_create' %}">Invoice</a></li>
+				
+				<li><a href="{% url 'invoice_create' %}">Invoices/a></li>
+				
+            </ul>
+        </div>
+    </nav>
+
+    <div class="main-container">
+        {% if messages %}
+        <div class="messages">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% block content %}
+        <!-- Main content will be inserted here -->
+        {% endblock %}
+    
+    
+    </div>
+
+    <footer class="bg-dark text-white py-4">
+    
+    </footer>
+
+    <script>
+        // Navbar scroll effect
+        window.addEventListener('scroll', function() {
+            const navbar = document.querySelector('.navbar');
+            if (window.scrollY > 50) {
+                navbar.classList.add('scrolled');
+            } else {
+                navbar.classList.remove('scrolled');
+            }
+        });
+
+        // Mobile menu toggle would go here
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+
+</html>

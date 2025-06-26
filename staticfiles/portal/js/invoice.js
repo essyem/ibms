@@ -1,134 +1,89 @@
+// static/admin/js/invoice_admin.js
 document.addEventListener('DOMContentLoaded', function() {
-    const productRows = document.getElementById('product-rows');
-    const addProductBtn = document.getElementById('add-product');
-    const template = document.getElementById('product-row-template');
-    const subtotalInput = document.getElementById('subtotal');
-    const taxInput = document.getElementById('tax');
-    const totalInput = document.getElementById('total');
-    
-    // Add first product row by default
-    addProductRow();
-    
-    // Add product row
-    addProductBtn.addEventListener('click', addProductRow);
-    
-    // Remove product row
-    productRows.addEventListener('click', function(e) {
-        if (e.target.classList.contains('remove-product') || 
-            e.target.closest('.remove-product')) {
-            e.target.closest('tr').remove();
-            calculateTotals();
-        }
-    });
-    
-    // Handle product selection
-    // static/portal/js/invoice.js - update the product selection handler
-productRows.addEventListener('change', function(e) {
-    if (e.target.classList.contains('product-select')) {
-        const row = e.target.closest('tr');
-        const productId = e.target.value;
-        const unitPriceInput = row.querySelector('.unit-price');
-        
-        // Fetch product details - ensure URL matches your endpoint
-        fetch(`/api/products/${productId}/`)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                return response.json();
-            })
-            .then(data => {
-                console.log('Product data:', data); // Debug log
-                unitPriceInput.value = data.selling_price;
-                calculateRowTotal(row);
-                calculateTotals();
-            })
-            .catch(error => {
-                console.error('Error fetching product:', error);
-                alert('Error loading product details. Please try again.');
-            });
-    }
-    });
-    
-    // Handle quantity/price changes
-    productRows.addEventListener('input', function(e) {
-        if (e.target.classList.contains('quantity') || 
-            e.target.classList.contains('unit-price')) {
-            const row = e.target.closest('tr');
-            calculateRowTotal(row);
-            calculateTotals();
-        }
-    });
-    
-    // Tax input change
-    taxInput.addEventListener('input', calculateTotals);
-    
-    function addProductRow() {
-        const clone = template.content.cloneNode(true);
-        productRows.appendChild(clone);
-        
-        // Initialize the new row
-        const newRow = productRows.lastElementChild;
-        const productSelect = newRow.querySelector('.product-select');
-        const unitPriceInput = newRow.querySelector('.unit-price');
-        
-        // Set initial price
-        if (productSelect.selectedOptions[0]) {
-            unitPriceInput.value = productSelect.selectedOptions[0].dataset.price;
-            calculateRowTotal(newRow);
-            calculateTotals();
-        }
-    }
-    
-    function calculateRowTotal(row) {
-        const quantity = parseFloat(row.querySelector('.quantity').value) || 0;
-        const unitPrice = parseFloat(row.querySelector('.unit-price').value) || 0;
-        const totalInput = row.querySelector('.total');
-        
-        totalInput.value = (quantity * unitPrice).toFixed(2);
-    }
-    
-    function calculateTotals() {
-        let subtotal = 0;
-        
-        document.querySelectorAll('#product-rows tr').forEach(row => {
-            subtotal += parseFloat(row.querySelector('.total').value) || 0;
+    // Parse product prices from data attribute
+    function getProductPrices(selectElement) {
+        const priceData = selectElement.getAttribute('data-prices');
+        const prices = {};
+        priceData.split('|').forEach(item => {
+            const [id, selling, cost] = item.split(',');
+            prices[id] = { selling, cost };
         });
-        
-        const tax = parseFloat(taxInput.value) || 0;
-        const total = subtotal + tax;
-        
-        subtotalInput.value = subtotal.toFixed(2);
-        totalInput.value = total.toFixed(2);
+        return prices;
     }
-    
-    // Form submission - convert dynamic rows to form data
-    document.getElementById('invoice-form').addEventListener('submit', function(e) {
-        e.preventDefault();
+    // Function to extract price from option text
+    function extractPrice(optionText) {
+        const match = optionText.match(/\$([\d.]+)/);
+        return match ? match[1] : null;
+    }
+
+const productRows = document.getElementById('product-rows');
+const addProductBtn = document.getElementById('add-product');
+const template = document.getElementById('product-row-template');
+const subtotalInput = document.getElementById('subtotal');
+const taxInput = document.getElementById('tax');
+const totalInput = document.getElementById('total');
+
+// Add product row function
+function addProductRow() {
+    if (!template) return;
+    const clone = template.content.cloneNode(true);
+    productRows.appendChild(clone);
+    calculateTotals();
+}
+
+// Add first product row by default
+addProductRow();
+
+// Add product row
+addProductBtn.addEventListener('click', addProductRow);
+
+// Remove product row
+productRows.addEventListener('click', function(e) {
+    if (e.target.classList.contains('remove-product') || 
+        e.target.closest('.remove-product')) {
+        e.target.closest('tr').remove();
+        calculateTotals();
+    }
+});
+// Handle product selection changes
+document.addEventListener('change', function(e) {
+    if (e.target.classList.contains('field-product')) {
+        const row = e.target.closest('.dynamic-invoiceitem');
+        const selectedOption = e.target.options[e.target.selectedIndex];
+        const sellingPrice = extractPrice(selectedOption.text);
         
-        const form = e.target;
-        const formData = new FormData(form);
-        
-        // Add product items to form data
-        document.querySelectorAll('#product-rows tr').forEach((row, index) => {
-            formData.append(`items-${index}-product`, row.querySelector('.product-select').value);
-            formData.append(`items-${index}-quantity`, row.querySelector('.quantity').value);
-            formData.append(`items-${index}-unit_price`, row.querySelector('.unit-price').value);
-        });
-        
-        // Submit the form
-        fetch(form.action, {
-            method: form.method,
-            body: formData,
-            headers: {
-                'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+        if (sellingPrice) {
+            const sellingInput = row.querySelector('.field-selling_price input');
+            if (sellingInput) {
+                sellingInput.value = sellingPrice;
+                sellingInput.dispatchEvent(new Event('change'));
             }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                window.location.href = data.redirect_url;
+            
+            // For cost price, we'll use a ratio (or fetch via API if needed)
+            const costDisplay = row.querySelector('.field-cost_price div.readonly');
+            if (costDisplay && sellingPrice) {
+                // This is temporary - adjust ratio as needed
+                costDisplay.textContent = (parseFloat(sellingPrice) * 0.8).toFixed(2);
             }
-        });
-    });
+        }
+    }
+});
+
+// Dummy calculateTotals function to prevent errors
+function calculateTotals() {
+    // Implement calculation logic here if needed
+}
+
+// Initialize existing rows
+document.querySelectorAll('.dynamic-invoiceitem').forEach(row => {
+    const productSelect = row.querySelector('.field-product select');
+    if (productSelect && productSelect.value) {
+        productSelect.dispatchEvent(new Event('change'));
+    }
+
+    const costDisplay = row.querySelector('.field-cost_price div.readonly');
+    if (costDisplay) {
+        // This is temporary - adjust ratio as needed
+        costDisplay.textContent = (parseFloat(sellingPrice) * 0.8).toFixed(2);
+    }
 });

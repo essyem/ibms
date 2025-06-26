@@ -20,29 +20,59 @@ from django.http import HttpResponse  # <-- Add this import
 from io import BytesIO  # <-- Add this import
 import uuid
 from django.db.models import Sum
+from django.db.models import Value, CharField, CharField
+from django.db.models.functions import Concat
 from portal.forms import InvoiceItemForm  # Ensure this import is correct
 from xhtml2pdf import pisa  # <-- Add this import
 
+# portal/admin.py
+if admin.site.is_registered(Invoice):
+    admin.site.unregister(Invoice)
 
 class InvoiceItemInline(admin.TabularInline):
     model = InvoiceItem
-    form = InvoiceItemForm  # Removed because InvoiceItemForm is not defined
     extra = 1
     fields = ('product', 'quantity', 'selling_price', 'cost_price', 'total')
     readonly_fields = ('cost_price', 'total')
     
     def get_formset(self, request, obj=None, **kwargs):
         formset = super().get_formset(request, obj, **kwargs)
+        
+        # Properly annotated queryset with output_field specified
+        formset.form.base_fields['product'].queryset = Product.objects.annotate(
+            price_display=Concat(
+                'name', 
+                Value(' - $'), 
+                'selling_price',
+                output_field=CharField()
+            )
+        ).select_related('category')
+        
         formset.form.base_fields['selling_price'].widget.attrs.update({
             'step': '0.01',
-            'min': '0.01'
+            'min': '0.01',
+            'class': 'selling-price-input'
         })
+        
         return formset
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == "product":
+            kwargs["queryset"] = Product.objects.annotate(
+                price_display=Concat(
+                    'name',
+                    Value(' - $'),
+                    'selling_price',
+                    output_field=CharField()
+                )
+            ).select_related('category')
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
 
 @admin.register(Invoice)
 class InvoiceAdmin(admin.ModelAdmin):
     inlines = [InvoiceItemInline]
-    list_display = ('invoice_number', 'customer', 'date', 'due_date', 'status', 'grand_total', 'pdf_actions')
+    list_display = ('invoice_number', 'customer_name', 'date', 'due_date', 'status', 'grand_total', 'payment_mode_display', 'pdf_actions', )
     fieldsets = (
         (None, {
             'fields': ('customer', 'due_date', 'status', 'notes')
@@ -57,7 +87,7 @@ class InvoiceAdmin(admin.ModelAdmin):
         }),
     )
     readonly_fields = ('date', 'subtotal', 'tax', 'discount_amount', 'total', 'grand_total')
-    list_filter = ('status', 'date', 'due_date')
+    list_filter = ('status', 'date', 'due_date', 'payment_mode')
     search_fields = ('invoice_number', 'customer__name', 'notes')
     date_hierarchy = 'date'
     ordering = ('-date',)
@@ -74,6 +104,14 @@ class InvoiceAdmin(admin.ModelAdmin):
             return self.readonly_fields + ('tax',)
         return self.readonly_fields
     
+    def customer_name(self, obj):
+        return obj.customer.full_name if obj.customer else "Walk-in"
+    customer_name.short_description = 'Customer'
+
+    def payment_mode_display(self, obj):
+        return dict(Invoice.PAYMENT_MODES).get(obj.payment_mode, "Unknown")
+    payment_mode_display.short_description = 'Payment Mode'
+
     def save_formset(self, request, form, formset, change):
         instances = formset.save(commit=False)
         for instance in instances:
@@ -89,7 +127,9 @@ class InvoiceAdmin(admin.ModelAdmin):
             'admin/js/invoice_items.js',
             'admin/js/invoice_admin.js',
         )
-    
+        css = {
+            'all': ('admin/css/invoice_admin.css',)
+        }
     def pdf_actions(self, obj):
         return format_html(
             '<a class="button" href="{}" target="_blank">PDF</a>&nbsp;'
@@ -117,92 +157,9 @@ class InvoiceAdmin(admin.ModelAdmin):
         )
 
     
-#Admin configuration for TRENDZ Trading Portal'''
 
-'''
-# portal/admin.py
-class InvoiceItemInline(admin.TabularInline):
-    model = InvoiceItem
-    extra = 1
-    fields = ('product', 'quantity', 'selling_price', 'cost_price', 'total')
-    readonly_fields = ('cost_price', 'total')
-    
-    def get_formset(self, request, obj=None, **kwargs):
-        formset = super().get_formset(request, obj, **kwargs)
-        formset.form.base_fields['selling_price'].widget.attrs.update({
-            'step': '0.01',
-            'min': '0.01'
-        })
-        return formset
-    
-    
-    
-
-@admin.register(Invoice)
-class InvoiceAdmin(admin.ModelAdmin):
-    inlines = [InvoiceItemInline]
-    list_display = ('invoice_number', 'customer', 'date', 'due_date', 'status', 'grand_total', 'pdf_actions')
-    fieldsets = (
-        (None, {
-            'fields': ('customer', 'due_date', 'status', 'notes')
-        }),
-        ('Financials', {
-            'fields': ('subtotal', 'tax', 'grand_total'),
-            'classes': ('collapse',)
-        }),
-    )
-    readonly_fields = ('date', 'subtotal', 'tax', 'grand_total')
-    list_filter = ('status', 'date', 'due_date')
-    search_fields = ('invoice_number', 'customer__name', 'notes')
-    date_hierarchy = 'date'
-    ordering = ('-date',)
-    actions = ['mark_as_paid', 'mark_as_unpaid']
-    
-    def save_model(self, request, obj, form, change):
-        super().save_model(request, obj, form, change)
-        obj.update_totals()  # Ensure totals are recalculated after save
-    
-    def get_readonly_fields(self, request, obj=None):
-        if obj:  # Editing existing invoice
-            return self.readonly_fields + ('tax',)
-        return self.readonly_fields
-    
-    def save_formset(self, request, form, formset, change):
-        instances = formset.save(commit=False)
-        for instance in instances:
-            if isinstance(instance, InvoiceItem) and not instance.selling_price:
-                # Set selling price from product if not specified
-                instance.selling_price = instance.product.selling_price
-            instance.save()
-        formset.save_m2m()
-
-    class Media:
-        js = ('admin/js/invoice_items.js', 
-              'admin/js/invoice_admin.js')
-    
-    def pdf_actions(self, obj):
-        return format_html(
-            '<a class="button" href="{}" target="_blank">PDF</a>&nbsp;'
-            '<a class="button" href="{}" download>Download</a>',
-            reverse('admin:invoice_pdf', args=[obj.pk]),
-            reverse('admin:invoice_pdf_download', args=[obj.pk])
-        )
-    pdf_actions.short_description = 'Actions'
-    def get_urls(self):
-        urls = super().get_urls()
-        custom_urls = [
-            path('<int:pk>/pdf/',
-                self.admin_site.admin_view(InvoicePDFView.as_view()),
-                name='invoice_pdf'),
-            path('<int:pk>/pdf/download/',
-                self.admin_site.admin_view(InvoicePDFView.as_view()),
-                name='invoice_pdf_download'),
-     ]
-        return custom_urls + urls
-'''
     
 @admin.register(InvoiceItem)
-# portal/admin.py
 class InvoiceItemAdmin(admin.ModelAdmin):
     list_display = ('invoice', 'product_name', 'quantity', 'selling_price', 'cost_price', 'total_amount')
     list_filter = ('invoice__status', 'product__category')
@@ -230,8 +187,6 @@ class InvoiceItemAdmin(admin.ModelAdmin):
         return super().get_queryset(request).select_related('product', 'invoice')
 
 
-
-
 class ProductResource(resources.ModelResource):
     category = fields.Field(
         column_name='category',
@@ -246,7 +201,6 @@ class ProductResource(resources.ModelResource):
         skip_unchanged = True
         report_skipped = True
 
-# admin.py - modify the ProductAdmin
 
 ICON_CHOICES = [
     ('fa-microchip', 'Microchip'),
@@ -276,29 +230,15 @@ class InvoicePDFView(View):
             return response
         return HttpResponse("Error generating PDF", status=400)
 
-'''
-'
-@admin.register(Invoice)
-class InvoiceAdmin(admin.ModelAdmin):
-    # ... other code ...
-    
-    def get_urls(self):
-        urls = super().get_urls()
-        custom_urls = [
-            path('<int:pk>/pdf/',
-                self.admin_site.admin_view(InvoicePDFView.as_view()),
-                name='invoice_pdf'),
-        ]
-        return custom_urls + urls
-    
-    def pdf_actions(self, obj):
-        return format_html(
-            '<a class="button" href="{}" target="_blank">View PDF</a>&nbsp;'
-            '<a class="button" href="{}?download=true" target="_blank">Download PDF</a>',
-            reverse('admin:invoice_pdf', args=[obj.pk]),
-            reverse('admin:invoice_pdf', args=[obj.pk])
-        )
-'''
+# ...existing code...
+
+@admin.register(Customer)
+class CustomerAdmin(admin.ModelAdmin):
+    list_display = ('customer_id', 'full_name', 'phone')
+    readonly_fields = ('customer_id',)
+    search_fields = ('customer_id', 'full_name')
+
+
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
     list_display = ('name', 'category', 'sku', 'cost_price', 'selling_price', 'stock', 'warranty_period', 'is_active', 'profit_display', 'margin_display')
@@ -340,7 +280,16 @@ class ProductAdmin(admin.ModelAdmin):
     def get_readonly_fields(self, request, obj=None):
         return super().get_readonly_fields(request, obj) + ('profit_display', 'margin_display')
 
-
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == "product":
+            kwargs["queryset"] = Product.objects.annotate(
+                price_info=Concat(
+                    'name', Value(' - $'), 
+                    'selling_price',
+                    output_field=CharField()
+                )
+            )
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 
 class CategoryAdminForm(forms.ModelForm):
@@ -482,10 +431,10 @@ class CategoryAdminForm(forms.ModelForm):
 
 
 admin.site.register(Order)
-admin.site.register(Customer)
+
+
 admin.site.register(Review)
 admin.site.register(Cart)
-admin.site.register(CartItem)
 
 # Default admin site configuration
 admin.site.site_header = "TRENDZ Trading Administration"

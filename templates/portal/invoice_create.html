@@ -6,18 +6,71 @@
     
     <form method="post" id="invoice-form">
         {% csrf_token %}
-        
+        <!-- Customer Details Only -->
+
         <div class="row mb-4">
             <div class="col-md-6">
                 <div class="card">
                     <div class="card-header">Customer Details</div>
                     <div class="card-body">
-                        {{ form.as_p }}
+                        <div class="form-group">
+                            <label for="customer">Customer Name</label>
+                            <select class="form-control" name="customer" id="customer" required>
+                                {% for customer in customers %}
+                                <option value="{{ customer.id }}" {% if object and object.customer.id == customer.id %}selected{% endif %}>
+                                    {{ customer.company_name|default:customer.full_name }} ({{ customer.custom_id }})
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="address">Delivery Address</label>
+                            <textarea class="form-control" name="address" id="address" rows="3" required>
+                                {% if object %}{{ object.address }}{% endif %}
+                            </textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="phone">Phone</label>
+                            <input type="text" class="form-control" name="phone" id="phone" value="{% if object %}{{ object.customer.phone }}{% endif %}" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="tax_number">Tax Number</label>
+                            <input type="text" class="form-control" name="tax_number" id="tax_number" value="{% if object %}{{ object.customer.tax_number }}{% endif %}">
+                        </div>
+                    </div>
+                </div>
+            </div>  
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">Invoice Details</div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label for="date">Date</label>
+                            <input type="date" class="form-control" name="date" id="date" value="{% if object %}{{ object.date|date:'Y-m-d' }}{% else %}{{ today|date:'Y-m-d' }}{% endif %}" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="due_date">Due Date</label>
+                            <input type="date" class="form-control" name="due_date" id="due_date" value="{% if object %}{{ object.due_date|date:'Y-m-d' }}{% else %}{{ today|date:'Y-m-d' }}{% endif %}" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="invoice_number">Invoice Number</label>
+                            <input type="text" class="form-control" name="invoice_number" id="invoice_number" value="{% if object %}{{ object.invoice_number }}{% else %}Auto-generated{% endif %}" {% if object %}readonly{% endif %}>
+                        </div>  
+                        <div class="form-group">
+                            <label for="status">Status</label>
+                            <select class="form-control" name="status" id="status">
+                                <option value="draft" {% if object and object.status == 'draft' %}selected{% endif %}>Draft</option>
+                                <option value="sent" {% if object and object.status == 'sent' %}selected{% endif %}>Sent</option>
+                                <option value="paid" {% if object and object.status == 'paid' %}selected{% endif %}>Paid</option>
+                                <option value="cancelled" {% if object and object.status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
             </div>
-            
-            
+        </div>  
+        
+        <!-- Products Section -->
         <div class="card mb-4">
             <div class="card-header">Products</div>
             <div class="card-body">
@@ -27,6 +80,7 @@
                             <th>Product</th>
                             <th>Quantity</th>
                             <th>Unit Price</th>
+                            <th>Cost Price</th>
                             <th>Total</th>
                             <th>Action</th>
                         </tr>
@@ -43,10 +97,41 @@
         </div>
         
         
-    </form>
-</div>
-
-<div class="col-md-6">
+        
+        <!-- Product Row Template -->
+        <template id="product-row-template">
+            <tr class="product-row">
+                <td>
+                    <select class="form-control product-select" name="products">
+                        {% for product in products %}
+                        <option value="{{ product.id }}" data-selling-price="{{ product.selling_price }}" data-cost-price="{{ product.cost_price }}">
+                            {{ product.name }} ({{ product.sku }})
+                        </option>
+                        {% endfor %}
+                    </select>
+                </td>
+                <td>
+                    <input type="number" class="form-control quantity" name="quantity" value="1" min="1" step="1" required>
+                </td>
+                <td>
+                    <input type="text" class="form-control unit-price" name="unit_price" value="0.00" readonly>
+                </td>
+                <td>
+                    <input type="text" class="form-control cost-price" name="cost_price" value="0.00" readonly>
+                </td>
+                <td>
+                    <input type="text" class="form-control total" name="total" value="0.00" readonly>
+                </td>
+                <td>
+                    <button type="button" class="btn btn-danger remove-product">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            </tr>
+        </template>
+        <!-- Invoice Summary (Single Section) -->
+        <div class="row mb-4">
+            <div class="col-md-6 offset-md-6">
                 <div class="card">
                     <div class="card-header">Invoice Summary</div>
                     <div class="card-body">
@@ -63,44 +148,254 @@
                             <input type="number" class="form-control" id="tax" value="0.00" step="0.01" min="0">
                         </div>
                         <div class="form-group">
-                            <label>Total:</label>
-                            <input type="text" class="form-control" id="total" value="0.00" disabled>
+                            <label>Discount Type:</label>
+                            <select class="form-control" id="discount-type">
+                                <option value="percent">Percentage</option>
+                                <option value="amount">Fixed Amount</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Discount Value:</label>
+                            <input type="number" class="form-control" id="discount-value" value="0.00" step="0.01" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label>Discount Amount:</label>
+                            <input type="text" class="form-control" id="discount-amount" value="0.00" disabled>
+                        </div>
+                        <div class="form-group">
+                            <label>Grand Total:</label>
+                            <input type="text" class="form-control" id="grand-total" value="0.00" disabled>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
+        <!-- Existing payment mode -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">Payment Details</div>
+                <div class="card-body">
+            <div class="form-group">
+                <label>Payment Mode</label>
+                <select class="form-control" name="payment_mode" required id="payment-mode-select">
+                    <option value="">Select Payment Method</option>
+                    {% for value, name in invoice_form.fields.payment_mode.choices %}
+                        <option value="{{ value }}" {% if invoice_form.payment_mode.value == value %}selected{% endif %}>
+                            {{ name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div id="split-details" class="d-none">
+                <div class="form-group">
+                    <label>Cash Amount</label>
+                    <input type="number" class="form-control" name="cash_amount" value="0.00" step="0.01" min="0">
+                </div>
+                <div class="form-group">
+                    <label>POS Amount</label>
+                    <input type="number" class="form-control" name="pos_amount" value="0.00" step="0.01" min="0">
+                </div>
+                <div class="form-group">
+                    <label>Other Amount</label>
+                    <input type="number" class="form-control" name="other_amount" value="0.00" step="0.01" min="0">
+                </div>
+                <div class="form-group">
+                    <label>Other Method</label>
+                    <input type="text" class="form-control" name="other_method" placeholder="Method name">
+                </div>
+            </div>
+        </div>
+        
+        <!-- Form Actions -->
         <div class="row">
             <div class="col-md-12">
-                <button type="submit" class="btn btn-primary">Save Invoice</button>
+                <button type="submit" class="btn btn-success"><div id="form-messages" class="alert d-none">
+                </div>Save Invoice</button>
                 <a href="{% url 'invoice_list' %}" class="btn btn-secondary">Cancel</a>
             </div>
         </div>
-    
-<!-- Template for new product row -->
-<template id="product-row-template">
-    <tr>
-        <td>
-            <select class="form-control product-select" name="product">
-                {% for product in products %}
-                    <option value="{{ product.id }}" 
-                            data-price="{{ product.selling_price }}">
-                        {{ product.name }} ({{ product.sku }})
-                    </option>
-                {% empty %}
-                    <option value="">No products available</option>
-                {% endfor %}
-            </select>
-        </td>
-        <td><input type="number" class="form-control quantity" name="quantity" value="1" min="1"></td>
-        <td><input type="number" class="form-control unit-price" name="unit_price" step="0.01" min="0"></td>
-        <td><input type="text" class="form-control total" name="total" value="0.00" disabled></td>
-        <td><button type="button" class="btn btn-danger remove-product"><i class="fas fa-trash"></i></button></td>
-    </tr>
-</template>
+    </form>
+</div>
 
 {% endblock %}
-
 {% block scripts %}
 <script src="{% static 'portal/js/invoice.js' %}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const productRows = document.getElementById('product-rows');
+    const addProductBtn = document.getElementById('add-product');
+    const template = document.getElementById('product-row-template');
+    const subtotalInput = document.getElementById('subtotal');
+    const taxInput = document.getElementById('tax');
+    const discountTypeInput = document.getElementById('discount-type');
+    const discountValueInput = document.getElementById('discount-value');
+    const discountAmountInput = document.getElementById('discount-amount');
+    const grandTotalInput = document.getElementById('grand-total');
+
+    // Payment mode split toggle
+    const paymentModeSelect = document.getElementById('payment-mode-select');
+    const splitDetails = document.getElementById('split-details');
+    if (paymentModeSelect && splitDetails) {
+        function toggleSplitDetails() {
+            if (paymentModeSelect.value === 'split') {
+                splitDetails.classList.remove('d-none');
+            } else {
+                splitDetails.classList.add('d-none');
+            }
+        }
+        paymentModeSelect.addEventListener('change', toggleSplitDetails);
+        // Initialize on page load
+        toggleSplitDetails();
+    }
+
+    // Add first product row by default
+    addProductRow();
+
+    // Add product row
+    addProductBtn.addEventListener('click', addProductRow);
+
+    // Remove product row
+    productRows.addEventListener('click', function(e) {
+        if (e.target.classList.contains('remove-product') || 
+            e.target.closest('.remove-product')) {
+            e.target.closest('tr').remove();
+            calculateTotals();
+        }
+    });
+
+    // Handle product selection changes
+    productRows.addEventListener('change', function(e) {
+        if (e.target.classList.contains('product-select')) {
+            const row = e.target.closest('tr');
+            const productSelect = row.querySelector('.product-select');
+            const unitPriceInput = row.querySelector('.unit-price');
+            const costPriceInput = row.querySelector('.cost-price');
+            const selectedOption = productSelect.selectedOptions[0];
+            if (selectedOption) {
+                unitPriceInput.value = selectedOption.dataset.sellingPrice || "0.00";
+                costPriceInput.value = selectedOption.dataset.costPrice || "0.00";
+                calculateRowTotal(row);
+                calculateTotals();
+            }
+        }
+    });
+
+    // Handle quantity changes
+    productRows.addEventListener('input', function(e) {
+        if (e.target.classList.contains('quantity')) {
+            const row = e.target.closest('tr');
+            calculateRowTotal(row);
+            calculateTotals();
+        }
+    });
+
+    // Tax, discount type, and discount value changes
+    taxInput.addEventListener('input', calculateTotals);
+    discountTypeInput.addEventListener('change', calculateTotals);
+    discountValueInput.addEventListener('input', calculateTotals);
+
+    function addProductRow() {
+        const clone = template.content.cloneNode(true);
+        productRows.appendChild(clone);
+
+        // Initialize the new row
+        const newRow = productRows.lastElementChild;
+        const productSelect = newRow.querySelector('.product-select');
+        const unitPriceInput = newRow.querySelector('.unit-price');
+        const costPriceInput = newRow.querySelector('.cost-price');
+
+        // Set initial price and cost price from the first option
+        if (productSelect.selectedOptions[0]) {
+            unitPriceInput.value = productSelect.selectedOptions[0].dataset.sellingPrice || "0.00";
+            costPriceInput.value = productSelect.selectedOptions[0].dataset.costPrice || "0.00";
+            calculateRowTotal(newRow);
+            calculateTotals();
+        }
+    }
+
+    function calculateRowTotal(row) {
+        const quantity = parseFloat(row.querySelector('.quantity').value) || 0;
+        const unitPrice = parseFloat(row.querySelector('.unit-price').value) || 0;
+        const totalInput = row.querySelector('.total');
+        totalInput.value = (quantity * unitPrice).toFixed(2);
+    }
+
+    function calculateTotals() {
+        let subtotal = 0;
+        document.querySelectorAll('#product-rows tr').forEach(row => {
+            subtotal += parseFloat(row.querySelector('.total').value) || 0;
+        });
+
+        const tax = parseFloat(taxInput.value) || 0;
+        const discountType = discountTypeInput.value;
+        const discountValue = parseFloat(discountValueInput.value) || 0;
+        let discountAmount = 0;
+        if (discountType === 'percent') {
+            discountAmount = subtotal * (discountValue / 100);
+        } else {
+            discountAmount = discountValue;
+        }
+        const grandTotal = subtotal + tax - discountAmount;
+
+        subtotalInput.value = subtotal.toFixed(2);
+        discountAmountInput.value = discountAmount.toFixed(2);
+        grandTotalInput.value = grandTotal.toFixed(2);
+    }
+
+    // Form submission - convert dynamic rows to form data
+    document.getElementById('invoice-form').addEventListener('submit', function(e) {
+        const paymentMode = document.getElementById('payment-mode-select').value;
+        const grandTotal = parseFloat(document.getElementById('grand-total').value);
+
+        // Split payment validation
+        if (paymentMode === 'split') {
+            const cash = parseFloat(document.querySelector('[name="cash_amount"]').value);
+            const pos = parseFloat(document.querySelector('[name="pos_amount"]').value);
+            const other = parseFloat(document.querySelector('[name="other_amount"]').value);
+
+            if (Math.abs((cash + pos + other) - grandTotal) > 0.01) {
+                alert('Split payment amounts must equal the grand total');
+                e.preventDefault();
+                return;
+            }
+        }
+
+        e.preventDefault();
+
+        const form = e.target;
+        const formData = new FormData(form);
+
+        // Add product items to form data
+        document.querySelectorAll('#product-rows tr').forEach((row, index) => {
+            formData.append(`items-${index}-product`, row.querySelector('.product-select').value);
+            formData.append(`items-${index}-quantity`, row.querySelector('.quantity').value);
+            formData.append(`items-${index}-unit_price`, row.querySelector('.unit-price').value);
+            formData.append(`items-${index}-cost_price`, row.querySelector('.cost-price').value);
+        });
+
+        // Add summary fields
+        formData.append('subtotal', document.getElementById('subtotal').value);
+        formData.append('tax', document.getElementById('tax').value);
+        formData.append('discount_type', document.getElementById('discount-type').value);
+        formData.append('discount_value', document.getElementById('discount-value').value);
+        formData.append('discount_amount', document.getElementById('discount-amount').value);
+        formData.append('grand_total', document.getElementById('grand-total').value);
+
+        // Submit the form
+        fetch(form.action, {
+            method: form.method,
+            body: formData,
+            headers: {
+                'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                window.location.href = data.redirect_url;
+            }
+        });
+    });
+});
+</script>
 {% endblock %}

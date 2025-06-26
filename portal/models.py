@@ -7,26 +7,52 @@ from django.core.mail import send_mail
 from django.core.exceptions import ValidationError
 from django.db.models import Sum
 import uuid
-from django.utils import timezone   
+from django.utils import timezone
+import random   
+import string
+from django.utils.text import gettext_lazy as _
 
 class Customer(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='customer')
-    company_name = models.CharField(max_length=100, blank=True)
+    customer_id = models.CharField(
+        max_length=10,
+        unique=True,
+        editable=False
+    )
+    full_name = models.CharField(max_length=100)
     phone = models.CharField(max_length=20)
-    tax_number = models.CharField(max_length=50, blank=True)
-    delivery_address = models.TextField()
+    company_name = models.CharField(max_length=100, null=True, blank=True)
+    address = models.TextField(null=True, blank=True)
+    tax_number = models.CharField(max_length=50, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
     preferred_contact_method = models.CharField(
         max_length=10,
         choices=[('email', 'Email'), ('phone', 'Phone'), ('whatsapp', 'WhatsApp')],
-        default='email'
+        default='phone'
     )
 
+    def save(self, *args, **kwargs):
+        if not self.customer_id:
+            self.customer_id = self.generate_customer_id()
+        super().save(*args, **kwargs)
+
+    @classmethod
+    def generate_customer_id(cls):
+        """Generate ID in format: YYMMXXXXXX"""
+        now = timezone.now()
+        date_part = f"{now.strftime('%y')}{now.strftime('%m')}"
+        
+        # Generate until unique
+        while True:
+            letters_part = ''.join(random.choices(string.ascii_uppercase, k=2))
+            numbers_part = ''.join(random.choices(string.digits, k=4))
+            customer_id = f"{date_part}{letters_part}{numbers_part}"
+            if not cls.objects.filter(customer_id=customer_id).exists():
+                return customer_id
+    
     def __str__(self):
-        return f"{self.company_name or self.user.username}"
-    pass
 
-
-
+        return f"{self.full_name} ({self.phone})"
 
 
 class Invoice(models.Model):
@@ -37,7 +63,33 @@ class Invoice(models.Model):
         ('cancelled', 'Cancelled'),
     ]
     
-    customer = models.ForeignKey('Customer', on_delete=models.CASCADE)
+    PAYMENT_MODES = [
+        ('cash', 'Cash'),
+        ('credit', 'Credit'),
+        ('pos', 'POS'),
+        ('split', 'Split Payment'),
+    ]
+    
+    customer = models.ForeignKey(
+        'Customer',
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        verbose_name='Customer'
+    )
+
+    payment_mode = models.CharField(
+        max_length=10,
+        choices=PAYMENT_MODES,
+        default='cash'
+    )
+    
+    split_details = models.JSONField(
+        blank=True, 
+        null=True,
+        help_text="Details of split payment (e.g., {'cash': 100, 'pos': 50})"
+    )
+    
     invoice_number = models.CharField(
         max_length=50,
         unique=True,
@@ -90,6 +142,15 @@ class Invoice(models.Model):
         super().save(*args, **kwargs)
         self.update_totals()  # Ensure totals are updated after save
 
+    def save(self, *args, **kwargs):
+        if not self.customer:
+            # Create anonymous customer if none provided
+            self.customer, _ = Customer.objects.get_or_create(
+                full_name="Walk-in Customer",
+                defaults={'phone': ''}
+            )
+        super().save(*args, **kwargs)
+
     def update_totals(self):
         # Calculate subtotal from items
         self.subtotal = self.items.aggregate(
@@ -118,7 +179,14 @@ class Invoice(models.Model):
     def __str__(self):
         return f"Invoice #{self.invoice_number} - {self.customer}"
 
-# portal/models.py
+    # Set default customer for existing invoices
+    # (This logic should be run outside the model class, e.g., in a migration or management command)
+    # default_customer, _ = Customer.objects.get_or_create(
+    #     full_name="Walk-in Customer",
+    #     defaults={'phone': ''}
+    # )
+    # Invoice.objects.filter(customer__isnull=True).update(customer=default_customer)
+
 class InvoiceItem(models.Model):
     invoice = models.ForeignKey('Invoice', on_delete=models.CASCADE, related_name='items')
     product = models.ForeignKey(
@@ -140,54 +208,6 @@ class InvoiceItem(models.Model):
         self.total = self.quantity * self.selling_price
         super().save(*args, **kwargs)
         self.invoice.update_totals()
-
-'''
-
-class InvoiceItem(models.Model):
-    invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE, related_name='items')
-    product = models.ForeignKey('Product', on_delete=models.PROTECT)
-    quantity = models.PositiveIntegerField(default=1)
-    cost_price = models.DecimalField(
-        max_digits=10, 
-        decimal_places=2, 
-        editable=False)  # Captured at time of sale
-    selling_price = models.DecimalField(
-        max_digits=10, 
-        decimal_places=2,
-        editable=True)  # Editable for discounts
-    total = models.DecimalField(max_digits=10, decimal_places=2, editable=False)
-
-    def save(self, *args, **kwargs):
-        if not self.pk:  # New instance
-            if not self.selling_price:
-                self.selling_price = self.product.selling_price
-            self.cost_price = self.product.cost_price
-        
-        self.total = self.quantity * self.selling_price
-        super().save(*args, **kwargs)
-        
-        # Update parent invoice
-        self.invoice.update_totals()
-
-    def __str__(self):
-        return f"{self.quantity}x {self.product.name} @ {self.selling_price}"
-
-    def save(self, *args, **kwargs):
-        # Auto-capture cost price when first created
-        if not self.pk:
-            self.cost_price = self.product.cost_price
-        
-        # Calculate total
-        self.total = self.quantity * self.selling_price
-        
-        super().save(*args, **kwargs)
-        
-        # Update parent invoice totals
-        self.invoice.update_totals()
-    '''
-
-    
-    
 
 
 class Review(models.Model):
@@ -248,7 +268,8 @@ class Product(models.Model):
         null=True,
         help_text="Barcode number (UPC, EAN, etc.)"
     )
-
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
     # models.py - update the profit calculation methods
     def profit_margin(self):
         """Calculate profit margin percentage"""
@@ -279,7 +300,8 @@ class Product(models.Model):
         
     def __str__(self):
         return f"{self.name} ({self.sku}) - {self.category.name}"
-    
+
+
 class Cart(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -310,7 +332,6 @@ class Order(models.Model):
     payment_status = models.BooleanField(default=False)
     delivery_address = models.TextField()
     preferred_contact = models.CharField(max_length=100)
-
 
 class ProductEnquiry(models.Model):
     PRODUCT_CHOICES = [

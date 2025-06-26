@@ -3,19 +3,27 @@ from .models import(ProductEnquiry, Invoice, InvoiceItem,
     Product)
 
 
-
 class InvoiceForm(forms.ModelForm):
+    customer_name = forms.CharField(required=False, initial='Walk-in Customer')
+    customer_phone = forms.CharField(required=False)
+    
     class Meta:
         model = Invoice
-        fields = ['customer', 'due_date', 'notes']
+        fields = ['due_date', 'notes', 'tax', 'discount_type', 'discount_value', 'payment_mode']
         widgets = {
             'due_date': forms.DateInput(attrs={'type': 'date'}),
             'notes': forms.Textarea(attrs={'rows': 3}),
+            'payment_mode': forms.Select(attrs={'class': 'form-control'}),
         }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Make all fields optional except due_date
+        self.fields['due_date'].required = True
+        for field in self.fields:
+            if field != 'due_date':
+                self.fields[field].required = False
 
-# portal/forms.py
-from django import forms
-from .models import InvoiceItem
 
 class InvoiceItemForm(forms.ModelForm):
     class Meta:
@@ -32,30 +40,6 @@ class InvoiceItemForm(forms.ModelForm):
         if self.instance and self.instance.product:
             self.fields['selling_price'].initial = self.instance.product.selling_price
 
-'''
-class InvoiceItemForm(forms.ModelForm):
-    product = forms.ModelChoiceField(
-        queryset=Product.objects.all(),
-        widget=forms.Select(attrs={'class': 'product-select'})
-    )
-    
-    class Meta:
-        model = InvoiceItem
-        fields = ['product', 'quantity', 'selling_price']  # Changed unit_price to selling_price
-        widgets = {
-            'quantity': forms.NumberInput(attrs={'min': 1}),
-            'selling_price': forms.NumberInput(attrs={'step': '0.01'}),  # Changed unit_price to selling_price
-        }
-
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['selling_price'].widget.attrs.update({
-            'readonly': False,
-            'disabled': False,
-            'step': '0.01'
-        })
-'''
 
 class InvoiceAdminForm(forms.ModelForm):
     class Meta:

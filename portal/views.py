@@ -1,9 +1,9 @@
 # portal/views.py
 from django.views.generic import (CreateView, UpdateView, 
 ListView, DetailView, View)
-from .models import Invoice, Product
-from django.db.models import Q
-from .models import Product  # Make sure to import your Product model
+from .models import Invoice, InvoiceItem, Product, Customer
+from django.db.models import Sum, Q
+from django.db import transaction
 from django.shortcuts import render, redirect, get_object_or_404
 from .forms import ProductEnquiryForm, InvoiceForm, InvoiceItemForm
 from django.contrib import messages
@@ -18,6 +18,12 @@ from django.http import HttpResponse
 from django.http import Http404
 from django.conf import settings
 from django.utils.html import format_html
+from django.utils import timezone
+import json
+import logging
+from decimal import Decimal
+
+logger = logging.getLogger(__name__)
 
 
 class InvoicePDFView(View):
@@ -61,36 +67,272 @@ class InvoicePDFView(View):
             response['Content-Disposition'] = content
             return response
         return HttpResponse("Error generating PDF", status=400)
-# Ensure you have the necessary imports for your views
+
 class InvoiceCreateView(CreateView):
     model = Invoice
     form_class = InvoiceForm
-    template_name = 'portal/invoice_create.html'
+    template_name = 'portal/invoice_create.html'      
 
     def get_context_data(self, **kwargs):
+        """Add products and customers to template context"""
         context = super().get_context_data(**kwargs)
-        context['products'] = Product.objects.filter(is_active=True)
+        context.update({
+            'products': Product.objects.all(),
+            'customers': Customer.objects.all()[:100]  # Limit to 100 most recent
+        })
         return context
     
+    def form_valid(self, form):
+        """Handle invoice creation with transaction safety"""
+        try:
+            with transaction.atomic():
+                invoice = self._create_invoice(form)
+                self._create_invoice_items(invoice)
+                self._update_invoice_totals(invoice)
+                
+                return self._handle_response(invoice)
+                
+        except Exception as e:
+            logger.error(f"Invoice creation error: {str(e)}")
+            return self._handle_error(e, form)
+
+    def _create_invoice(self, form):
+        """Create and save the invoice instance"""
+        invoice = form.save(commit=False)
+        
+        # Set default values
+        invoice.due_date = form.cleaned_data.get('due_date') or timezone.now().date()
+        invoice.status = 'draft'
+        
+        # Generate invoice number if needed
+        if not invoice.invoice_number or invoice.invoice_number == 'Auto-generated':
+            invoice.invoice_number = self._generate_invoice_number()
+        
+        invoice.save()
+        return invoice
+
+    def _generate_invoice_number(self):
+        """Generate sequential invoice number"""
+        last_invoice = Invoice.objects.order_by('-id').first()
+        last_num = int(last_invoice.invoice_number.split('-')[-1]) if last_invoice else 0
+        return f"INV-{timezone.now().year}-{last_num + 1:04d}"
+
+    def _create_invoice_items(self, invoice):
+        """Create all associated invoice items"""
+        items_data = json.loads(self.request.POST.get('items', '[]'))
+        for item in items_data:
+            product = Product.objects.get(pk=item['product'])
+            InvoiceItem.objects.create(
+                invoice=invoice,
+                product=product,
+                quantity=item['quantity'],
+                selling_price=item['selling_price'],
+                cost_price=item['cost_price']
+            )
+
+    def _update_invoice_totals(self, invoice):
+        """Update calculated invoice totals"""
+        invoice.subtotal = Decimal(self.request.POST.get('subtotal', 0))
+        invoice.discount_amount = Decimal(self.request.POST.get('discount_amount', 0))
+        invoice.grand_total = Decimal(self.request.POST.get('grand_total', 0))
+        invoice.save()
+
+    def _handle_response(self, invoice):
+        """Return appropriate response based on request type"""
+        if self.request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({
+                'success': True,
+                'redirect_url': self.get_success_url(),
+                'invoice_number': invoice.invoice_number
+            })
+        self.object = invoice
+        return super().form_valid(self.get_form())
+
+    def _handle_error(self, error, form=None):
+        """Handle errors appropriately based on request type"""
+        if self.request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({
+                'success': False,
+                'message': str(error)
+            }, status=400)
+        if form is None:
+            form = self.get_form()
+        return super().form_invalid(form)
+        
     def get_success_url(self):
         return reverse('invoice_detail', kwargs={'pk': self.object.pk})
+
+    def form_valid(self, form):
+        """Handle invoice creation with transaction safety"""
+        try:
+            with transaction.atomic():
+                invoice = form.save(commit=False)
+
+                # Handle payment details
+                if form.cleaned_data['payment_mode'] == 'split':
+                    invoice.cash_amount = Decimal(self.request.POST.get('cash_amount', 0))
+                    invoice.pos_amount = Decimal(self.request.POST.get('pos_amount', 0))
+                    invoice.other_amount = Decimal(self.request.POST.get('other_amount', 0))
+                    invoice.other_method = self.request.POST.get('other_method', '')
+
+                invoice.save()
+                self._create_invoice_items(invoice)
+        
+        except Exception as e:
+            logger.error(f"Invoice creation error: {str(e)}")
+            return self._handle_error(e, form)
 
 class InvoiceUpdateView(UpdateView):
     model = Invoice
     form_class = InvoiceForm
     template_name = 'portal/invoice_create.html'
     
+    def get_context_data(self, **kwargs):
+        """Add products, customers, and existing items to template context"""
+        context = super().get_context_data(**kwargs)
+        context.update({
+            'products': Product.objects.filter(is_active=True),
+            'customers': Customer.objects.filter(is_active=True),
+            'existing_items': self.object.items.select_related('product')
+        })
+        return context
+    
+    def form_valid(self, form):
+        """Handle invoice update with transaction safety"""
+        try:
+            with transaction.atomic():
+                invoice = form.save()
+                self._process_invoice_items(invoice)
+                invoice.update_totals()
+                
+                return self._handle_response()
+                
+        except Exception as e:
+            logger.error(f"Invoice update error: {str(e)}")
+            return self._handle_error(e)
+
+    def _process_invoice_items(self, invoice):
+        """Process all invoice item changes (create/update/delete)"""
+        items_data = json.loads(self.request.POST.get('items', '[]'))
+        existing_ids = set(invoice.items.values_list('id', flat=True))
+        updated_ids = set()
+        
+        for item_data in items_data:
+            if item_data.get('id'):
+                self._update_existing_item(invoice, item_data)
+                updated_ids.add(int(item_data['id']))
+            else:
+                self._create_new_item(invoice, item_data)
+        
+        self._delete_removed_items(invoice, existing_ids, updated_ids)
+
+    def _update_existing_item(self, invoice, item_data):
+        """Update an existing invoice item"""
+        product = Product.objects.get(pk=item_data['product'])
+        InvoiceItem.objects.filter(
+            id=item_data['id'],
+            invoice=invoice
+        ).update(
+            product=product,
+            quantity=item_data['quantity'],
+            selling_price=item_data['selling_price'],
+            cost_price=product.cost_price
+        )
+
+    def _create_new_item(self, invoice, item_data):
+        """Create a new invoice item"""
+        product = Product.objects.get(pk=item_data['product'])
+        InvoiceItem.objects.create(
+            invoice=invoice,
+            product=product,
+            quantity=item_data['quantity'],
+            selling_price=item_data['selling_price'],
+            cost_price=product.cost_price
+        )
+
+    def _delete_removed_items(self, invoice, existing_ids, updated_ids):
+        """Delete items that were removed from the invoice"""
+        items_to_delete = existing_ids - updated_ids
+        if items_to_delete:
+            invoice.items.filter(id__in=items_to_delete).delete()
+
+    def _handle_response(self):
+        """Return appropriate response based on request type"""
+        if self.request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({
+                'success': True,
+                'redirect_url': self.get_success_url()
+            })
+        return super().form_valid(self.get_form())
+
+    def _handle_error(self, error, form=None):
+        """Handle errors appropriately based on request type"""
+        if self.request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({
+                'success': False,
+                'message': str(error)
+            }, status=400)
+        if form is None:
+            form = self.get_form()
+        return super().form_invalid(form)
+      
     def get_success_url(self):
         return reverse('invoice_detail', kwargs={'pk': self.object.pk})
 
 class InvoiceDetailView(DetailView):
     model = Invoice
     template_name = 'portal/invoice_detail.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        invoice = self.object
+        context['items'] = invoice.items.select_related('product')
+        
+        # Add calculated fields for template
+        context.update({
+            'subtotal': invoice.subtotal,
+            'tax_amount': invoice.tax,
+            'discount_amount': invoice.discount_amount,
+            'grand_total': invoice.grand_total,
+            'status_display': invoice.get_status_display()
+        })
+        return context
 
 class InvoiceListView(ListView):
     model = Invoice
     template_name = 'portal/invoice_list.html'
-    paginate_by = 10
+    paginate_by = 25
+    ordering = ['-date']
+    
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        
+        # Status filter
+        status = self.request.GET.get('status')
+        if status in dict(Invoice.INVOICE_STATUS).keys():
+            queryset = queryset.filter(status=status)
+            
+        # Date range filter
+        date_from = self.request.GET.get('date_from')
+        date_to = self.request.GET.get('date_to')
+        if date_from:
+            queryset = queryset.filter(date__gte=date_from)
+        if date_to:
+            queryset = queryset.filter(date__lte=date_to)
+            
+        # Search
+        search = self.request.GET.get('search')
+        if search:
+            queryset = queryset.filter(
+                Q(invoice_number__icontains=search) |
+                Q(customer__name__icontains=search) |
+                Q(items__product__name__icontains=search)
+            ).distinct()
+            
+        return queryset.select_related('customer').prefetch_related('items')
+
+
+
 
 def get_product_details(request, product_id):
     product = get_object_or_404(Product, pk=product_id)
@@ -161,7 +403,8 @@ class ProductSearchView(ListView):
         context['query'] = self.request.GET.get('q', '')
         return context
 
-
+def product_search_fallback(request):
+    return render(request, 'portal/products/search_empty.html')
 # views.py - add new imports and view
 
 
@@ -191,8 +434,7 @@ def barcode_scan(request):
         return JsonResponse({'error': str(e)}, status=500)
 
 # Adding a fallback view for empty searches
-def product_search_fallback(request):
-    return render(request, 'portal/products/search_empty.html')
+
 
 # BarcodeScanner
 def barcode_scanner_view(request):

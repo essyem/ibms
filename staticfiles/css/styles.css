@@ -43,3 +43,152 @@
     display: block;
     width: 100%;
 }
+/* Add to your main CSS file */
+.badge {
+    font-size: 0.85em;
+    font-weight: 500;
+}
+
+#invoices-table th {
+    white-space: nowrap;
+}
+
+.dt-nowrap {
+    white-space: nowrap;
+}
+
+.btn-group .btn {
+    padding: 0.25rem 0.5rem;
+}
+/* Add a class for the invoice status badge */
+.invoice-status-badge {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    border-radius: 0.375rem;
+    color: #fff;
+}
+/* Define colors for different statuses */
+.invoice-status-badge.paid {
+    background-color: #28a745; /* Green for paid */
+}
+.invoice-status-badge.unpaid {
+    background-color: #dc3545; /* Red for unpaid */
+}
+.invoice-status-badge.overdue {
+    background-color: #ffc107; /* Yellow for overdue */
+}
+.invoice-status-badge.pending {
+    background-color: #17a2b8; /* Blue for pending */
+}
+.invoice-status-badge.draft {
+    background-color: #6c757d; /* Gray for draft */
+}
+.invoice-status-badge.refunded {
+    background-color: #6f42c1; /* Purple for refunded */
+}
+.invoice-status-badge.cancelled {
+    background-color: #343a40; /* Dark gray for cancelled */
+}
+/* Add a class for the invoice action buttons */
+.invoice-action-buttons {
+    display: flex;
+    gap: 0.5rem;
+}
+.invoice-action-buttons .btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    border-radius: 0.375rem;
+}
+.invoice-action-buttons .btn.view {
+    background-color: #007bff; /* Blue for view */
+    color: #fff;
+}
+.invoice-action-buttons .btn.edit {
+    background-color: #ffc107; /* Yellow for edit */
+    color: #fff;
+}
+.invoice-action-buttons .btn.delete {
+    background-color: #dc3545; /* Red for delete */
+    color: #fff;
+}
+.invoice-action-buttons .btn.download {
+    background-color: #28a745; /* Green for download */
+    color: #fff;
+}
+.invoice-action-buttons .btn.refund {
+    background-color: #6f42c1; /* Purple for refund */
+    color: #fff;
+}
+.invoice-action-buttons .btn.cancel {
+    background-color: #343a40; /* Dark gray for cancel */
+    color: #fff;
+}   
+/* Add a class for the invoice table */
+.invoice-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+.invoice-table th,
+.invoice-table td {
+    padding: 10px;
+    border: 1px solid #ddd;
+    text-align: left;
+}
+.invoice-table th {
+    background-color: #f8f9fa; /* Light gray for header */
+    font-weight: 600;
+}
+.invoice-table td {
+    background-color: #fff; /* White for body */
+}
+.invoice-table tr:nth-child(even) {
+    background-color: #f2f2f2; /* Light gray for even rows */
+}       
+.invoice-table tr:hover {
+    background-color: #e9ecef; /* Light gray for hover */
+}
+.invoice-table .invoice-status-badge {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    border-radius: 0.375rem;
+    color: #fff;
+}
+.invoice-table .invoice-action-buttons {
+    display: flex;
+    gap: 0.5rem;
+}
+.invoice-table .invoice-action-buttons .btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    border-radius: 0.375rem;
+}
+.invoice-table .invoice-action-buttons .btn.view {
+    background-color: #007bff; /* Blue for view */
+    color: #fff;
+}
+.invoice-table .invoice-action-buttons .btn.edit {
+    background-color: #ffc107; /* Yellow for edit */
+    color: #fff;
+}
+.invoice-table .invoice-action-buttons .btn.delete {
+    background-color: #dc3545; /* Red for delete */
+    color: #fff;
+}
+.invoice-table .invoice-action-buttons .btn.download {
+    background-color: #28a745; /* Green for download */
+    color: #fff;
+}
+.invoice-table .invoice-action-buttons .btn.refund {
+    background-color: #6f42c1; /* Purple for refund */
+    color: #fff;
+}
+.invoice-table .invoice-action-buttons .btn.cancel {
+    background-color: #343a40; /* Dark gray for cancel */
+    color: #fff;
+}

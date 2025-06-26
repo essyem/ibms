@@ -1,46 +1,41 @@
+// static/admin/js/invoice_admin.js
 document.addEventListener('DOMContentLoaded', function() {
-    // Product selection handler
+    // Parse product prices from data attribute
+    function getProductPrices(selectElement) {
+        const priceData = selectElement.getAttribute('data-prices');
+        const prices = {};
+        priceData.split('|').forEach(item => {
+            const [id, selling, cost] = item.split(',');
+            prices[id] = { selling, cost };
+        });
+        return prices;
+    }
+    // Function to extract price from option text
+    function extractPrice(optionText) {
+        const match = optionText.match(/\$([\d.]+)/);
+        return match ? match[1] : null;
+    }
+
+    // Handle product selection changes
     document.addEventListener('change', function(e) {
         if (e.target.classList.contains('field-product')) {
             const row = e.target.closest('.dynamic-invoiceitem');
-            const productId = e.target.value;
-            const sellingPriceInput = row.querySelector('.field-selling_price input');
+            const selectedOption = e.target.options[e.target.selectedIndex];
+            const sellingPrice = extractPrice(selectedOption.text);
             
-            if (productId) {
-                fetch(`/admin/portal/product/${productId}/change/?_popup=1`)
-                    .then(response => response.text())
-                    .then(html => {
-                        const doc = new DOMParser().parseFromString(html, 'text/html');
-                        const sellingPrice = doc.querySelector('#id_selling_price').value;
-                        const costPrice = doc.querySelector('#id_cost_price').value;
-                        
-                        // Update fields
-                        if (sellingPriceInput) {
-                            sellingPriceInput.value = sellingPrice;
-                            sellingPriceInput.dispatchEvent(new Event('change'));
-                        }
-                        
-                        // Update cost price display
-                        const costPriceDisplay = row.querySelector('.field-cost_price div.readonly');
-                        if (costPriceDisplay) {
-                            costPriceDisplay.textContent = costPrice;
-                        }
-                    });
-            }
-        }
-    });
-
-    // Price/quantity change handler
-    document.addEventListener('change', function(e) {
-        if (e.target.classList.contains('field-quantity') || 
-            e.target.classList.contains('field-selling_price')) {
-            const row = e.target.closest('.dynamic-invoiceitem');
-            const quantity = parseFloat(row.querySelector('.field-quantity input').value) || 0;
-            const price = parseFloat(row.querySelector('.field-selling_price input').value) || 0;
-            const totalDisplay = row.querySelector('.field-total div.readonly');
-            
-            if (totalDisplay) {
-                totalDisplay.textContent = (quantity * price).toFixed(2);
+            if (sellingPrice) {
+                const sellingInput = row.querySelector('.field-selling_price input');
+                if (sellingInput) {
+                    sellingInput.value = sellingPrice;
+                    sellingInput.dispatchEvent(new Event('change'));
+                }
+                
+                // For cost price, we'll use a ratio (or fetch via API if needed)
+                const costDisplay = row.querySelector('.field-cost_price div.readonly');
+                if (costDisplay) {
+                    // This is temporary - adjust ratio as needed
+                    costDisplay.textContent = (parseFloat(sellingPrice) * 0.8).toFixed(2);
+                }
             }
         }
     });

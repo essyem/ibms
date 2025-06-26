@@ -93,7 +93,10 @@
     <!-- Customer Info -->
     <div>
         <h3>Bill To:</h3>
-        <p>{{ invoice.customer.company_name|default:invoice.customer.user.get_full_name }}<br>
+         {% for customer in customers %}
+            <option value="{{ customer.id }}" {% if object and object.customer.id == customer.id %}selected{% endif %}>
+                    {{ customer.company_name|default:customer.name }}                    </option>
+        {% endfor %}
         {{ invoice.customer.delivery_address }}<br>
         Phone: {{ invoice.customer.phone }}<br>
         Tax Number: {{ invoice.customer.tax_number|default:"-" }}</p>
@@ -116,7 +119,7 @@
                 <td>{{ item.product.name }}</td>
                 <td>{{ item.product.sku }}</td>
                 <td>{{ item.quantity }}</td>
-                <td>${{ item.unit_price }}</td>
+                <td>${{ item.selling_price }}</td>
                 <td>${{ item.total }}</td>
             </tr>
             {% endfor %}
