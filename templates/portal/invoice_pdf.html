@@ -1,174 +1,392 @@
+{% load static %}
+
 <!-- templates/portal/invoice_pdf.html -->
 <!DOCTYPE html>
-<html>
+<html dir="auto">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Invoice #{{ invoice.invoice_number }}</title>
+    
     <style>
+        @font-face {
+            font-family: 'Amiri';
+            src: url('{{ STATIC_URL }}fonts/Amiri-Regular.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+        }
+        
         @page {
             size: A4;
             margin: 1cm;
-            @frame header {
-                -pdf-frame-content: header;
-                top: 0.5cm;
-                margin-left: 1cm;
-                margin-right: 1cm;
-                height: 2cm;
-            }
-            @frame footer {
-                -pdf-frame-content: footer;
-                bottom: 0.5cm;
-                margin-left: 1cm;
-                margin-right: 1cm;
-                height: 1cm;
-            }
         }
+        
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'DejaVu Sans', 'Helvetica', sans-serif;
+            font-size: 12px;
+            line-height: 1.4;
+            color: #333;
         }
+        
+        .arabic {
+            font-family: 'Amiri', 'Traditional Arabic', 'Arabic Typesetting', 'Arial Unicode MS', sans-serif;
+            direction: rtl;
+            text-align: right;
+            font-size: 14px;
+            line-height: 1.8;
+            unicode-bidi: embed;
+            word-spacing: 0.1em;
+            letter-spacing: 0.05em;
+            font-feature-settings: "liga" 1, "calt" 1, "kern" 1;
+            -webkit-font-feature-settings: "liga" 1, "calt" 1, "kern" 1;
+            -moz-font-feature-settings: "liga" 1, "calt" 1, "kern" 1;
+        }
+        
+        .english {
+            direction: ltr;
+            unicode-bidi: embed;
+            text-align: left;
+            font-family: 'DejaVu Sans', 'Helvetica', sans-serif;
+        }
+        
+        .bilingual {
+            width: 100%;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+        
+        .bilingual .english {
+            float: left;
+            width: 48%;
+            direction: ltr;
+            text-align: left;
+        }
+        
+        .bilingual .arabic {
+            float: right;
+            width: 48%;
+            direction: rtl;
+            text-align: right;
+        }
+        
         .header {
             text-align: center;
             margin-bottom: 20px;
-            border-bottom: 1px solid #eee;
-            padding-bottom: 10px;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 15px;
         }
-        .company-info {
-            float: left;
-            width: 40%;
+        
+        .header img {
+            max-height: 60px;
+            width: auto;
+            margin-right: 20px;
         }
+        
+        .company-name {
+            font-size: 1.8em;
+            font-weight: bold;
+            margin-bottom: 10px;
+            flex-grow: 1;
+        }
+        
+        .company-name .english {
+            color: #2c3e50;
+        }
+        
+        .company-name .arabic {
+            color: #34495e;
+            font-size: 1.6em;
+        }
+        
         .invoice-info {
-            float: right;
-            text-align: right;
-            width: 40%;
+            margin: 20px 0;
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
         }
-        .clearfix {
-            clear: both;
+        
+        .customer-info {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
         }
+        
         table {
             width: 100%;
             border-collapse: collapse;
             margin: 20px 0;
+            background-color: white;
         }
+        
         th, td {
-            border: 1px solid #ddd;
-            padding: 8px;
+            border: 1px solid #dee2e6;
+            padding: 12px 8px;
             text-align: left;
+            vertical-align: middle;
         }
+        
         th {
-            background-color: #f2f2f2;
+            background-color: #f8f9fa;
+            font-weight: bold;
+            color: #495057;
         }
-        .totals {
-            float: right;
-            width: 30%;
-            margin-top: 20px;
+        
+        .text-right {
+            text-align: right;
         }
+        
+        .text-center {
+            text-align: center;
+        }
+        
+        .totals-section {
+            margin-top: 30px;
+            display: flex;
+            justify-content: flex-end;
+        }
+        
+        .totals-table {
+            width: 350px;
+            margin-left: auto;
+        }
+        
+        .totals-table th,
+        .totals-table td {
+            padding: 8px 12px;
+        }
+        
+        .grand-total {
+            background-color: #e9ecef;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+        
+        .bank-details {
+            margin-top: 30px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            border-left: 4px solid #007bff;
+        }
+        
         .footer {
             text-align: center;
-            font-size: 0.8em;
-            color: #666;
+            font-size: 0.9em;
+            color: #6c757d;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #dee2e6;
+        }
+        
+        .currency {
+            font-weight: bold;
+            color: #28a745;
+        }
+        
+        .clearfix {
+            clear: both;
+        }
+        
+        /* Print-specific styles */
+        @media print {
+            body {
+                font-size: 11px;
+            }
+            .arabic {
+                font-size: 13px;
+            }
         }
     </style>
+    
 </head>
 <body>
-    <!-- Header -->
-    <div id="header">
-        <div class="header">
-            <h1>INVOICE</h1>
+    <!-- Header Section -->
+    <div class="header">
+        <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 15px;">
+            {% if logo_base64 %}
+            <img src="{{ logo_base64 }}" alt="Trendz Logo" style="height: 60px; margin-right: 20px;">
+            {% endif %}
+            <div class="company-name">
+                <div class="english">Trendz Trading & Services</div>
+                <div class="arabic">شركة تريندز للتجارة والخدمات</div>
+            </div>
         </div>
-        <div class="company-info">
-            <h3>Your Company Name</h3>
-            <p>123 Business Street<br>
-            City, State 10001<br>
-            Phone: (123) 456-7890<br>
-            Email: info@yourcompany.com</p>
-        </div>
-        <div class="invoice-info">
-            <p><strong>Invoice #:</strong> {{ invoice.invoice_number }}</p>
-            <p><strong>Date:</strong> {{ invoice.date|date:"F d, Y" }}</p>
-            <p><strong>Due Date:</strong> {{ invoice.due_date|date:"F d, Y" }}</p>
+    </div>
+    
+    <!-- Invoice Information -->
+    <div class="invoice-info">
+        <div class="bilingual">
+            <div class="english">
+                <strong>Invoice #:</strong> {{ invoice.invoice_number }}
+            </div>
+            <div class="arabic">
+                <strong>رقم الفاتورة:</strong> {{ invoice.invoice_number }}
+            </div>
         </div>
         <div class="clearfix"></div>
+        
+        <div class="bilingual">
+            <div class="english">
+                <strong>Date:</strong> {{ invoice.date|date:"F d, Y" }}
+            </div>
+            <div class="arabic">
+                <strong>التاريخ:</strong> {{ invoice.date|date:"Y/m/d" }}
+            </div>
+        </div>
+        <div class="clearfix"></div>
+        
+        {% if invoice.due_date %}
+        <div class="bilingual">
+            <div class="english">
+                <strong>Due Date:</strong> {{ invoice.due_date|date:"F d, Y" }}
+            </div>
+            <div class="arabic">
+                <strong>تاريخ الاستحقاق:</strong> {{ invoice.due_date|date:"Y/m/d" }}
+            </div>
+        </div>
+        <div class="clearfix"></div>
+        {% endif %}
     </div>
 
     <!-- Customer Info -->
     <div>
         <h3>Bill To:</h3>
-         {% for customer in customers %}
-            <option value="{{ customer.id }}" {% if object and object.customer.id == customer.id %}selected{% endif %}>
-                    {{ customer.company_name|default:customer.name }}                    </option>
-        {% endfor %}
-        {{ invoice.customer.delivery_address }}<br>
-        Phone: {{ invoice.customer.phone }}<br>
-        Tax Number: {{ invoice.customer.tax_number|default:"-" }}</p>
+        <p>
+            {{ invoice.customer.company_name|default:invoice.customer.full_name }}<br>
+            {{ invoice.customer.delivery_address }}<br>
+            Phone: {{ invoice.customer.phone }}<br>
+            Tax Number: {{ invoice.customer.tax_number|default:"-" }}
+        </p>
     </div>
 
-    <!-- Invoice Items -->
+    <!-- Invoice Items Table -->
     <table>
         <thead>
             <tr>
+                <th class="text-center">No.</th>
                 <th>Product</th>
                 <th>SKU</th>
-                <th>Quantity</th>
-                <th>Unit Price</th>
-                <th>Total</th>
+                <th class="text-center">Quantity</th>
+                <th class="text-right">Unit Price</th>
+                <th class="text-right">Total</th>
             </tr>
         </thead>
         <tbody>
             {% for item in invoice.items.all %}
             <tr>
+                <td class="text-center">{{ forloop.counter }}</td>
                 <td>{{ item.product.name }}</td>
-                <td>{{ item.product.sku }}</td>
-                <td>{{ item.quantity }}</td>
-                <td>${{ item.selling_price }}</td>
-                <td>${{ item.total }}</td>
+                <td>{{ item.product.sku|default:"-" }}</td>
+                <td class="text-center">{{ item.quantity }}</td>
+                <td class="text-right"><span class="currency">QAR</span> {{ item.selling_price|floatformat:2 }}</td>
+                <td class="text-right"><span class="currency">QAR</span> {{ item.total|floatformat:2 }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6" class="text-center" style="color: #6c757d; font-style: italic;">
+                    No items found for this invoice
+                </td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
 
-    <!-- Totals -->
-    <div class="totals">
-        <table>
-        <tr>
-            <th>Subtotal:</th>
-            <td>${{ invoice.subtotal }}</td>
-        </tr>
-        <tr>
-            <th>Tax:</th>
-            <td>${{ invoice.tax }}</td>
-        </tr>
-        {% if invoice.discount_amount > 0 %}
-        <tr>
-            <th>Discount ({{ invoice.discount_value }}{% if invoice.discount_type == 'percent' %}%{% else %}${% endif %}):</th>
-            <td>-${{ invoice.discount_amount }}</td>
-        </tr>
-        {% endif %}
-        <tr>
-            <th>Grand Total:</th>
-            <td>${{ invoice.grand_total }}</td>
-        </tr>
-    </table>
+    <!-- Totals Section -->
+    <div class="totals-section">
+        <table class="totals-table">
+            <tr>
+                <th>Subtotal:</th>
+                <td class="text-right"><span class="currency">QAR</span> {{ invoice.subtotal|floatformat:2 }}</td>
+            </tr>
+            {% if invoice.tax > 0 %}
+            <tr>
+                <th>Tax:</th>
+                <td class="text-right"><span class="currency">QAR</span> {{ invoice.tax|floatformat:2 }}</td>
+            </tr>
+            {% endif %}
+            {% if invoice.discount_amount > 0 %}
+            <tr>
+                <th>
+                    Discount 
+                    {% if invoice.discount_type == 'percent' %}
+                        ({{ invoice.discount_value }}%)
+                    {% else %}
+                        ({{ invoice.discount_value }} QAR)
+                    {% endif %}:
+                </th>
+                <td class="text-right">-<span class="currency">QAR</span> {{ invoice.discount_amount|floatformat:2 }}</td>
+            </tr>
+            {% endif %}
+            <tr class="grand-total">
+                <th>Grand Total:</th>
+                <td class="text-right"><span class="currency">QAR</span> {{ invoice.grand_total|floatformat:2 }}</td>
+            </tr>
+        </table>
     </div>
-    <div class="clearfix"></div>
 
+    <!-- Bank Transfer Details -->
     <div class="bank-details">
-        <h4>Bank Transfer Details</h4>
-        <p>Bank: Your Bank Name<br>
-        Account #: 123456789<br>
-        SWIFT/BIC: YOURBANKXXX</p>
+        <div class="bilingual">
+            <div class="english">
+                <h4 style="margin-top: 0;">Bank Transfer Details</h4>
+            </div>
+            <div class="arabic">
+                <h4 style="margin-top: 0;">تفاصيل التحويل المصرفي</h4>
+            </div>
+        </div>
+        <div class="clearfix"></div>
+        
+        <div class="bilingual">
+            <div class="english">
+                <strong>Bank:</strong> CBQ<br>
+                <strong>IBAN No:</strong> QA48CBQA00000481074980016001<br>
+                <strong>SWIFT/BIC:</strong> CBQAQAQA
+            </div>
+            
+            <div class="arabic">
+                <strong>البنك:</strong> بنك قطر التجاري<br>
+                <strong>رقم الحساب المصرفي الدولي:</strong> QA48CBQA00000481074980016001<br>
+                <strong>رمز السويفت:</strong> CBQAQAQA
+            </div>
+        </div>
+        <div class="clearfix"></div>
     </div>
 
-    <!-- Notes -->
+    <!-- Notes Section -->
     {% if invoice.notes %}
-    <div>
-        <h3>Notes:</h3>
-        <p>{{ invoice.notes }}</p>
+    <div style="margin: 30px 0;">
+        <div class="bilingual">
+            <div class="english">
+                <h4>Notes:</h4>
+            </div>
+            <div class="arabic">
+                <h4>ملاحظات:</h4>
+            </div>
+        </div>
+        <div class="clearfix"></div>
+        <div style="padding: 10px; background-color: #f8f9fa; border-radius: 5px;">
+            {{ invoice.notes|linebreaksbr }}
+        </div>
     </div>
     {% endif %}
 
     <!-- Footer -->
-    <div id="footer">
-        <p class="footer">Thank you for your business! | Terms: Payment due within {{ invoice.due_date|timeuntil:invoice.date }}</p>
+    <div class="footer">
+        <div class="bilingual">
+            <div class="english">
+                <p>CR No: 100019, Door No: 72, Ground Floor, Sofitel Complex, Msheireb Street<br>
+                Doha, Qatar. Tel: +974 3051 4865<br>
+                Email: info@trendzqtr.com | Website: www.trendzqtr.com</p>
+            </div>
+            
+            <div class="arabic">
+                <p>رقم السجل التجاري: 100019، رقم الباب: 72، الطابق الأرضي، مجمع سوفيتيل، شارع المشيرب<br>
+                الدوحة، قطر. هاتف: 4865 3051 974+<br>
+                البريد الإلكتروني: info@trendzqtr.com | الموقع: www.trendzqtr.com</p>
+            </div>
+        </div>
+        <div class="clearfix"></div>
     </div>
 </body>
 </html>

@@ -130,16 +130,24 @@ class InvoiceAdmin(admin.ModelAdmin):
         css = {
             'all': ('admin/css/invoice_admin.css',)
         }
+
     def pdf_actions(self, obj):
+        """
+        Creates PDF action buttons for admin list view
+        """
         return format_html(
-            '<a class="button" href="{}" target="_blank">PDF</a>&nbsp;'
-            '<a class="button" href="{}" download>Download</a>',
+            '<a class="button" href="{}" target="_blank" style="padding: 5px 10px; background: #417690; color: white; text-decoration: none; border-radius: 4px; margin-right: 5px;">View PDF</a>'
+            '<a class="button" href="{}?download=true" style="padding: 5px 10px; background: #79aec8; color: white; text-decoration: none; border-radius: 4px;">Download PDF</a>',
             reverse('admin:invoice_pdf', args=[obj.pk]),
-            reverse('admin:invoice_pdf_download', args=[obj.pk])
+            reverse('admin:invoice_pdf', args=[obj.pk])  # Same URL but with download param
         )
-    pdf_actions.short_description = 'Actions'
-    
+    pdf_actions.short_description = 'PDF Actions'
+    pdf_actions.allow_tags = True
+
     def get_urls(self):
+        """
+        Adds custom URLs for PDF handling
+        """
         urls = super().get_urls()
         custom_urls = [
             path('<int:pk>/pdf/',
@@ -148,13 +156,6 @@ class InvoiceAdmin(admin.ModelAdmin):
         ]
         return custom_urls + urls
     
-    def pdf_actions(self, obj):
-        return format_html(
-            '<a class="button" href="{}" target="_blank">View PDF</a>&nbsp;'
-            '<a class="button" href="{}?download=true" target="_blank">Download PDF</a>',
-            reverse('admin:invoice_pdf', args=[obj.pk]),
-            reverse('admin:invoice_pdf', args=[obj.pk])
-        )
 
     
 
@@ -431,8 +432,6 @@ class CategoryAdminForm(forms.ModelForm):
 
 
 admin.site.register(Order)
-
-
 admin.site.register(Review)
 admin.site.register(Cart)
 
@@ -441,6 +440,6 @@ admin.site.site_header = "TRENDZ Trading Administration"
 admin.site.site_title = "TRENDZ Admin Portal"
 admin.site.index_title = "Welcome to TRENDZ Admin"
 
-from django.utils.html import format_html
+
 
 

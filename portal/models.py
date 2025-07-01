@@ -129,8 +129,15 @@ class Invoice(models.Model):
     )
 
     def save(self, *args, **kwargs):
-        if not self.invoice_number or len(str(self.invoice_number)) > 36:  # UUID length
-            # Generate final invoice number
+        # Assign walk-in customer if missing
+        if not self.customer:
+            self.customer, _ = Customer.objects.get_or_create(
+                full_name="Walk-in Customer",
+                defaults={'phone': ''}
+            )
+
+    # Generate invoice number if needed
+        if not self.invoice_number or len(str(self.invoice_number)) > 36:
             last_invoice = Invoice.objects.order_by('-id').first()
             last_num = 0
             if last_invoice and last_invoice.invoice_number:
@@ -139,17 +146,10 @@ class Invoice(models.Model):
                 except (ValueError, IndexError):
                     pass
             self.invoice_number = f"INV-{timezone.now().year}-{last_num + 1:04d}"
-        super().save(*args, **kwargs)
-        self.update_totals()  # Ensure totals are updated after save
 
-    def save(self, *args, **kwargs):
-        if not self.customer:
-            # Create anonymous customer if none provided
-            self.customer, _ = Customer.objects.get_or_create(
-                full_name="Walk-in Customer",
-                defaults={'phone': ''}
-            )
         super().save(*args, **kwargs)
+        self.update_totals()
+
 
     def update_totals(self):
         # Calculate subtotal from items

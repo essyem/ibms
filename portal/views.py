@@ -1,4 +1,5 @@
 # portal/views.py
+from django.views import View
 from django.views.generic import (CreateView, UpdateView, 
 ListView, DetailView, View)
 from .models import Invoice, InvoiceItem, Product, Customer
@@ -11,8 +12,7 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.urls import reverse, path
-from django.template.loader import get_template
-from xhtml2pdf import pisa
+from django.template.loader import get_template, render_to_string
 from io import BytesIO
 from django.http import HttpResponse
 from django.http import Http404
@@ -22,20 +22,31 @@ from django.utils import timezone
 import json
 import logging
 from decimal import Decimal
+import os
+import base64
+
+from weasyprint import HTML, CSS
+from django.conf import settings
+
+
+
 
 logger = logging.getLogger(__name__)
 
 
 class InvoicePDFView(View):
     def pdf_actions(self, obj):
+        """Admin action links for PDF viewing/downloading"""
         return format_html(
-            '<a class="button" href="{}" target="_blank">PDF</a>&nbsp;'
-            '<a class="button" href="{}" download>Download</a>',
+            '<a class="button" href="{}" target="_blank">View PDF</a>&nbsp;'
+            '<a class="button" href="{}?download=true" download>Download PDF</a>',
             reverse('admin:invoice_pdf', args=[obj.pk]),
-            reverse('admin:invoice_pdf_download', args=[obj.pk])
+            reverse('admin:invoice_pdf', args=[obj.pk])
         )
-    pdf_actions.short_description = 'Actions'
+    pdf_actions.short_description = 'PDF Actions'
+
     def get_urls(self):
+        """URL patterns for PDF viewing/downloading"""
         urls = super().get_urls()
         custom_urls = [
             path('<int:pk>/pdf/',
@@ -44,29 +55,137 @@ class InvoicePDFView(View):
             path('<int:pk>/pdf/download/',
                 self.admin_site.admin_view(InvoicePDFView.as_view()),
                 name='invoice_pdf_download'),
-     ]
-# Invoice PDF generation view
-class InvoicePDFView(View):
+        ]
+        return custom_urls + urls
+
     def get(self, request, *args, **kwargs):
+        """Handle PDF generation with Arabic support using WeasyPrint"""
         invoice = get_object_or_404(Invoice, pk=self.kwargs['pk'])
-        template = get_template('portal/invoice_pdf.html')
-        context = {'invoice': invoice}
-        html = template.render(context)
         
-        # Create PDF
-        result = BytesIO()
-        pdf = pisa.pisaDocument(BytesIO(html.encode("UTF-8")), result)
+        context = {
+            'invoice': invoice,
+            'STATIC_URL': settings.STATIC_URL,
+        }
         
-        if not pdf.err:
-            response = HttpResponse(result.getvalue(), content_type='application/pdf')
-            filename = f"Invoice_{invoice.invoice_number}.pdf"
-            if request.GET.get('download'):
-                content = f"attachment; filename={filename}"
+        try:
+            # Load and encode logo
+            logo_path = os.path.join(settings.BASE_DIR, 'static', 'images', 'logo.png')
+            logo_base64 = None
+            if os.path.exists(logo_path):
+                with open(logo_path, 'rb') as logo_file:
+                    logo_data = base64.b64encode(logo_file.read()).decode()
+                    logo_base64 = f"data:image/png;base64,{logo_data}"
+                    
+            context['logo_base64'] = logo_base64
+            
+            # Render template with Arabic support
+            template = get_template('portal/invoice_pdf.html')
+            html_string = template.render(context)
+            
+            # Use WeasyPrint for better Arabic support
+            # Use a safer base_url approach
+            try:
+                base_url = request.build_absolute_uri('/')
+            except:
+                # Fallback for test environments
+                base_url = 'http://localhost:8000/'
+            
+            html = HTML(string=html_string, base_url=base_url)
+            
+            # Embed Arabic font as base64 for reliable loading
+            font_path = os.path.join(settings.BASE_DIR, 'static', 'fonts', 'Amiri-Regular.ttf')
+            
+            try:
+                with open(font_path, 'rb') as f:
+                    font_data = base64.b64encode(f.read()).decode()
+                font_src = f'data:font/truetype;charset=utf-8;base64,{font_data}'
+            except Exception as e:
+                logger.error(f"Could not load font file: {e}")
+                font_src = None
+            
+            if font_src:
+                css_content = f'''
+                    @font-face {{
+                        font-family: 'Amiri';
+                        src: url('{font_src}') format('truetype');
+                        font-weight: normal;
+                        font-style: normal;
+                        font-display: swap;
+                    }}
+                    
+                    body {{
+                        font-family: 'DejaVu Sans', Arial, sans-serif;
+                        font-size: 12px;
+                    }}
+                    
+                    .arabic {{
+                        font-family: 'Amiri', 'Traditional Arabic', 'Arabic Typesetting', sans-serif !important;
+                        direction: rtl;
+                        text-align: right;
+                        unicode-bidi: embed;
+                        font-feature-settings: "liga" 1, "calt" 1, "kern" 1, "curs" 1;
+                        -webkit-font-feature-settings: "liga" 1, "calt" 1, "kern" 1, "curs" 1;
+                        -moz-font-feature-settings: "liga" 1, "calt" 1, "kern" 1, "curs" 1;
+                        font-size: 14px;
+                        line-height: 1.8;
+                        font-weight: 400;
+                        text-rendering: optimizeLegibility;
+                        -webkit-text-size-adjust: 100%;
+                        -ms-text-size-adjust: 100%;
+                    }}
+                    
+                    .bilingual .arabic {{
+                        font-family: 'Amiri', sans-serif !important;
+                    }}
+                    
+                    @page {{
+                        size: A4;
+                        margin: 1cm;
+                    }}
+                '''
             else:
-                content = f"inline; filename={filename}"
-            response['Content-Disposition'] = content
+                # Fallback CSS without custom font
+                css_content = '''
+                    body {
+                        font-family: 'DejaVu Sans', Arial, sans-serif;
+                        font-size: 12px;
+                    }
+                    
+                    .arabic {
+                        font-family: 'Traditional Arabic', 'Arabic Typesetting', Arial, sans-serif !important;
+                        direction: rtl;
+                        text-align: right;
+                        unicode-bidi: embed;
+                        font-size: 14px;
+                        line-height: 1.8;
+                    }
+                    
+                    @page {
+                        size: A4;
+                        margin: 1cm;
+                    }
+                '''
+            
+            css = CSS(string=css_content)
+            
+            # Generate PDF
+            pdf_file = html.write_pdf(stylesheets=[css])
+            
+            response = HttpResponse(pdf_file, content_type='application/pdf')
+            filename = f"Invoice_{invoice.invoice_number}.pdf"
+            
+            # Determine if download or view
+            if 'download' in request.GET or 'download/' in request.path:
+                disposition = f"attachment; filename={filename}"
+            else:
+                disposition = f"inline; filename={filename}"
+            
+            response['Content-Disposition'] = disposition
             return response
-        return HttpResponse("Error generating PDF", status=400)
+            
+        except Exception as e:
+            logger.error(f"PDF generation exception: {str(e)}")
+            return HttpResponse(f"Server error during PDF generation: {str(e)}", status=500)
 
 class InvoiceCreateView(CreateView):
     model = Invoice
@@ -83,19 +202,32 @@ class InvoiceCreateView(CreateView):
         return context
     
     def form_valid(self, form):
-        """Handle invoice creation with transaction safety"""
         try:
             with transaction.atomic():
-                invoice = self._create_invoice(form)
+                invoice = form.save(commit=False)
+                invoice.due_date = form.cleaned_data.get('due_date') or timezone.now().date()
+                invoice.status = 'draft'
+
+                if not invoice.invoice_number or invoice.invoice_number == 'Auto-generated':
+                    invoice.invoice_number = self._generate_invoice_number()
+
+                if form.cleaned_data.get('payment_mode') == 'split':
+                    invoice.cash_amount = Decimal(self.request.POST.get('cash_amount', 0))
+                    invoice.pos_amount = Decimal(self.request.POST.get('pos_amount', 0))
+                    invoice.other_amount = Decimal(self.request.POST.get('other_amount', 0))
+                    invoice.other_method = self.request.POST.get('other_method', '')
+
+                invoice.save()
                 self._create_invoice_items(invoice)
                 self._update_invoice_totals(invoice)
-                
+
                 return self._handle_response(invoice)
-                
+
         except Exception as e:
             logger.error(f"Invoice creation error: {str(e)}")
             return self._handle_error(e, form)
-
+        return super().form_valid(form)
+    
     def _create_invoice(self, form):
         """Create and save the invoice instance"""
         invoice = form.save(commit=False)
@@ -161,26 +293,6 @@ class InvoiceCreateView(CreateView):
         
     def get_success_url(self):
         return reverse('invoice_detail', kwargs={'pk': self.object.pk})
-
-    def form_valid(self, form):
-        """Handle invoice creation with transaction safety"""
-        try:
-            with transaction.atomic():
-                invoice = form.save(commit=False)
-
-                # Handle payment details
-                if form.cleaned_data['payment_mode'] == 'split':
-                    invoice.cash_amount = Decimal(self.request.POST.get('cash_amount', 0))
-                    invoice.pos_amount = Decimal(self.request.POST.get('pos_amount', 0))
-                    invoice.other_amount = Decimal(self.request.POST.get('other_amount', 0))
-                    invoice.other_method = self.request.POST.get('other_method', '')
-
-                invoice.save()
-                self._create_invoice_items(invoice)
-        
-        except Exception as e:
-            logger.error(f"Invoice creation error: {str(e)}")
-            return self._handle_error(e, form)
 
 class InvoiceUpdateView(UpdateView):
     model = Invoice

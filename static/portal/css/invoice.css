@@ -15,3 +15,47 @@
 .btn-group .btn {
     padding: 0.25rem 0.5rem;
 }
+.btn-group .btn i {
+    margin-right: 0.25rem;
+}
+.arabic-text {
+    font-family: 'ArabicFont', 'Traditional Arabic', 'Arial Unicode MS';
+    direction: rtl;
+    unicode-bidi: bidi-override; /* This forces proper RTL rendering */
+    text-align: right;
+}   
+.bilingual {
+    display: flex;
+    justify-content: space-between;
+}
+.bilingual .arabic {
+    text-align: right;
+    flex: 1;
+}
+.bilingual .english {
+    text-align: left;
+    flex: 1;
+}
+/* Add these to your styles */
+.arabic-text {
+    font-family: 'ArabicFont', 'Traditional Arabic', 'Arial Unicode MS';
+    direction: rtl;
+    unicode-bidi: bidi-override; /* This forces proper RTL rendering */
+    text-align: right;
+}
+
+.bilingual {
+    display: flex;
+    justify-content: space-between;
+}
+
+.bilingual .arabic {
+    text-align: right;
+    flex: 1;
+}
+
+.bilingual .english {
+    text-align: left;
+    flex: 1;
+}
+
