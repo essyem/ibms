@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Trendz Trading & Services{% endblock %}</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="icon" href="{% static 'favicon/favicon.ico' %}">
+    <style>
+        :root {
+            --primary-color: #336699;
+            --secondary-color: #50b3a2;
+            --accent-color: #ff6b35;
+            --dark-color: #2c3e50;
+            --light-color: #f8f9fa;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+        }
+        
+        .navbar-custom {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .brand-logo {
+            max-height: 40px;
+        }
+        
+        /* Header styles */
+        .trendz-header {
+            background: linear-gradient(135deg, #336699 0%, #50b3a2 100%);
+            color: white;
+            padding: 1rem 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+        }
+        
+        .trendz-header h1 {
+            font-weight: 700;
+            font-size: 1.8rem;
+            margin: 0;
+        }
+        
+        .trendz-header a {
+            color: rgba(255,255,255,0.9);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        
+        .trendz-header a:hover {
+            color: white;
+        }
+        
+        /* Navigation styles */
+        .navbar-nav .nav-link {
+            font-weight: 500;
+            padding: 0.8rem 1.2rem !important;
+            transition: all 0.3s ease;
+            border-radius: 25px;
+            margin: 0 0.2rem;
+        }
+        
+        .navbar-nav .nav-link:hover {
+            background: rgba(255,255,255,0.15);
+            transform: translateY(-2px);
+        }
+        
+        /* Footer styles */
+        .footer {
+            background: linear-gradient(135deg, var(--dark-color) 0%, var(--primary-color) 100%);
+            color: white;
+            margin-top: auto;
+        }
+        
+        .footer a {
+            color: rgba(255,255,255,0.8);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        
+        .footer a:hover {
+            color: white;
+        }
+        
+        /* Smooth scrolling */
+        html {
+            scroll-behavior: smooth;
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: var(--primary-color);
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--secondary-color);
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .trendz-header h1 {
+                font-size: 1.4rem;
+            }
+            
+            .trendz-header .col-md-6:last-child {
+                text-align: center !important;
+                margin-top: 10px;
+            }
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <header class="trendz-header">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h1>TRENDZ Trading & Services</h1>
+                </div>
+                <div class="col-md-6 text-end">
+                    {% if user.is_authenticated %}
+                        Welcome, {{ user.username }} | <a href="{% url 'admin:logout' %}" class="text-white">Logout</a>
+                    {% else %}
+                        <a href="{% url 'admin:login' %}" class="text-white">Login</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-custom">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <img src="{% static 'images/trendz_logo.png' %}" alt="TRENDZ Logo" class="brand-logo">
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/products/">Products</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/services/">Services</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/contact/">Contact</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container py-4">
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <footer class="bg-dark text-white py-4">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4">
+                    <h5>TRENDZ Trading & Services</h5>
+                    <p>Your trusted partner for IT solutions in Qatar.</p>
+                </div>
+                <div class="col-md-4">
+                    <h5>Quick Links</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="/" class="text-white">Home</a></li>
+                        <li><a href="/products/" class="text-white">Products</a></li>
+                        <li><a href="/services/" class="text-white">Services</a></li>
+                        <li><a href="/contact/" class="text-white">Contact</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-4">
+                    <h5>Contact Us</h5>
+                    <address>
+                        Sofitel Complex, Msheireb St.<br>
+                        Doha, Qatar<br>
+                        <a href="mailto:info@trendzqtr.com" class="text-white">info@trendzqtr.com</a><br>
+                        <a href="tel:+97430514865" class="text-white">+974 30514865</a>
+                    </address>
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-12 text-center">
+                    <p class="mb-0">© {% now "Y" %} TRENDZ Trading & Services. All rights reserved.</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

@@ -1,8 +1,20 @@
 # finance/models.py
 from django.db import models
 from django.contrib.auth.models import User
+from django.contrib.sites.models import Site
+from portal.models import SiteManager
 
-class Category(models.Model):
+# Base model with site field
+class FinanceSiteModel(models.Model):
+    site = models.ForeignKey(Site, on_delete=models.CASCADE, default=1, related_name='%(app_label)s_%(class)s_set')
+    
+    objects = SiteManager()
+    all_objects = models.Manager()  # Access to all sites data
+    
+    class Meta:
+        abstract = True
+
+class Category(FinanceSiteModel):
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True)
     type_choices = [
@@ -12,10 +24,15 @@ class Category(models.Model):
     ]
     type = models.CharField(max_length=10, choices=type_choices)
     
+    class Meta:
+        unique_together = ['site', 'name', 'type']
+        verbose_name_plural = 'Finance Categories'
+        ordering = ['site', 'type', 'name']
+    
     def __str__(self):
-        return f"{self.get_type_display()}: {self.name}"
+        return f"{self.site.domain}: {self.get_type_display()}: {self.name}"
 
-class FinanceTransaction(models.Model):
+class FinanceTransaction(FinanceSiteModel):
     TRANSACTION_TYPES = [
         ('purchase', 'Purchase'),
         ('sale', 'Sale'),
@@ -48,7 +65,9 @@ class FinanceTransaction(models.Model):
     document = models.FileField(upload_to='finance_documents/', blank=True, null=True)
     
     class Meta:
-        ordering = ['-date']
+        ordering = ['-date', 'site']
+        verbose_name = 'Finance Transaction'
+        verbose_name_plural = 'Finance Transactions'
     
     def __str__(self):
-        return f"{self.get_type_display()} - {self.category}: {self.amount} ({self.date})"
+        return f"{self.site.domain}: {self.get_type_display()} - {self.category}: {self.amount} ({self.date})"

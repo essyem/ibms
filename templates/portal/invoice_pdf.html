@@ -1,182 +1,103 @@
 {% load static %}
-
-<!-- templates/portal/invoice_pdf.html -->
+        
 <!DOCTYPE html>
-<html dir="auto">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Invoice #{{ invoice.invoice_number }}</title>
     
     <style>
-        @font-face {
-            font-family: 'Amiri';
-            src: url('{{ STATIC_URL }}fonts/Amiri-Regular.ttf') format('truetype');
-            font-weight: normal;
-            font-style: normal;
-        }
-        
         @page {
             size: A4;
             margin: 1cm;
         }
         
         body {
-            font-family: 'DejaVu Sans', 'Helvetica', sans-serif;
+            font-family: 'Amiri', 'DejaVu Sans', serif;
             font-size: 12px;
             line-height: 1.4;
             color: #333;
         }
         
         .arabic {
-            font-family: 'Amiri', 'Traditional Arabic', 'Arabic Typesetting', 'Arial Unicode MS', sans-serif;
+            font-family: 'Amiri', 'DejaVu Sans', serif;
             direction: rtl;
-            text-align: right;
-            font-size: 14px;
-            line-height: 1.8;
-            unicode-bidi: embed;
-            word-spacing: 0.1em;
-            letter-spacing: 0.05em;
-            font-feature-settings: "liga" 1, "calt" 1, "kern" 1;
-            -webkit-font-feature-settings: "liga" 1, "calt" 1, "kern" 1;
-            -moz-font-feature-settings: "liga" 1, "calt" 1, "kern" 1;
+            display: inline-block;
+            margin-left: 5px;
+            color: #666;
+            font-size: 11px;
         }
         
-        .english {
-            direction: ltr;
-            unicode-bidi: embed;
-            text-align: left;
-            font-family: 'DejaVu Sans', 'Helvetica', sans-serif;
-        }
-        
-        .bilingual {
-            width: 100%;
-            margin: 10px 0;
-            overflow: hidden;
-        }
-        
-        .bilingual .english {
-            float: left;
-            width: 48%;
-            direction: ltr;
-            text-align: left;
-        }
-        
-        .bilingual .arabic {
-            float: right;
-            width: 48%;
-            direction: rtl;
-            text-align: right;
+        .bilingual-header {
+            font-family: 'Amiri', 'DejaVu Sans', serif;
         }
         
         .header {
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 30px;
             border-bottom: 2px solid #e0e0e0;
-            padding-bottom: 15px;
+            padding-bottom: 20px;
         }
         
         .header img {
-            max-height: 60px;
+            max-height: 80px;
             width: auto;
-            margin-right: 20px;
+            margin-bottom: 15px;
         }
         
         .company-name {
-            font-size: 1.8em;
+            font-size: 2.2em;
             font-weight: bold;
-            margin-bottom: 10px;
-            flex-grow: 1;
-        }
-        
-        .company-name .english {
             color: #2c3e50;
-        }
-        
-        .company-name .arabic {
-            color: #34495e;
-            font-size: 1.6em;
+            margin-bottom: 10px;
         }
         
         .invoice-info {
-            margin: 20px 0;
+            margin: 30px 0;
             background-color: #f8f9fa;
-            padding: 15px;
-            border-radius: 5px;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        
+        .invoice-info div {
+            margin: 8px 0;
         }
         
         .customer-info {
-            margin: 20px 0;
-            padding: 15px;
-            border: 1px solid #dee2e6;
-            border-radius: 5px;
+            margin: 30px 0;
+        }
+        
+        .customer-info h3 {
+            color: #2c3e50;
+            border-bottom: 1px solid #e0e0e0;
+            padding-bottom: 5px;
         }
         
         table {
             width: 100%;
             border-collapse: collapse;
-            margin: 20px 0;
-            background-color: white;
+            margin: 30px 0;
         }
         
         th, td {
-            border: 1px solid #dee2e6;
-            padding: 12px 8px;
+            border: 1px solid #ddd;
+            padding: 12px;
             text-align: left;
-            vertical-align: middle;
         }
         
         th {
             background-color: #f8f9fa;
             font-weight: bold;
-            color: #495057;
-        }
-        
-        .text-right {
-            text-align: right;
+            color: #2c3e50;
         }
         
         .text-center {
             text-align: center;
         }
         
-        .totals-section {
-            margin-top: 30px;
-            display: flex;
-            justify-content: flex-end;
-        }
-        
-        .totals-table {
-            width: 350px;
-            margin-left: auto;
-        }
-        
-        .totals-table th,
-        .totals-table td {
-            padding: 8px 12px;
-        }
-        
-        .grand-total {
-            background-color: #e9ecef;
-            font-weight: bold;
-            font-size: 1.1em;
-        }
-        
-        .bank-details {
-            margin-top: 30px;
-            padding: 15px;
-            background-color: #f8f9fa;
-            border-radius: 5px;
-            border-left: 4px solid #007bff;
-        }
-        
-        .footer {
-            text-align: center;
-            font-size: 0.9em;
-            color: #6c757d;
-            margin-top: 40px;
-            padding-top: 20px;
-            border-top: 1px solid #dee2e6;
+        .text-right {
+            text-align: right;
         }
         
         .currency {
@@ -184,79 +105,81 @@
             color: #28a745;
         }
         
+        .totals-section {
+            margin: 30px 0;
+            float: right;
+            width: 300px;
+        }
+        
+        .totals-table {
+            width: 100%;
+            margin: 0;
+        }
+        
+        .totals-table th, .totals-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+        
+        .grand-total {
+            background-color: #f8f9fa;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .bank-details {
+            clear: both;
+            margin: 40px 0;
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        
+        .bank-details h4 {
+            color: #2c3e50;
+            margin-top: 0;
+        }
+        
+        .footer {
+            margin-top: 50px;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+            text-align: center;
+            font-size: 11px;
+            color: #666;
+        }
+        
         .clearfix {
             clear: both;
         }
-        
-        /* Print-specific styles */
-        @media print {
-            body {
-                font-size: 11px;
-            }
-            .arabic {
-                font-size: 13px;
-            }
-        }
     </style>
-    
 </head>
 <body>
     <!-- Header Section -->
     <div class="header">
-        <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 15px;">
-            {% if logo_base64 %}
-            <img src="{{ logo_base64 }}" alt="Trendz Logo" style="height: 60px; margin-right: 20px;">
-            {% endif %}
-            <div class="company-name">
-                <div class="english">Trendz Trading & Services</div>
-                <div class="arabic">شركة تريندز للتجارة والخدمات</div>
-            </div>
-        </div>
+        {% if logo_base64 %}
+        <img src="{{ logo_base64 }}" alt="Trendz Logo">
+        {% endif %}
+        <div class="company-name">Trendz Trading & Services</div>
     </div>
     
     <!-- Invoice Information -->
     <div class="invoice-info">
-        <div class="bilingual">
-            <div class="english">
-                <strong>Invoice #:</strong> {{ invoice.invoice_number }}
-            </div>
-            <div class="arabic">
-                <strong>رقم الفاتورة:</strong> {{ invoice.invoice_number }}
-            </div>
-        </div>
-        <div class="clearfix"></div>
-        
-        <div class="bilingual">
-            <div class="english">
-                <strong>Date:</strong> {{ invoice.date|date:"F d, Y" }}
-            </div>
-            <div class="arabic">
-                <strong>التاريخ:</strong> {{ invoice.date|date:"Y/m/d" }}
-            </div>
-        </div>
-        <div class="clearfix"></div>
-        
+        <div><strong>Invoice #:</strong> {{ invoice.invoice_number }}</div>
+        <div><strong>Date:</strong> {{ invoice.date|date:"F d, Y" }}</div>
         {% if invoice.due_date %}
-        <div class="bilingual">
-            <div class="english">
-                <strong>Due Date:</strong> {{ invoice.due_date|date:"F d, Y" }}
-            </div>
-            <div class="arabic">
-                <strong>تاريخ الاستحقاق:</strong> {{ invoice.due_date|date:"Y/m/d" }}
-            </div>
-        </div>
-        <div class="clearfix"></div>
+        <div><strong>Due Date:</strong> {{ invoice.due_date|date:"F d, Y" }}</div>
         {% endif %}
     </div>
 
     <!-- Customer Info -->
-    <div>
+    <div class="customer-info">
         <h3>Bill To:</h3>
         <p>
             {{ invoice.customer.company_name|default:invoice.customer.full_name }}<br>
-            {{ invoice.customer.delivery_address }}<br>
+            {% if invoice.customer.address %}{{ invoice.customer.address }}<br>{% endif %}
             Phone: {{ invoice.customer.phone }}<br>
-            Tax Number: {{ invoice.customer.tax_number|default:"-" }}
+            {% if invoice.customer.tax_number %}Tax Number: {{ invoice.customer.tax_number }}{% endif %}
         </p>
     </div>
 
@@ -264,12 +187,12 @@
     <table>
         <thead>
             <tr>
-                <th class="text-center">No.</th>
-                <th>Product</th>
-                <th>SKU</th>
-                <th class="text-center">Quantity</th>
-                <th class="text-right">Unit Price</th>
-                <th class="text-right">Total</th>
+                <th class="text-center bilingual-header">No. <span class="arabic">رقم</span></th>
+                <th class="bilingual-header">Product <span class="arabic">المنتج</span></th>
+                <th class="bilingual-header">SKU <span class="arabic">كود المنتج</span></th>
+                <th class="text-center bilingual-header">Quantity <span class="arabic">الكمية</span></th>
+                <th class="text-right bilingual-header">Unit Price <span class="arabic">سعر الوحدة</span></th>
+                <th class="text-right bilingual-header">Total <span class="arabic">المجموع</span></th>
             </tr>
         </thead>
         <tbody>
@@ -279,8 +202,8 @@
                 <td>{{ item.product.name }}</td>
                 <td>{{ item.product.sku|default:"-" }}</td>
                 <td class="text-center">{{ item.quantity }}</td>
-                <td class="text-right"><span class="currency">QAR</span> {{ item.selling_price|floatformat:2 }}</td>
-                <td class="text-right"><span class="currency">QAR</span> {{ item.total|floatformat:2 }}</td>
+                <td class="text-right"><span class="currency">QAR</span> {{ item.unit_price|floatformat:2 }}</td>
+                <td class="text-right"><span class="currency">QAR</span> {{ item.subtotal|floatformat:2 }}</td>
             </tr>
             {% empty %}
             <tr>
@@ -296,30 +219,30 @@
     <div class="totals-section">
         <table class="totals-table">
             <tr>
-                <th>Subtotal:</th>
+                <th class="bilingual-header">Subtotal: <span class="arabic">المجموع الفرعي:</span></th>
                 <td class="text-right"><span class="currency">QAR</span> {{ invoice.subtotal|floatformat:2 }}</td>
             </tr>
             {% if invoice.tax > 0 %}
             <tr>
-                <th>Tax:</th>
+                <th class="bilingual-header">Tax: <span class="arabic">الضريبة:</span></th>
                 <td class="text-right"><span class="currency">QAR</span> {{ invoice.tax|floatformat:2 }}</td>
             </tr>
             {% endif %}
             {% if invoice.discount_amount > 0 %}
             <tr>
-                <th>
-                    Discount 
+                <th class="bilingual-header">
+                    Discount <span class="arabic">الخصم</span>
                     {% if invoice.discount_type == 'percent' %}
                         ({{ invoice.discount_value }}%)
                     {% else %}
                         ({{ invoice.discount_value }} QAR)
                     {% endif %}:
                 </th>
-                <td class="text-right">-<span class="currency">QAR</span> {{ invoice.discount_amount|floatformat:2 }}</td>
+                <td class="text-right">-<span class="currency">QAR -</span> {{ invoice.discount_amount|floatformat:2 }}</td>
             </tr>
             {% endif %}
             <tr class="grand-total">
-                <th>Grand Total:</th>
+                <th class="bilingual-header">Grand Total: <span class="arabic">المجموع الإجمالي:</span></th>
                 <td class="text-right"><span class="currency">QAR</span> {{ invoice.grand_total|floatformat:2 }}</td>
             </tr>
         </table>
@@ -327,45 +250,19 @@
 
     <!-- Bank Transfer Details -->
     <div class="bank-details">
-        <div class="bilingual">
-            <div class="english">
-                <h4 style="margin-top: 0;">Bank Transfer Details</h4>
-            </div>
-            <div class="arabic">
-                <h4 style="margin-top: 0;">تفاصيل التحويل المصرفي</h4>
-            </div>
-        </div>
-        <div class="clearfix"></div>
-        
-        <div class="bilingual">
-            <div class="english">
-                <strong>Bank:</strong> CBQ<br>
-                <strong>IBAN No:</strong> QA48CBQA00000481074980016001<br>
-                <strong>SWIFT/BIC:</strong> CBQAQAQA
-            </div>
-            
-            <div class="arabic">
-                <strong>البنك:</strong> بنك قطر التجاري<br>
-                <strong>رقم الحساب المصرفي الدولي:</strong> QA48CBQA00000481074980016001<br>
-                <strong>رمز السويفت:</strong> CBQAQAQA
-            </div>
-        </div>
-        <div class="clearfix"></div>
+        <h4>Bank Transfer Details</h4>
+        <p>
+            <strong>Bank:</strong> CBQ (Commercial Bank of Qatar)<br>
+            <strong>IBAN No:</strong> QA48CBQA00000481074980016001<br>
+            <strong>SWIFT/BIC:</strong> CBQAQAQA
+        </p>
     </div>
 
     <!-- Notes Section -->
     {% if invoice.notes %}
     <div style="margin: 30px 0;">
-        <div class="bilingual">
-            <div class="english">
-                <h4>Notes:</h4>
-            </div>
-            <div class="arabic">
-                <h4>ملاحظات:</h4>
-            </div>
-        </div>
-        <div class="clearfix"></div>
-        <div style="padding: 10px; background-color: #f8f9fa; border-radius: 5px;">
+        <h4>Notes:</h4>
+        <div style="padding: 15px; background-color: #f8f9fa; border-radius: 5px;">
             {{ invoice.notes|linebreaksbr }}
         </div>
     </div>
@@ -373,20 +270,11 @@
 
     <!-- Footer -->
     <div class="footer">
-        <div class="bilingual">
-            <div class="english">
-                <p>CR No: 100019, Door No: 72, Ground Floor, Sofitel Complex, Msheireb Street<br>
-                Doha, Qatar. Tel: +974 3051 4865<br>
-                Email: info@trendzqtr.com | Website: www.trendzqtr.com</p>
-            </div>
-            
-            <div class="arabic">
-                <p>رقم السجل التجاري: 100019، رقم الباب: 72، الطابق الأرضي، مجمع سوفيتيل، شارع المشيرب<br>
-                الدوحة، قطر. هاتف: 4865 3051 974+<br>
-                البريد الإلكتروني: info@trendzqtr.com | الموقع: www.trendzqtr.com</p>
-            </div>
-        </div>
-        <div class="clearfix"></div>
+        <p>
+            CR No: 100019, Door No: 72, Ground Floor, Sofitel Complex, Msheireb Street<br>
+            Doha, Qatar. Tel: +974 3051 4865<br>
+            Email: info@trendzqtr.com | Website: www.trendzqtr.com
+        </p>
     </div>
 </body>
 </html>

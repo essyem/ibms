@@ -282,6 +282,235 @@
       }
     }
 
+    /* Dashboard Specific Styles */
+    .dashboard {
+      padding: 2rem;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .dashboard h1 {
+      background: var(--gradient);
+      background-size: 300%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      font-size: 2.5rem;
+      margin-bottom: 2rem;
+      text-align: center;
+      animation: gradientShift 3s ease-in-out infinite;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 3rem;
+    }
+
+    .card {
+      background: var(--section-bg);
+      border: var(--border);
+      border-radius: 15px;
+      padding: 1.5rem;
+      backdrop-filter: blur(10px);
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: var(--gradient);
+      background-size: 300%;
+      animation: gradientShift 3s ease-in-out infinite;
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 15px 35px rgba(255, 51, 102, 0.3);
+    }
+
+    .card h3 {
+      color: #fff;
+      margin-bottom: 1rem;
+      font-size: 1.1rem;
+      opacity: 0.9;
+    }
+
+    .card p {
+      font-size: 2rem;
+      font-weight: bold;
+      background: var(--gradient);
+      background-size: 300%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 1rem;
+      animation: gradientShift 3s ease-in-out infinite;
+    }
+
+    .view-all {
+      color: #ff6b6b;
+      text-decoration: none;
+      font-weight: 500;
+      transition: color 0.3s ease;
+    }
+
+    .view-all:hover {
+      color: #ff3366;
+    }
+
+    /* Table Styles */
+    .table-container {
+      background: var(--section-bg);
+      border: var(--border);
+      border-radius: 15px;
+      margin-bottom: 2rem;
+      overflow: hidden;
+      backdrop-filter: blur(10px);
+    }
+
+    .table-container table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .table-container th {
+      background: rgba(255, 51, 102, 0.2);
+      color: #fff;
+      padding: 1rem;
+      text-align: left;
+      font-weight: 600;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .table-container td {
+      padding: 1rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      color: rgba(255, 255, 255, 0.9);
+    }
+
+    .table-container tbody tr:hover {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .badge {
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .badge.success {
+      background: rgba(40, 167, 69, 0.3);
+      color: #28a745;
+      border: 1px solid #28a745;
+    }
+
+    .badge.warning {
+      background: rgba(255, 193, 7, 0.3);
+      color: #ffc107;
+      border: 1px solid #ffc107;
+    }
+
+    .badge.danger {
+      background: rgba(220, 53, 69, 0.3);
+      color: #dc3545;
+      border: 1px solid #dc3545;
+    }
+
+    .badge.secondary {
+      background: rgba(108, 117, 125, 0.3);
+      color: #6c757d;
+      border: 1px solid #6c757d;
+    }
+
+    .button {
+      background: var(--gradient);
+      background-size: 300%;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 25px;
+      color: white;
+      text-decoration: none;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      display: inline-block;
+      animation: gradientShift 3s ease-in-out infinite;
+    }
+
+    .button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(255, 51, 102, 0.4);
+    }
+
+    .button.small {
+      padding: 0.25rem 0.75rem;
+      font-size: 0.85rem;
+    }
+
+    /* Report Styles */
+    .form-inline {
+      background: var(--section-bg);
+      border: var(--border);
+      border-radius: 15px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      backdrop-filter: blur(10px);
+    }
+
+    .form-select, .form-control {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 10px;
+      color: white;
+      padding: 0.5rem 1rem;
+    }
+
+    .form-select:focus, .form-control:focus {
+      background: rgba(255, 255, 255, 0.15);
+      border-color: #ff6b6b;
+      outline: none;
+      box-shadow: 0 0 10px rgba(255, 107, 107, 0.3);
+    }
+
+    .form-label {
+      color: rgba(255, 255, 255, 0.9);
+      margin-bottom: 0.5rem;
+      display: block;
+    }
+
+    /* Animation */
+    @keyframes gradient {
+      0% {
+        background-position: 0% 50%;
+      }
+      50% {
+        background-position: 100% 50%;
+      }
+      100% {
+        background-position: 0% 50%;
+      }
+    }
+
+    @keyframes gradientShift {
+      0%, 100% {
+        background-position: 0% 50%;
+      }
+      50% {
+        background-position: 100% 50%;
+      }
+    }
+
+    /* Responsive Design */
     @media (max-width: 768px) {
       .section-header h1 {
         font-size: 2.5rem;
@@ -294,6 +523,22 @@
       .nav-links {
         display: none;
       }
+
+      .dashboard {
+        padding: 1rem;
+      }
+      
+      .grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .table-container {
+        overflow-x: auto;
+      }
+      
+      .dashboard h1 {
+        font-size: 2rem;
+      }
     }
     </style>
   <head>
@@ -305,11 +550,20 @@
 <body>
     <nav class="navbar">
         <div class="navbar-container">
-            <a href="{% url 'home' %}" class="logo">TRENDZ</a>
+            <a href="{% url 'portal:home' %}" class="logo">TRENDZ</a>
             <ul class="nav-links">
-                <li><a href="{% url 'home' %}">Home</a></li>
-                
-                
+                <li><a href="{% url 'portal:home' %}">Home</a></li>
+                <li><a href="{% url 'portal:dashboard' %}">📊 Dashboard</a></li>
+                <li><a href="{% url 'portal:reports' %}">📈 Reports</a></li>
+                {% if user.is_staff %}
+                <li><a href="{% url 'admin:index' %}">🔧 Admin</a></li>
+                <li><a href="{% url 'barcode_generator_dashboard' %}">📋 Barcodes</a></li>
+                {% endif %}
+                {% if user.is_authenticated %}
+                <li><a href="{% url 'admin:logout' %}">🚪 Logout</a></li>
+                {% else %}
+                <li><a href="{% url 'admin:login' %}">🔑 Login</a></li>
+                {% endif %}
             </ul>
         </div>
     </nav>

@@ -1,0 +1,589 @@
+{% extends "portal/base.html" %}
+{% load static %}
+{% load humanizelib %}
+{% load math_filters %}
+
+{% block title %}TrendzPortal Dashboard{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+    <h1>📊 TrendzPortal Central Dashboard</h1>
+    
+    <!-- Summary Cards -->
+    <div class="grid">
+        <div class="card">
+            <h3>Total Customers</h3>
+            <p>{{ total_customers|intcomma }}</p>
+            <a href="{% url 'admin:portal_customer_changelist' %}" class="view-all">View All</a>
+        </div>
+        <div class="card">
+            <h3>Pending Invoices</h3>
+            <p>{{ pending_invoices|intcomma }}</p>
+            <a href="{% url 'admin:portal_invoice_changelist' %}?status__exact=pending" class="view-all">View Pending</a>
+        </div>
+        <div class="card">
+            <h3>Monthly Revenue</h3>
+            <p>QAR {{ monthly_revenue|floatformat:2|intcomma }}</p>
+            <a href="{% url 'admin:portal_invoice_changelist' %}?status__exact=paid" class="view-all">View Paid</a>
+        </div>
+        <div class="card">
+            <h3>Active Products</h3>
+            <p>{{ active_products|intcomma }}</p>
+            <a href="{% url 'admin:portal_product_changelist' %}" class="view-all">View All</a>
+        </div>
+        <div class="card">
+            <h3>Active Suppliers</h3>
+            <p>{{ active_suppliers|intcomma }}</p>
+            <a href="{% url 'admin:procurement_supplier_changelist' %}" class="view-all">View All</a>
+        </div>
+        <div class="card">
+            <h3>Pending Purchase Orders</h3>
+            <p>{{ pending_purchase_orders|intcomma }}</p>
+            <a href="{% url 'admin:procurement_purchaseorder_changelist' %}?status__exact=ordered" class="view-all">View Pending</a>
+        </div>
+    </div>
+
+    <!-- Enhanced Product Analytics -->
+    <h2>📦 Product Analytics</h2>
+    <div class="grid">
+        <div class="card">
+            <h3>Total Inventory Value</h3>
+            <p>QAR {{ total_inventory_value|floatformat:2|intcomma }}</p>
+            <small>Based on cost price × stock</small>
+        </div>
+        <div class="card">
+            <h3>Average Product Cost</h3>
+            <p>QAR {{ avg_product_cost|floatformat:2|intcomma }}</p>
+            <small>Average cost per product</small>
+        </div>
+        <div class="card">
+            <h3>Product Categories</h3>
+            <p>{{ products_by_category|length }} categories</p>
+            <small>Active product categories</small>
+        </div>
+        <div class="card">
+            <h3>Recent Products</h3>
+            <p>{{ recent_products|length }} items</p>
+            <a href="{% url 'admin:portal_product_changelist' %}?o=-id" class="view-all">View Recent</a>
+        </div>
+    </div>
+
+    <!-- Products by Category -->
+    {% if products_by_category %}
+    <h2>📊 Products by Category</h2>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Category</th>
+                    <th>Product Count</th>
+                    <th>Total Inventory Value</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for category in products_by_category %}
+                <tr>
+                    <td>{{ category.category__name|default:"Uncategorized" }}</td>
+                    <td>{{ category.count|intcomma }}</td>
+                    <td>QAR {{ category.total_value|floatformat:2|intcomma|default:"0.00" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    <!-- High Value Products -->
+    {% if high_value_products %}
+    <h2>💎 High Value Products (Top 10)</h2>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Product Name</th>
+                    <th>Category</th>
+                    <th>Cost Price</th>
+                    <th>Stock</th>
+                    <th>Total Value</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for product in high_value_products %}
+                <tr>
+                    <td>{{ product.name }}</td>
+                    <td>{{ product.category.name|default:"N/A" }}</td>
+                    <td>QAR {{ product.unit_price|floatformat:2|intcomma }}</td>
+                    <td>{{ product.stock|intcomma }}</td>
+                    <td>QAR {{ product.unit_price|mul:product.stock|floatformat:2|intcomma }}</td>
+                    <td>
+                        <a href="{% url 'admin:portal_product_change' product.id %}" class="button small">Edit</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    <!-- Recent Products -->
+    {% if recent_products %}
+    <h2>🆕 Recently Added Products</h2>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Product Name</th>
+                    <th>Category</th>
+                    <th>Cost Price</th>
+                    <th>Stock</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for product in recent_products %}
+                <tr>
+                    <td>{{ product.name }}</td>
+                    <td>{{ product.category.name|default:"N/A" }}</td>
+                    <td>QAR {{ product.unit_price|floatformat:2|intcomma }}</td>
+                    <td>{{ product.stock|intcomma }}</td>
+                    <td>
+                        <span class="badge {% if product.is_active %}success{% else %}secondary{% endif %}">
+                            {% if product.is_active %}Active{% else %}Inactive{% endif %}
+                        </span>
+                    </td>
+                    <td>
+                        <a href="{% url 'admin:portal_product_change' product.id %}" class="button small">Edit</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    <!-- Recent Invoices -->
+    <h2>📄 Recent Invoices</h2>
+    {% if recent_invoices %}
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Invoice #</th>
+                    <th>Customer</th>
+                    <th>Date</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for invoice in recent_invoices %}
+                <tr>
+                    <td>
+                        <a href="{% url 'admin:portal_invoice_change' invoice.id %}">
+                            {{ invoice.invoice_number }}
+                        </a>
+                    </td>
+                    <td>{{ invoice.customer.full_name }}</td>
+                    <td>{{ invoice.date|date:"M d, Y" }}</td>
+                    <td>QAR {{ invoice.grand_total|floatformat:2|intcomma }}</td>
+                    <td>
+                        <span class="badge 
+                            {% if invoice.status == 'draft' %}secondary
+                            {% elif invoice.status == 'pending' %}warning
+                            {% elif invoice.status == 'paid' %}success
+                            {% elif invoice.status == 'cancelled' %}danger
+                            {% else %}info{% endif %}">
+                            {{ invoice.get_status_display|default:invoice.status|title }}
+                        </span>
+                    </td>
+                    <td>
+                        <a href="{% url 'admin:portal_invoice_change' invoice.id %}" class="button small">Edit</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p>No recent invoices found</p>
+    {% endif %}
+
+    <!-- Recent Purchase Orders -->
+    <h2>🛒 Recent Purchase Orders</h2>
+    {% if recent_purchase_orders %}
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>PO Reference</th>
+                    <th>Supplier</th>
+                    <th>Order Date</th>
+                    <th>Total</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for po in recent_purchase_orders %}
+                <tr>
+                    <td>
+                        <a href="{% url 'admin:procurement_purchaseorder_change' po.id %}">
+                            {{ po.reference }}
+                        </a>
+                    </td>
+                    <td>{{ po.supplier.name }}</td>
+                    <td>{{ po.order_date|date:"M d, Y" }}</td>
+                    <td>QAR {{ po.total_amount|floatformat:2|intcomma }}</td>
+                    <td>
+                        <span class="badge 
+                            {% if po.status == 'draft' %}secondary
+                            {% elif po.status == 'ordered' %}warning
+                            {% elif po.status == 'received' %}success
+                            {% elif po.status == 'cancelled' %}danger
+                            {% endif %}">
+                            {{ po.get_status_display }}
+                        </span>
+                    </td>
+                    <td>
+                        <a href="{% url 'admin:procurement_purchaseorder_change' po.id %}" class="button small">Edit</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p>No recent purchase orders found</p>
+    {% endif %}
+
+    <!-- Low Stock Alerts -->
+    {% if low_stock_products %}
+    <h2>⚠️ Low Stock Alerts ({{ low_stock_products|length }})</h2>
+    <div class="table-container">
+        <table class="alerts">
+            <thead>
+                <tr>
+                    <th>Product</th>
+                    <th>Category</th>
+                    <th>Current Stock</th>
+                    <th>Min Stock</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for product in low_stock_products %}
+                <tr>
+                    <td>
+                        <a href="{% url 'admin:portal_product_change' product.id %}">
+                            {{ product.name }}
+                        </a>
+                    </td>
+                    <td>{{ product.category.name|default:"Uncategorized" }}</td>
+                    <td class="danger">{{ product.stock|intcomma }}</td>
+                    <td>{{ product.min_stock|intcomma }}</td>
+                    <td>
+                        <a href="{% url 'procurement:purchase_order_create' %}?product={{ product.id }}" class="button">Order More</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p class="success-message">No stock alerts 🎉</p>
+    {% endif %}
+
+    <!-- Top Selling Products -->
+    {% if top_selling_products %}
+    <h2>🔥 Top Selling Products (This Month)</h2>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Product</th>
+                    <th>Category</th>
+                    <th>Units Sold</th>
+                    <th>Revenue</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for product in top_selling_products %}
+                <tr>
+                    <td>
+                        <a href="{% url 'admin:portal_product_change' product.id %}">
+                            {{ product.name }}
+                        </a>
+                    </td>
+                    <td>{{ product.category.name|default:"Uncategorized" }}</td>
+                    <td>{{ product.total_sold|intcomma }}</td>
+                    <td>${{ product.total_revenue|floatformat:2|intcomma }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    <!-- Quick Actions -->
+    <div class="quick-actions">
+        <h2>⚡ Quick Actions</h2>
+        <div class="action-grid">
+            <a href="{% url 'admin:portal_invoice_add' %}" class="action-card">
+                <i class="fas fa-file-invoice"></i>
+                <span>New Invoice</span>
+            </a>
+            <a href="{% url 'admin:portal_customer_add' %}" class="action-card">
+                <i class="fas fa-user-plus"></i>
+                <span>Add Customer</span>
+            </a>
+            <a href="{% url 'procurement:purchase_order_create' %}" class="action-card">
+                <i class="fas fa-shopping-cart"></i>
+                <span>New Purchase Order</span>
+            </a>
+            <a href="{% url 'admin:portal_product_add' %}" class="action-card">
+                <i class="fas fa-box"></i>
+                <span>Add Product</span>
+            </a>
+            <a href="{% url 'portal:reports' %}" class="action-card">
+                <i class="fas fa-chart-bar"></i>
+                <span>View Reports</span>
+            </a>
+            <a href="{% url 'admin:procurement_supplier_add' %}" class="action-card">
+                <i class="fas fa-truck"></i>
+                <span>Add Supplier</span>
+            </a>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Dashboard Styles */
+.dashboard {
+    padding: 2rem;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.dashboard h1 {
+    text-align: center;
+    margin-bottom: 2rem;
+    background: var(--gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-size: 2.5rem;
+    font-weight: bold;
+}
+
+.dashboard h2 {
+    margin: 2rem 0 1rem 0;
+    color: white;
+    font-size: 1.5rem;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 3rem;
+}
+
+.card {
+    background: var(--section-bg);
+    border: var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    text-align: center;
+    backdrop-filter: blur(12px);
+    box-shadow: var(--shadow);
+    transition: transform 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+.card h3 {
+    margin-bottom: 1rem;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.card p {
+    font-size: 2rem;
+    font-weight: bold;
+    margin-bottom: 1rem;
+    background: var(--gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.view-all {
+    color: rgba(255, 255, 255, 0.7);
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: color 0.3s ease;
+}
+
+.view-all:hover {
+    color: white;
+}
+
+.table-container {
+    background: var(--section-bg);
+    border: var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 2rem;
+    backdrop-filter: blur(12px);
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+table th {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 1rem;
+    text-align: left;
+    font-weight: 600;
+    color: white;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+table td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    color: rgba(255, 255, 255, 0.9);
+}
+
+table tr:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.badge.secondary { background: #6c757d; color: white; }
+.badge.warning { background: #ffc107; color: black; }
+.badge.success { background: #28a745; color: white; }
+.badge.danger { background: #dc3545; color: white; }
+.badge.info { background: #17a2b8; color: white; }
+
+.button {
+    background: var(--gradient);
+    color: white;
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    display: inline-block;
+}
+
+.button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(255, 51, 102, 0.3);
+}
+
+.button.small {
+    padding: 0.25rem 0.75rem;
+    font-size: 0.8rem;
+}
+
+.alerts td.danger {
+    color: #ff6b6b;
+    font-weight: bold;
+}
+
+.alerts td.success {
+    color: #51cf66;
+    font-weight: bold;
+}
+
+.success-message {
+    text-align: center;
+    color: #51cf66;
+    font-size: 1.2rem;
+    padding: 2rem;
+}
+
+.quick-actions {
+    margin-top: 3rem;
+}
+
+.action-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.action-card {
+    background: var(--section-bg);
+    border: var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    text-decoration: none;
+    color: white;
+    text-align: center;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(12px);
+}
+
+.action-card:hover {
+    transform: translateY(-3px);
+    background: var(--highlight);
+}
+
+.action-card i {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    background: var(--gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.action-card span {
+    display: block;
+    font-weight: 500;
+}
+
+@media (max-width: 768px) {
+    .grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .action-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .dashboard {
+        padding: 1rem;
+    }
+    
+    table {
+        font-size: 0.9rem;
+    }
+    
+    table th,
+    table td {
+        padding: 0.5rem;
+    }
+}
+</style>
+{% endblock %}

@@ -7,6 +7,8 @@ class CategoryAdmin(admin.ModelAdmin):
     list_display = ('name', 'type', 'description')
     list_filter = ('type',)
     search_fields = ('name', 'description')
+    ordering = ['type', 'name']
+    exclude = ('site',)  # Hide site field for simplicity
 
 @admin.register(FinanceTransaction)
 class FinanceTransactionAdmin(admin.ModelAdmin):
@@ -14,9 +16,15 @@ class FinanceTransactionAdmin(admin.ModelAdmin):
     list_filter = ('type', 'category', 'payment_method', 'date')
     search_fields = ('description', 'reference')
     date_hierarchy = 'date'
+    ordering = ['-date']
+    exclude = ('site',)  # Hide site field for simplicity
+    list_filter = ('site', 'type', 'category', 'payment_method', 'date')
+    search_fields = ('description', 'reference')
+    date_hierarchy = 'date'
+    ordering = ['-date', 'site']
     fieldsets = (
-        (None, {
-            'fields': ('type', 'category', 'amount', 'date')
+        ('Basic Information', {
+            'fields': ('site', 'type', 'category', 'amount', 'date')
         }),
         ('Details', {
             'fields': ('description', 'payment_method', 'reference', 'document')

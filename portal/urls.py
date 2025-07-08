@@ -4,26 +4,48 @@ from . import views
 from .views import (
     ProductSearchView, product_search_fallback, barcode_scanner_view,
     barcode_scan, InvoiceCreateView, InvoiceUpdateView, InvoiceDetailView, InvoiceListView,
-    get_product_details
+    get_product_details, dashboard_view, report_view, analytics_api,
+    CustomerListView, CustomerCreateView, CustomerDetailView, CustomerUpdateView
 )
+from . import ajax_views
 
+app_name = 'portal'
 
 urlpatterns = [
-    path('', views.home, name='home'),
+    # Main portal pages
+    path('', views.index, name='home'),
+    path('dashboard/', dashboard_view, name='dashboard'),
+    path('reports/', report_view, name='reports'),
+    path('api/analytics/', analytics_api, name='analytics_api'),
     path('profile/', views.profile, name='profile'),
     path('register/', views.register, name='register'),
     path('enquiry/', views.enquiry, name='enquiry'),
-    path('terms/', views.terms, name='terms'), 
-    path('products/search/', views.ProductSearchView.as_view(), name='product-search'),
+    path('terms/', views.terms, name='terms'),
+    
+    # Product search and management
+    path('products/search/', ProductSearchView.as_view(), name='product-search'),
     path('search/', ProductSearchView.as_view(), name='product-search'),
     path('products/', product_search_fallback, name='product-list'),
-    # Add other portal-specific URLs here
-    path('api/barcode-scan/', views.barcode_scan, name='barcode_scan'),
-    path('barcode-scanner/', views.barcode_scanner_view, name='barcode_scanner'),
+    path('api/products/<int:product_id>/', get_product_details, name='product_details'),
+    
+    # Invoice management
     path('invoices/', InvoiceListView.as_view(), name='invoice_list'),
     path('invoices/create/', InvoiceCreateView.as_view(), name='invoice_create'),
     path('invoices/<int:pk>/', InvoiceDetailView.as_view(), name='invoice_detail'),
     path('invoices/<int:pk>/edit/', InvoiceUpdateView.as_view(), name='invoice_update'),
-    path('api/products/<int:product_id>/', get_product_details, name='product_details'),
     path('invoices/<int:pk>/pdf/', views.InvoicePDFView.as_view(), name='invoice_pdf'),
+    
+    # Customer management
+    path('customers/', CustomerListView.as_view(), name='customer_list'),
+    path('customers/create/', CustomerCreateView.as_view(), name='customer_create'),
+    path('customers/<int:pk>/', CustomerDetailView.as_view(), name='customer_detail'),
+    path('customers/<int:pk>/edit/', CustomerUpdateView.as_view(), name='customer_update'),
+    
+    # Barcode functionality
+    path('api/barcode-scan/', barcode_scan, name='barcode_scan'),
+    path('barcode-scanner/', barcode_scanner_view, name='barcode_scanner'),
+    
+    # AJAX endpoints for product search and barcode lookup
+    path('ajax/product-search/', ajax_views.product_search_public, name='product_search_public'),
+    path('ajax/barcode-lookup/', ajax_views.product_barcode_lookup_public, name='barcode_lookup_public'),
 ]

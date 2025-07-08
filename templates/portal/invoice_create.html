@@ -1,11 +1,24 @@
-
-
+{% extends "portal/invoice_base.html" %}
 {% load static %}
 
+{% block title %}Create Invoice - Trendz Portal{% endblock %}
+
+{% block extra_head %}
+<meta name="csrf-token" content="{{ csrf_token }}">
+{% endblock %}
+
 {% block content %}
-<div class="container mt-4">
-    <h2>{% if object %}Edit{% else %}Create{% endif %} Invoice</h2>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<div class="container mt-5 pt-3">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-lg" style="background: rgba(255,255,255,0.95); border: none; border-radius: 15px;">
+                <div class="card-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 15px 15px 0 0;">
+                    <h2 class="mb-0">
+                        <i class="fas fa-file-invoice me-2"></i>
+                        {% if object %}Edit{% else %}Create{% endif %} Invoice
+                    </h2>
+                </div>
+                <div class="card-body p-4">
 
     {% if form.errors %}
     <div class="alert alert-danger">
@@ -31,13 +44,19 @@
                     <div class="card-body">
                         <div class="form-group">
                             <label for="customer">Customer Name</label>
-                            <select class="form-control" name="customer" id="customer" required>
-                                {% for customer in customers %}
-                                <option value="{{ customer.id }}" {% if object and object.customer.id == customer.id %}selected{% endif %}>
-                                    {{ customer.company_name|default:customer.full_name }} ({{ customer.custom_id }})
-                                </option>
-                                {% endfor %}
-                            </select>
+                            <div class="input-group">
+                                <select class="form-control" name="customer" id="customer">
+                                    <option value="">Select Customer</option>
+                                    {% for customer in customers %}
+                                    <option value="{{ customer.id }}" {% if object and object.customer.id == customer.id %}selected{% endif %}>
+                                        {{ customer.company_name|default:customer.full_name }} ({{ customer.customer_id }})
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                                <button type="button" class="btn btn-success btn-sm" id="add-customer-btn" title="Add New Customer" style="background: #28a745; border: 1px solid #28a745; padding: 6px 12px;">
+                                    <i class="fas fa-user-plus"></i> Add
+                                </button>
+                            </div>
                         </div>
                         <div class="form-group">
                             <label for="address">Delivery Address</label>
@@ -95,7 +114,6 @@
                             <th>Product</th>
                             <th>Quantity</th>
                             <th>Unit Price</th>
-                            <th>Cost Price</th>
                             <th>Total</th>
                             <th>Action</th>
                         </tr>
@@ -105,7 +123,7 @@
                     </tbody>
                 </table>
                 
-                <button type="button" class="btn btn-primary" id="add-product">
+                <button type="button" class="btn btn-primary" id="add-product" style="background: #007bff; border: 1px solid #007bff; padding: 8px 16px;">
                     <i class="fas fa-plus"></i> Add Product
                 </button>
             </div>
@@ -116,22 +134,40 @@
         <template id="product-row-template">
             <tr class="product-row">
                 <td>
-                    <select class="form-control product-select" name="products">
-                        {% for product in products %}
-                        <option value="{{ product.id }}" data-selling-price="{{ product.selling_price }}" data-cost-price="{{ product.cost_price }}">
-                            {{ product.name }} ({{ product.sku }})
-                        </option>
-                        {% endfor %}
-                    </select>
+                    <div class="product-search-container">
+                        <div class="search-controls">
+                            <input type="text" 
+                                   class="form-control product-search-input" 
+                                   placeholder="Search products by name, barcode, or category..."
+                                   style="margin-bottom: 5px;">
+                            <button type="button" 
+                                    class="btn btn-sm btn-primary barcode-scan-btn">
+                                📷 Scan Barcode
+                            </button>
+                        </div>
+                        <div class="search-results" style="display: none;"></div>
+                        <select class="form-control product-select" name="products">
+                            <option value="">Select a product...</option>
+                            {% for product in products %}
+                            <option value="{{ product.id }}" 
+                                    data-selling-price="{{ product.unit_price }}" 
+                                    data-unit-price="{{ product.unit_price }}"
+                                    data-stock="{{ product.stock }}"
+                                    data-barcode="{{ product.barcode }}">
+                                {{ product.name }} - QAR {{ product.unit_price }} (Stock: {{ product.stock }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <div class="selected-product-info" style="display: none;">
+                            <div class="product-details"></div>
+                        </div>
+                    </div>
                 </td>
                 <td>
                     <input type="number" class="form-control quantity" name="quantity" value="1" min="1" step="1" required>
                 </td>
                 <td>
                     <input type="text" class="form-control unit-price" name="unit_price" value="0.00" readonly>
-                </td>
-                <td>
-                    <input type="text" class="form-control cost-price" name="cost_price" value="0.00" readonly>
                 </td>
                 <td>
                     <input type="text" class="form-control total" name="total" value="0.00" readonly>
@@ -202,586 +238,54 @@
                     <label class="form-label">Payment Mode</label>
                     <select class="form-select" name="payment_mode" required id="payment-mode-select">
                         <option value="">Select Payment Method</option>
-                        {% for value, name in invoice_form.fields.payment_mode.choices %}
-                            <option value="{{ value }}" {% if invoice_form.payment_mode.value == value %}selected{% endif %}>
+                        {% for value, name in form.fields.payment_mode.choices %}
+                            <option value="{{ value }}" {% if form.payment_mode.value == value %}selected{% endif %}>
                                 {{ name }}
                             </option>
                         {% endfor %}
                     </select>
                 </div>
                 
-                <div id="split-details" class="{% if invoice_form.data.payment_mode != 'split' %}d-none{% endif %}">
+                <div id="split-details" class="{% if form.data.payment_mode != 'split' %}d-none{% endif %}">
                     <div class="row">
                         <div class="col-md-6 form-group mb-3">
                             <label class="form-label">Cash Amount</label>
-                            <input type="number" class="form-control" name="cash_amount" value="0.00" step="0.01" min="0">
+                            {{ form.cash_amount }}
                         </div>
                         <div class="col-md-6 form-group mb-3">
                             <label class="form-label">POS Amount</label>
-                            <input type="number" class="form-control" name="pos_amount" value="0.00" step="0.01" min="0">
+                            {{ form.pos_amount }}
                         </div>
                     </div>
                     
                     <div class="row">
                         <div class="col-md-6 form-group mb-3">
                             <label class="form-label">Other Amount</label>
-                            <input type="number" class="form-control" name="other_amount" value="0.00" step="0.01" min="0">
+                            {{ form.other_amount }}
                         </div>
                         <div class="col-md-6 form-group mb-3">
                             <label class="form-label">Other Method</label>
-                            <input type="text" class="form-control" name="other_method" placeholder="Method name">
+                            {{ form.other_method }}
                         </div>
                     </div>
                 </div>
             </div>
         </div>
+        
+        <!-- Form Messages -->
+        <div id="form-messages" class="alert d-none mt-3"></div>
+        
         <!-- Form Actions -->
-        <div class="row">
+        <div class="row mt-3">
             <div class="col-md-12">
-                <button type="submit" class="btn btn-success"><div id="form-messages" class="alert d-none">
-                </div>Save Invoice</button>
-                <a href="{% url 'invoice_list' %}" class="btn btn-secondary">Cancel</a>
+                <button type="submit" class="btn btn-success">Save Invoice</button>
+                <a href="{% url 'portal:invoice_list' %}" class="btn btn-secondary">Cancel</a>
             </div>
         </div>
     </form>
 </div>
 
 {% endblock %}
-{% block scripts %}
-<script src="{% static 'portal/js/invoice.js' %}"></script>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const productRows = document.getElementById('product-rows');
-    const addProductBtn = document.getElementById('add-product');
-    const template = document.getElementById('product-row-template');
-    const subtotalInput = document.getElementById('subtotal');
-    const taxInput = document.getElementById('tax');
-    const discountTypeInput = document.getElementById('discount-type');
-    const discountValueInput = document.getElementById('discount-value');
-    const discountAmountInput = document.getElementById('discount-amount');
-    const grandTotalInput = document.getElementById('grand-total');
-
-    // Payment mode split toggle
-    const paymentModeSelect = document.getElementById('payment-mode-select');
-    const splitDetails = document.getElementById('split-details');
-    if (paymentModeSelect && splitDetails) {
-        function toggleSplitDetails() {
-            if (paymentModeSelect.value === 'split') {
-                splitDetails.classList.remove('d-none');
-            } else {
-                splitDetails.classList.add('d-none');
-            }
-        }
-        paymentModeSelect.addEventListener('change', toggleSplitDetails);
-        // Initialize on page load
-        toggleSplitDetails();
-    }
-
-    // Add first product row by default
-    addProductRow();
-
-    // Add product row
-    addProductBtn.addEventListener('click', addProductRow);
-
-    // Remove product row
-    productRows.addEventListener('click', function(e) {
-        if (e.target.classList.contains('remove-product') || 
-            e.target.closest('.remove-product')) {
-            e.target.closest('tr').remove();
-            calculateTotals();
-        }
-    });
-
-    // Handle product selection changes
-    productRows.addEventListener('change', function(e) {
-        if (e.target.classList.contains('product-select')) {
-            const row = e.target.closest('tr');
-            const productSelect = row.querySelector('.product-select');
-            const unitPriceInput = row.querySelector('.unit-price');
-            const costPriceInput = row.querySelector('.cost-price');
-            const selectedOption = productSelect.selectedOptions[0];
-            if (selectedOption) {
-                unitPriceInput.value = selectedOption.dataset.sellingPrice || "0.00";
-                costPriceInput.value = selectedOption.dataset.costPrice || "0.00";
-                calculateRowTotal(row);
-                calculateTotals();
-            }
-        }
-    });
-
-    // Handle quantity changes
-    productRows.addEventListener('input', function(e) {
-        if (e.target.classList.contains('quantity')) {
-            const row = e.target.closest('tr');
-            calculateRowTotal(row);
-            calculateTotals();
-        }
-    });
-
-    // Tax, discount type, and discount value changes
-    taxInput.addEventListener('input', calculateTotals);
-    discountTypeInput.addEventListener('change', calculateTotals);
-    discountValueInput.addEventListener('input', calculateTotals);
-
-    function addProductRow() {
-        const clone = template.content.cloneNode(true);
-        productRows.appendChild(clone);
-
-        // Initialize the new row
-        const newRow = productRows.lastElementChild;
-        const productSelect = newRow.querySelector('.product-select');
-        const unitPriceInput = newRow.querySelector('.unit-price');
-        const costPriceInput = newRow.querySelector('.cost-price');
-
-        // Set initial price and cost price from the first option
-        if (productSelect.selectedOptions[0]) {
-            unitPriceInput.value = productSelect.selectedOptions[0].dataset.sellingPrice || "0.00";
-            costPriceInput.value = productSelect.selectedOptions[0].dataset.costPrice || "0.00";
-            calculateRowTotal(newRow);
-            calculateTotals();
-        }
-    }
-
-    function calculateRowTotal(row) {
-        const quantity = parseFloat(row.querySelector('.quantity').value) || 0;
-        const unitPrice = parseFloat(row.querySelector('.unit-price').value) || 0;
-        const totalInput = row.querySelector('.total');
-        totalInput.value = (quantity * unitPrice).toFixed(2);
-    }
-
-    function calculateTotals() {
-        let subtotal = 0;
-        document.querySelectorAll('#product-rows tr').forEach(row => {
-            subtotal += parseFloat(row.querySelector('.total').value) || 0;
-        });
-
-        const tax = parseFloat(taxInput.value) || 0;
-        const discountType = discountTypeInput.value;
-        const discountValue = parseFloat(discountValueInput.value) || 0;
-        let discountAmount = 0;
-        if (discountType === 'percent') {
-            discountAmount = subtotal * (discountValue / 100);
-        } else {
-            discountAmount = discountValue;
-        }
-        const grandTotal = subtotal + tax - discountAmount;
-
-        subtotalInput.value = subtotal.toFixed(2);
-        discountAmountInput.value = discountAmount.toFixed(2);
-        grandTotalInput.value = grandTotal.toFixed(2);
-    }
-
-    // Form submission - convert dynamic rows to form data
-    document.getElementById('invoice-form').addEventListener('submit', function(e) {
-        const paymentMode = document.getElementById('payment-mode-select').value;
-        const grandTotal = parseFloat(document.getElementById('grand-total').value);
-
-        // Split payment validation
-        if (paymentMode === 'split') {
-            const cash = parseFloat(document.querySelector('[name="cash_amount"]').value);
-            const pos = parseFloat(document.querySelector('[name="pos_amount"]').value);
-            const other = parseFloat(document.querySelector('[name="other_amount"]').value);
-
-            if (Math.abs((cash + pos + other) - grandTotal) > 0.01) {
-                alert('Split payment amounts must equal the grand total');
-                e.preventDefault();
-                return;
-            }
-        }
-
-        e.preventDefault();
-
-        const form = e.target;
-        const formData = new FormData(form);
-
-        // Add product items to form data
-        document.querySelectorAll('#product-rows tr').forEach((row, index) => {
-            formData.append(`items-${index}-product`, row.querySelector('.product-select').value);
-            formData.append(`items-${index}-quantity`, row.querySelector('.quantity').value);
-            formData.append(`items-${index}-unit_price`, row.querySelector('.unit-price').value);
-            formData.append(`items-${index}-cost_price`, row.querySelector('.cost-price').value);
-        });
-
-        // Add summary fields
-        formData.append('subtotal', document.getElementById('subtotal').value);
-        formData.append('tax', document.getElementById('tax').value);
-        formData.append('discount_type', document.getElementById('discount-type').value);
-        formData.append('discount_value', document.getElementById('discount-value').value);
-        formData.append('discount_amount', document.getElementById('discount-amount').value);
-        formData.append('grand_total', document.getElementById('grand-total').value);
-
-        // Submit the form
-        fetch(form.action, {
-            method: form.method,
-            body: formData,
-            headers: {
-                'X-CSRFToken': formData.get('csrfmiddlewaretoken')
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                window.location.href = data.redirect_url;
-            }
-        });
-    });
-});
-</script>
-<style>
-    /* Add your custom styles here */
-    .invoice-container {
-    font-family: Arial, sans-serif;
-    max-width: 1000px;
-    margin: 0 auto;
-    padding: 20px;
-    box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    }
-
-    .top-sections {
-    display: flex;
-    gap: 20px;
-    margin-bottom: 30px;
-    }
-
-    .customer-details, .invoice-details {
-    flex: 1;
-    padding: 15px;
-    background: #f9f9f9;
-    border-radius: 5px;
-    }
-
-    h2 {
-    margin-top: 0;
-    color: #333;
-    border-bottom: 1px solid #ddd;
-    padding-bottom: 10px;
-    }
-
-    .form-group {
-        margin-bottom: 15px;
-    }
-
-    label {
-    display: block;
-    margin-bottom: 5px;
-    font-weight: bold;
-    }
-
-    input, select {
-    width: 100%;
-    padding: 8px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    box-sizing: border-box;
-    }
-
-    .products-section {
-    background: #f9f9f9;
-    padding: 15px;
-    border-radius: 5px;
-    margin-bottom: 30px;
-    }
-
-    .products-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-bottom: 15px;
-    }
-
-    .products-table th, .products-table td {
-    padding: 10px;
-    text-align: left;
-    border-bottom: 1px solid #ddd;
-    }
-
-    .products-table th {
-    background: #eee;
-    font-weight: bold;
-    }
-
-    .add-product-btn {
-    background: #4CAF50;
-    color: white;
-    border: none;
-    padding: 10px 15px;
-    border-radius: 4px;
-    cursor: pointer;
-    }
-
-    .remove-btn {
-    background: #f44336;
-    color: white;
-    border: none;
-    border-radius: 50%;
-    width: 25px;
-    height: 25px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    }
-    .remove-btn i {
-        font-size: 16px;
-    }
-    .remove-btn:hover {
-        background: #d32f2f;
-    }
-    .summary-section {
-        background: #f9f9f9;
-        padding: 15px;
-        border-radius: 5px;
-        margin-bottom: 30px;
-    }
-    .summary-section h3 {
-        margin-top: 0;
-        color: #333;
-        border-bottom: 1px solid #ddd;
-        padding-bottom: 10px;
-    }
-    .header {
-        background-color: #343a40;
-        color: white;
-        padding: 10px 0;
-    }
-    .header h1 {
-        margin: 0;
-        text-align: center;
-    }
-    .container {
-        max-width: 1200px;
-        margin: 0 auto;
-        padding: 20px;
-    }
-    .row {
-        display: flex;
-        flex-wrap: wrap;
-    }
-    .col-md-6 {
-        flex: 0 0 50%;
-        max-width: 50%;
-        padding: 10px;
-    }
-    .col-md-12 {
-        flex: 0 0 100%;
-        max-width: 100%;
-        padding: 10px;
-    }
-    .card {
-        border: 1px solid #ddd;
-        border-radius: 5px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    }
-    .card-header {
-        background-color: #007bff;
-        color: white;
-        padding: 10px;
-        font-weight: bold;
-    }
-    .card-body {
-        padding: 20px;
-    }
-    .form-group {
-        margin-bottom: 15px;
-    }
-    .form-control {
-        width: 100%;
-        padding: 10px;
-        border: 1px solid #ced4da;
-        border-radius: 5px;
-    }
-    .form-control:focus {
-        border-color: #80bdff;
-        outline: none;  
-    }
-    .product-row {
-        background-color: #f9f9f9;
-    }
-    .product-row:hover {
-        background-color: #f1f1f1;
-    }
-    .product-row .remove-product {
-        color: #dc3545;
-    }
-    .product-row .remove-product:hover {
-        color:rgb(255, 0, 25);
-    }
-    .card {
-        margin-bottom: 20px;
-    }
-    .card-header {
-        background-color:rgb(13, 0, 34);
-        color: white;
-    }
-    .card-body {
-        padding: 20px;
-    }
-    .form-control {
-        margin-bottom: 10px;
-    }
-    .btn {
-        margin-right: 10px;
-    }
-    .btn-success {
-        background-color: #28a745;
-        border-color: #28a745;
-    }
-    .btn-success:hover {
-        background-color: #218838;
-        border-color: #1e7e34;
-    }
-    .btn-secondary {
-        background-color: #6c757d;
-        border-color: #6c757d;
-    }
-    .btn-secondary:hover {
-        background-color: #5a6268;
-        border-color: #545b62;
-    }
-    .btn-danger {
-        background-color: #dc3545;
-        border-color: #dc3545;
-    }
-    .btn-danger:hover {
-        background-color: #c82333;
-        border-color: #bd2130;
-    }
-    .invoice_summary {
-        margin-top: 20px;
-    }
-    .invoice_summary h3 {
-        margin-bottom: 15px;
-    }
-    .invoice_summary .form-control {
-        margin-bottom: 10px;
-    }
-    .invoice_summary .form-label {
-        font-weight: bold;
-    }
-    .invoice_summary .form-select {
-        margin-bottom: 10px;
-    }
-    .invoice_summary .form-check {
-        margin-bottom: 10px;    
-    }
-    .invoice_summary .form-check-label {
-        margin-left: 5px;
-    }
-    .invoice_summary .form-check-input {
-        margin-right: 5px;
-    }
-    .invoice_summary .form-check {
-        margin-bottom: 10px;
-    }
-    .invoice_summary .form-check-label {
-        margin-left: 5px;
-    }
-    .invoice_summary .form-check-input {
-        margin-right: 5px;
-    }
-    .invoice_summary .form-check-input:checked {
-        background-color: #007bff;
-        border-color: #007bff;
-    }
-    .invoice_summary .form-check-input:focus {
-        box-shadow: 0 0 0 0.2rem rgba(0, 0, 255, 0.25);
-        border-color: #007bff;
-    }
-    .invoice_summary .form-check-input:disabled {
-        background-color: #e9ecef;
-        border-color: #ced4da;
-        cursor: not-allowed;
-    }
-    .invoice_summary .form-check-input:disabled:checked {
-        background-color: #e9ecef;
-        border-color: #ced4da;
-    }
-    .payment_details {
-        margin-top: 20px;
-    }
-    .payment_details h3 {
-        margin-bottom: 15px;
-    }
-    .payment_details .form-control {    
-        margin-bottom: 10px;
-    }
-    .payment_details .form-select {
-        margin-bottom: 10px;
-    }
-    .payment_details .form-check {
-        margin-bottom: 10px;
-    }
-    .payment_details .form-check-label {
-        margin-left: 5px;
-    }
-    .payment_details .form-check-input {
-        margin-right: 5px;
-    }
-    .payment_details .form-check-input:checked {
-        background-color: #007bff;
-        border-color: #007bff;
-    }
-    .payment_details .form-check-input:focus {
-        box-shadow: 0 0 0 0.2rem rgba(0, 0, 255, 0.25);
-        border-color: #007bff;
-    }
-    .payment_details .form-check-input:disabled {
-        background-color: #e9ecef;
-        border-color: #ced4da;
-        cursor: not-allowed;
-    }
-    .payment_details .form-check-input:disabled:checked {
-        background-color: #e9ecef;
-        border-color: #ced4da;
-    }
-    .form-actions {
-        margin-top: 20px;
-    }
-    .form-actions .btn {
-        margin-right: 10px;
-    }
-    .form-actions .btn:last-child {
-        margin-right: 0;
-    }
-    .alert {
-        margin-top: 20px;
-        padding: 15px;
-        border-radius: 5px;
-    }
-    .alert.alert-danger {
-        background-color: #f8d7da;
-        color: #721c24;
-    }
-    .alert.alert-info {
-        background-color: #d1ecf1;
-        color: #0c5460;
-    }
-    .alert.alert-success {
-        background-color: #d4edda;
-        color: #155724;
-    }
-    .alert.alert-warning {
-        background-color: #fff3cd;
-        color: #856404;
-    }
-    .alert.alert-light {
-        background-color: #fefefe;
-        color: #818182;
-    }
-    .alert.alert-dark {
-        background-color: #d6d8d9;
-        color: #1b1e21;
-    }
-    .alert strong {
-        font-weight: bold;
-    }
-    .alert p {
-        margin: 0;
-    }
-    .d-none {
-        display: none;
-    }
-    .d-block {
-        display: block;
-    }   
-</style>
+{% block extra_js %}
+<script src="{% static 'portal/js/invoice_create_unified.js' %}?v={{ 'now'|date:'YmdHis' }}"></script>
 {% endblock %}

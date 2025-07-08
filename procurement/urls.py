@@ -14,8 +14,4 @@ urlpatterns = [
     path('orders/create/', views.PurchaseOrderCreateView.as_view(), name='purchase_order_create'),
     path('orders/<int:pk>/', views.PurchaseOrderDetailView.as_view(), name='purchase_order_detail'),
     path('orders/<int:pk>/edit/', views.PurchaseOrderUpdateView.as_view(), name='purchase_order_edit'),
-    
-    # Payments
-    path('orders/<int:order_id>/payments/create/', views.PurchasePaymentCreateView.as_view(), name='payment_create'),
-    path('payments/<int:pk>/edit/', views.PurchasePaymentUpdateView.as_view(), name='payment_edit'),
 ]
