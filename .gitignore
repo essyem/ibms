@@ -10,11 +10,9 @@ db.sqlite3-journal
 # Static files (regenerated)
 staticfiles/
 media/
-static/
 
-# Django collected static files
+# Django collected static files (but allow source static files)
 /staticfiles/
-/static/
 /media/
 
 # Backup and temporary files
