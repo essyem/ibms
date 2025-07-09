@@ -47,14 +47,34 @@
     <h2>📦 Product Analytics</h2>
     <div class="grid">
         <div class="card">
-            <h3>Total Inventory Value</h3>
-            <p>QAR {{ total_inventory_value|floatformat:2|intcomma }}</p>
+            <h3>Total Inventory Value (Cost)</h3>
+            <p>QAR {{ total_inventory_cost_value|floatformat:2|intcomma }}</p>
             <small>Based on cost price × stock</small>
         </div>
         <div class="card">
-            <h3>Average Product Cost</h3>
-            <p>QAR {{ avg_product_cost|floatformat:2|intcomma }}</p>
+            <h3>Total Inventory Value (Selling)</h3>
+            <p>QAR {{ total_inventory_value|floatformat:2|intcomma }}</p>
+            <small>Based on selling price × stock</small>
+        </div>
+        <div class="card">
+            <h3>Potential Profit</h3>
+            <p>QAR {{ potential_profit|floatformat:2|intcomma }}</p>
+            <small>Selling value - Cost value</small>
+        </div>
+        <div class="card">
+            <h3>Average Cost Price</h3>
+            <p>QAR {{ avg_cost_price|floatformat:2|intcomma }}</p>
             <small>Average cost per product</small>
+        </div>
+        <div class="card">
+            <h3>Average Selling Price</h3>
+            <p>QAR {{ avg_product_cost|floatformat:2|intcomma }}</p>
+            <small>Average selling price per product</small>
+        </div>
+        <div class="card">
+            <h3>Average Profit Margin</h3>
+            <p>{{ avg_profit_margin|floatformat:1 }}%</p>
+            <small>Average profit percentage</small>
         </div>
         <div class="card">
             <h3>Product Categories</h3>
@@ -68,6 +88,31 @@
         </div>
     </div>
 
+    <!-- Procurement Analytics -->
+    <h2>🛒 Procurement Analytics</h2>
+    <div class="grid">
+        <div class="card">
+            <h3>Total Purchase Orders</h3>
+            <p>{{ total_purchase_orders|intcomma }}</p>
+            <a href="{% url 'admin:procurement_purchaseorder_changelist' %}" class="view-all">View All</a>
+        </div>
+        <div class="card">
+            <h3>Total Procurement Value</h3>
+            <p>QAR {{ total_procurement_value|floatformat:2|intcomma }}</p>
+            <small>All purchase orders total</small>
+        </div>
+        <div class="card">
+            <h3>This Month's Purchases</h3>
+            <p>QAR {{ monthly_procurement|floatformat:2|intcomma }}</p>
+            <small>Current month procurement</small>
+        </div>
+        <div class="card">
+            <h3>Average Order Value</h3>
+            <p>QAR {{ avg_order_value|floatformat:2|intcomma }}</p>
+            <small>Average purchase order size</small>
+        </div>
+    </div>
+
     <!-- Products by Category -->
     {% if products_by_category %}
     <h2>📊 Products by Category</h2>
@@ -77,7 +122,10 @@
                 <tr>
                     <th>Category</th>
                     <th>Product Count</th>
-                    <th>Total Inventory Value</th>
+                    <th>Total Cost Value</th>
+                    <th>Total Selling Value</th>
+                    <th>Potential Profit</th>
+                    <th>Profit Margin</th>
                 </tr>
             </thead>
             <tbody>
@@ -85,7 +133,10 @@
                 <tr>
                     <td>{{ category.category__name|default:"Uncategorized" }}</td>
                     <td>{{ category.count|intcomma }}</td>
+                    <td>QAR {{ category.total_cost_value|floatformat:2|intcomma|default:"0.00" }}</td>
                     <td>QAR {{ category.total_value|floatformat:2|intcomma|default:"0.00" }}</td>
+                    <td>QAR {{ category.profit|floatformat:2|intcomma|default:"0.00" }}</td>
+                    <td>{{ category.profit_margin|floatformat:1|default:"0.0" }}%</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -103,8 +154,11 @@
                     <th>Product Name</th>
                     <th>Category</th>
                     <th>Cost Price</th>
+                    <th>Selling Price</th>
+                    <th>Profit per Unit</th>
                     <th>Stock</th>
-                    <th>Total Value</th>
+                    <th>Total Cost Value</th>
+                    <th>Total Selling Value</th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -113,9 +167,12 @@
                 <tr>
                     <td>{{ product.name }}</td>
                     <td>{{ product.category.name|default:"N/A" }}</td>
+                    <td>QAR {{ product.cost_price|floatformat:2|intcomma }}</td>
                     <td>QAR {{ product.unit_price|floatformat:2|intcomma }}</td>
+                    <td>QAR {{ product.profit_per_unit|floatformat:2|intcomma }}</td>
                     <td>{{ product.stock|intcomma }}</td>
-                    <td>QAR {{ product.unit_price|mul:product.stock|floatformat:2|intcomma }}</td>
+                    <td>QAR {{ product.total_cost_value|floatformat:2|intcomma }}</td>
+                    <td>QAR {{ product.total_selling_value|floatformat:2|intcomma }}</td>
                     <td>
                         <a href="{% url 'admin:portal_product_change' product.id %}" class="button small">Edit</a>
                     </td>
@@ -136,6 +193,8 @@
                     <th>Product Name</th>
                     <th>Category</th>
                     <th>Cost Price</th>
+                    <th>Selling Price</th>
+                    <th>Profit Margin</th>
                     <th>Stock</th>
                     <th>Status</th>
                     <th>Actions</th>
@@ -146,7 +205,9 @@
                 <tr>
                     <td>{{ product.name }}</td>
                     <td>{{ product.category.name|default:"N/A" }}</td>
+                    <td>QAR {{ product.cost_price|floatformat:2|intcomma }}</td>
                     <td>QAR {{ product.unit_price|floatformat:2|intcomma }}</td>
+                    <td>{{ product.profit_margin_calc|floatformat:1 }}%</td>
                     <td>{{ product.stock|intcomma }}</td>
                     <td>
                         <span class="badge {% if product.is_active %}success{% else %}secondary{% endif %}">
@@ -221,7 +282,8 @@
                     <th>PO Reference</th>
                     <th>Supplier</th>
                     <th>Order Date</th>
-                    <th>Total</th>
+                    <th>Items Count</th>
+                    <th>Total Value</th>
                     <th>Status</th>
                     <th>Actions</th>
                 </tr>
@@ -236,7 +298,8 @@
                     </td>
                     <td>{{ po.supplier.name }}</td>
                     <td>{{ po.order_date|date:"M d, Y" }}</td>
-                    <td>QAR {{ po.total_amount|floatformat:2|intcomma }}</td>
+                    <td>{{ po.items_count|intcomma }}</td>
+                    <td>QAR {{ po.total|floatformat:2|intcomma }}</td>
                     <td>
                         <span class="badge 
                             {% if po.status == 'draft' %}secondary
@@ -319,7 +382,7 @@
                     </td>
                     <td>{{ product.category.name|default:"Uncategorized" }}</td>
                     <td>{{ product.total_sold|intcomma }}</td>
-                    <td>${{ product.total_revenue|floatformat:2|intcomma }}</td>
+                    <td>QAR {{ product.total_revenue|floatformat:2|intcomma }}</td>
                 </tr>
                 {% endfor %}
             </tbody>

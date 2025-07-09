@@ -294,9 +294,9 @@ class ProductAdmin(BarcodeAdminMixin, ImportExportModelAdmin):
     change_list_template = 'admin/import_export/change_list.html'
     exclude = ('site',)  # Hide site field for simplicity
 
-    list_display = ('name', 'category', 'sku', 'barcode_display', 'unit_price', 'stock', 'warranty_period', 'is_active')
+    list_display = ('name', 'category', 'sku', 'barcode_display', 'unit_price', 'cost_price', 'stock', 'warranty_period', 'is_active')
     list_filter = ('category', 'is_active', 'barcode')
-    search_fields = ('name', 'sku', 'description', 'barcode')
+    search_fields = ('name', 'sku', 'description', 'barcode', 'category__name')
     list_editable = ('unit_price', 'stock', 'is_active')
     list_per_page = 25
     actions = ['generate_barcodes_for_selected']

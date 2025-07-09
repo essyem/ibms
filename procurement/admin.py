@@ -1,5 +1,6 @@
 from django.contrib import admin
 from .models import Supplier, PurchaseOrder, PurchaseItem
+from .forms import PurchaseOrderForm, PurchaseItemForm
 from django import forms
 from portal.models import Product
 from django.db.models import Value, CharField
@@ -10,44 +11,30 @@ class PurchaseItemInline(admin.TabularInline):
     extra = 1
     fields = ('product', 'quantity', 'unit_cost', 'total')
     readonly_fields = ('total',)
+    autocomplete_fields = ('product',)
     
     def get_formset(self, request, obj=None, **kwargs):
         formset = super().get_formset(request, obj, **kwargs)
         
-        # Annotate products with price display for better UX - no site filtering needed
-        formset.form.base_fields['product'].queryset = Product.objects.annotate(
-            price_display=Concat(
-                'name', 
-                Value(' - $'), 
-                'unit_price',  # Changed from selling_price to unit_price
-                output_field=CharField()
-            )
-        ).select_related('category')
-        
         # Add proper attributes to form fields
-        formset.form.base_fields['unit_cost'].widget.attrs.update({
-            'step': '0.01',
-            'min': '0.01',
-            'class': 'unit-cost-input'
-        })
+        if 'unit_cost' in formset.form.base_fields:
+            formset.form.base_fields['unit_cost'].widget.attrs.update({
+                'step': '0.01',
+                'min': '0.01',
+                'class': 'unit-cost-input'
+            })
         
-        formset.form.base_fields['quantity'].widget.attrs.update({
-            'min': '1',
-            'class': 'quantity-input'
-        })
+        if 'quantity' in formset.form.base_fields:
+            formset.form.base_fields['quantity'].widget.attrs.update({
+                'min': '1',
+                'class': 'quantity-input'
+            })
         
         return formset
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == "product":
-            kwargs["queryset"] = Product.objects.annotate(
-                price_display=Concat(
-                    'name',
-                    Value(' - $'),
-                    'unit_price',  # Changed from selling_price to unit_price
-                    output_field=CharField()
-                )
-            ).select_related('category')
+            kwargs["queryset"] = Product.objects.select_related('category').filter(is_active=True)
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 @admin.register(Supplier)
@@ -69,6 +56,7 @@ class SupplierAdmin(admin.ModelAdmin):
 
 @admin.register(PurchaseOrder)
 class PurchaseOrderAdmin(admin.ModelAdmin):
+    change_form_template = 'admin/procurement/purchaseorder_change_form.html'
     inlines = [PurchaseItemInline]
     list_display = ('reference', 'supplier', 'order_date', 'total', 'status', 'payment_mode')
     list_filter = ('status', 'payment_mode', 'order_date')
@@ -144,8 +132,9 @@ class PurchaseOrderAdmin(admin.ModelAdmin):
 # Keep the separate PurchaseItem admin for standalone editing if needed
 @admin.register(PurchaseItem)
 class PurchaseItemAdmin(admin.ModelAdmin):
+    change_form_template = 'admin/procurement/purchaseitem_change_form.html'
     list_display = ('purchase_order', 'product', 'quantity', 'unit_cost', 'total')
-    search_fields = ('product__name', 'purchase_order__reference')
+    search_fields = ('product__name', 'product__sku', 'product__barcode', 'product__category__name', 'purchase_order__reference')
     readonly_fields = ('total',)
     autocomplete_fields = ('product',)
     

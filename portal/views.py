@@ -3,7 +3,7 @@ from django.views import View
 from django.views.generic import (CreateView, UpdateView, 
 ListView, DetailView, View)
 from .models import Invoice, InvoiceItem, Product, Customer
-from django.db.models import Sum, Q, Avg, Count, F
+from django.db.models import Sum, Q, Avg, Count, F, Case, When, DecimalField
 from django.db import transaction
 from django.shortcuts import render, redirect, get_object_or_404
 from .forms import ProductEnquiryForm, InvoiceForm, InvoiceItemForm, CustomerForm
@@ -1051,33 +1051,89 @@ def dashboard_view(request):
     
     # Enhanced Product Analytics
     # Total inventory value (cost price * stock)
+    total_inventory_cost_value = Product.objects.filter(
+        is_active=True
+    ).aggregate(
+        total_value=Sum(F('cost_price') * F('stock'))
+    )['total_value'] or 0
+    
+    # Total inventory value (selling price * stock)  
     total_inventory_value = Product.objects.filter(
         is_active=True
     ).aggregate(
         total_value=Sum(F('unit_price') * F('stock'))
     )['total_value'] or 0
     
-    # Average product cost
+    # Potential profit
+    potential_profit = total_inventory_value - total_inventory_cost_value
+    
+    # Average cost price
+    avg_cost_price = Product.objects.filter(
+        is_active=True
+    ).aggregate(avg_cost=Avg('cost_price'))['avg_cost'] or 0
+
+    # Average product cost (selling price)
     avg_product_cost = Product.objects.filter(
         is_active=True
     ).aggregate(avg_cost=Avg('unit_price'))['avg_cost'] or 0
     
-    # Products by category count
+    # Average profit margin
+    avg_profit_margin = 0
+    if avg_cost_price > 0:
+        avg_profit_margin = ((avg_product_cost - avg_cost_price) / avg_cost_price) * 100
+
+    # Products by category count with cost analysis
     products_by_category = Product.objects.filter(
         is_active=True
     ).values('category__name').annotate(
         count=Count('id'),
-        total_value=Sum(F('unit_price') * F('stock'))
+        total_cost_value=Sum(F('cost_price') * F('stock')),
+        total_value=Sum(F('unit_price') * F('stock')),
+        profit=Sum((F('unit_price') - F('cost_price')) * F('stock')),
+        avg_cost=Avg('cost_price'),
+        avg_selling=Avg('unit_price')
+    ).annotate(
+        profit_margin=Case(
+            When(avg_cost__gt=0, then=(F('avg_selling') - F('avg_cost')) / F('avg_cost') * 100),
+            default=0,
+            output_field=DecimalField(max_digits=10, decimal_places=2)
+        )
     ).order_by('-count')[:5]
     
-    # Recent products (last 10 added)
+    # Procurement Analytics
+    total_purchase_orders = PurchaseOrder.objects.count()
+    total_procurement_value = PurchaseOrder.objects.aggregate(
+        total=Sum('total')
+    )['total'] or 0
+    
+    # This month's procurement
+    monthly_procurement = PurchaseOrder.objects.filter(
+        order_date__gte=current_month_start
+    ).aggregate(total=Sum('total'))['total'] or 0
+    
+    # Average order value
+    avg_order_value = 0
+    if total_purchase_orders > 0:
+        avg_order_value = total_procurement_value / total_purchase_orders
+    
+    # Recent products (last 10 added) with profit calculations
     recent_products = Product.objects.filter(
         is_active=True
+    ).annotate(
+        profit_margin_calc=Case(
+            When(cost_price__gt=0, then=(F('unit_price') - F('cost_price')) / F('cost_price') * 100),
+            default=0,
+            output_field=DecimalField(max_digits=10, decimal_places=2)
+        )
     ).order_by('-id')[:10]
     
-    # High value products (top 10 by cost)
+    # High value products (top 10 by cost) with profit calculations
     high_value_products = Product.objects.filter(
         is_active=True
+    ).annotate(
+        profit_per_unit=F('unit_price') - F('cost_price'),
+        total_cost_value=F('cost_price') * F('stock'),
+        total_selling_value=F('unit_price') * F('stock')
     ).order_by('-unit_price')[:10]
     
     # Monthly comparison data
@@ -1107,10 +1163,18 @@ def dashboard_view(request):
         'last_month_revenue': last_month_revenue,
         'current_month': current_month_start.strftime('%B %Y'),
         'total_inventory_value': total_inventory_value,
+        'total_inventory_cost_value': total_inventory_cost_value,
+        'potential_profit': potential_profit,
         'avg_product_cost': avg_product_cost,
+        'avg_cost_price': avg_cost_price,
+        'avg_profit_margin': avg_profit_margin,
         'products_by_category': products_by_category,
         'recent_products': recent_products,
         'high_value_products': high_value_products,
+        'total_purchase_orders': total_purchase_orders,
+        'total_procurement_value': total_procurement_value,
+        'monthly_procurement': monthly_procurement,
+        'avg_order_value': avg_order_value,
     }
     
     return render(request, 'portal/dashboard.html', context)
@@ -1224,6 +1288,76 @@ def report_view(request):
         ('cancelled', 'Cancelled'),
     ]
     
+    # Enhanced Analytics for Reports
+    # Cost Analysis
+    from procurement.models import PurchaseItem
+    
+    # Total cost analysis from purchase items
+    total_cost_value = PurchaseItem.objects.aggregate(
+        total=Sum(F('unit_cost') * F('quantity'))
+    )['total'] or 0
+    
+    # Revenue from invoices (in filtered period if applicable)
+    total_revenue = invoices.filter(status='paid').aggregate(
+        total=Sum('grand_total')
+    )['total'] or 0
+    
+    # Gross profit and margin
+    gross_profit = total_revenue - total_cost_value
+    gross_margin = 0
+    if total_revenue > 0:
+        gross_margin = (gross_profit / total_revenue) * 100
+    
+    # Category analysis with cost breakdown
+    category_analysis = Product.objects.filter(
+        is_active=True
+    ).values('category__name').annotate(
+        count=Count('id'),
+        total_cost=Sum(F('cost_price') * F('stock')),
+        total_selling=Sum(F('unit_price') * F('stock')),
+        avg_cost=Avg('cost_price'),
+        avg_selling=Avg('unit_price')
+    ).annotate(
+        margin=Case(
+            When(avg_cost__gt=0, then=(F('avg_selling') - F('avg_cost')) / F('avg_cost') * 100),
+            default=0,
+            output_field=DecimalField(max_digits=10, decimal_places=2)
+        )
+    ).order_by('-total_selling')[:10]
+    
+    # Top products by sales performance (with profit calculation)
+    top_products = InvoiceItem.objects.filter(
+        invoice__status='paid'
+    ).values('product__name', 'product__cost_price', 'product__unit_price').annotate(
+        total_qty=Sum('quantity'),
+        total_revenue=Sum(F('quantity') * F('unit_price')),
+        avg_cost=Avg('product__cost_price')
+    ).annotate(
+        total_profit=F('total_revenue') - (F('total_qty') * F('avg_cost'))
+    ).order_by('-total_revenue')[:10]
+    
+    # Invoice and PO totals for summary cards
+    invoice_totals = {
+        'count': invoices.count(),
+        'total_amount': invoices.aggregate(total=Sum('grand_total'))['total'] or 0
+    }
+    
+    po_totals = {
+        'count': purchase_orders.count(),
+        'total_amount': purchase_orders.aggregate(total=Sum('total'))['total'] or 0
+    }
+    
+    # Calculate profit metrics
+    total_profit = gross_profit
+    profit_margin = gross_margin
+    avg_margin = 0
+    
+    if category_analysis:
+        avg_margin = sum(cat['margin'] or 0 for cat in category_analysis) / len(category_analysis)
+    
+    # Add totals for costs
+    total_costs = total_cost_value
+    
     context = {
         'page_obj': page_obj,
         'stats': stats,
@@ -1234,6 +1368,21 @@ def report_view(request):
         'purchase_order_status_choices': purchase_order_status_choices,
         'report_type': report_type,
         'current_filters': request.GET,
+        # Enhanced analytics
+        'invoice_totals': invoice_totals,
+        'po_totals': po_totals,
+        'total_cost_value': total_cost_value,
+        'total_revenue': total_revenue,
+        'gross_profit': gross_profit,
+        'gross_margin': gross_margin,
+        'total_profit': total_profit,
+        'profit_margin': profit_margin,
+        'avg_margin': avg_margin,
+        'total_costs': total_costs,
+        'category_analysis': category_analysis,
+        'top_products': top_products,
+        'invoices': invoices[:50],  # Limit for display
+        'purchase_orders': purchase_orders[:50],  # Limit for display
     }
     
     return render(request, 'portal/report.html', context)

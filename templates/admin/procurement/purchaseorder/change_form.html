@@ -90,15 +90,15 @@
         <h3>💰 Order Summary</h3>
         <div class="total-display">
             <span>Subtotal:</span>
-            <span>${{ original.subtotal|floatformat:2 }}</span>
+            <span>QAR {{ original.subtotal|floatformat:2 }}</span>
         </div>
         <div class="total-display">
             <span>Tax (Manual Entry):</span>
-            <span>${{ original.tax|floatformat:2|default:"0.00" }}</span>
+            <span>QAR {{ original.tax|floatformat:2|default:"0.00" }}</span>
         </div>
         <div class="total-display grand-total">
             <span>Grand Total:</span>
-            <span>${{ original.total|floatformat:2 }}</span>
+            <span>QAR {{ original.total|floatformat:2 }}</span>
         </div>
         <div class="total-display">
             <span>Total Items:</span>
