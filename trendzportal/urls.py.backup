@@ -1,0 +1,40 @@
+from django.conf import settings
+from django.conf.urls.static import static
+from django.contrib import admin
+from django.urls import path, include
+from django.views.generic import RedirectView
+from portal import barcode_views
+from django.http import HttpResponse
+
+def test_barcode_url(request):
+    return HttpResponse("Barcode URL is working! This means the URL configuration is correct.")
+
+urlpatterns = [
+    # Redirect for common barcode access patterns (must come before admin/)
+    path('admin/barcode', RedirectView.as_view(url='/admin/barcode/', permanent=True)),
+    
+    # Barcode admin URLs (must come before admin/)
+    path('admin/barcode/', barcode_views.barcode_generator_dashboard, name='barcode_generator_dashboard'),
+    path('admin/barcode/generate/<int:product_id>/', barcode_views.generate_single_barcode, name='generate_single_barcode'),
+    path('admin/barcode/generate-bulk/', barcode_views.generate_bulk_barcodes, name='generate_bulk_barcodes'),
+    path('admin/barcode/preview/<int:product_id>/', barcode_views.preview_barcode, name='preview_barcode'),
+    path('admin/barcode/print/', barcode_views.print_barcode_labels, name='print_barcode_labels'),
+    path('admin/barcode/demo/', barcode_views.demo_barcode_labels, name='demo_barcode_labels'),
+    
+    # Test URL to verify routing works
+    path('admin/barcode/test/', test_barcode_url, name='test_barcode_url'),
+    
+    # Admin URLs (must come after custom admin URLs)
+    path('admin/', admin.site.urls),
+    
+    # App URLs
+    path('', include('portal.urls')),  # Portal (main app) - root level
+    path('rbac/', include('rbac.urls')),  # RBAC (Role-Based Access Control) app
+    path('finance/', include('finance.urls')),  # Finance app
+    path('procurement/', include('procurement.urls')),  # Procurement app
+]
+
+# Static and media files for development
+if settings.DEBUG:
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

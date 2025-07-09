@@ -1,0 +1,267 @@
+{% load static %}
+
+<!-- templates/portal/invoice_pdf.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice #{{ invoice.invoice_number }}</title>
+    
+    <style>
+        @page {
+            size: A4;
+            margin: 1cm;
+        }
+        
+        body {
+            font-family: 'DejaVu Sans', 'Helvetica', sans-serif;
+            font-size: 12px;
+            line-height: 1.4;
+            color: #333;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 20px;
+        }
+        
+        .header img {
+            max-height: 80px;
+            width: auto;
+            margin-bottom: 15px;
+        }
+        
+        .company-name {
+            font-size: 2.2em;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        
+        .invoice-info {
+            margin: 30px 0;
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        
+        .invoice-info div {
+            margin: 8px 0;
+        }
+        
+        .customer-info {
+            margin: 30px 0;
+        }
+        
+        .customer-info h3 {
+            color: #2c3e50;
+            border-bottom: 1px solid #e0e0e0;
+            padding-bottom: 5px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 30px 0;
+        }
+        
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        
+        th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .text-center {
+            text-align: center;
+        }
+        
+        .text-right {
+            text-align: right;
+        }
+        
+        .currency {
+            font-weight: bold;
+            color: #28a745;
+        }
+        
+        .totals-section {
+            margin: 30px 0;
+            float: right;
+            width: 300px;
+        }
+        
+        .totals-table {
+            width: 100%;
+            margin: 0;
+        }
+        
+        .totals-table th, .totals-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+        
+        .grand-total {
+            background-color: #f8f9fa;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .bank-details {
+            clear: both;
+            margin: 40px 0;
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        
+        .bank-details h4 {
+            color: #2c3e50;
+            margin-top: 0;
+        }
+        
+        .footer {
+            margin-top: 50px;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+            text-align: center;
+            font-size: 11px;
+            color: #666;
+        }
+        
+        .clearfix {
+            clear: both;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header Section -->
+    <div class="header">
+        {% if logo_base64 %}
+        <img src="{{ logo_base64 }}" alt="Trendz Logo">
+        {% endif %}
+        <div class="company-name">Trendz Trading & Services</div>
+    </div>
+    
+    <!-- Invoice Information -->
+    <div class="invoice-info">
+        <div><strong>Invoice #:</strong> {{ invoice.invoice_number }}</div>
+        <div><strong>Date:</strong> {{ invoice.date|date:"F d, Y" }}</div>
+        {% if invoice.due_date %}
+        <div><strong>Due Date:</strong> {{ invoice.due_date|date:"F d, Y" }}</div>
+        {% endif %}
+    </div>
+
+    <!-- Customer Info -->
+    <div class="customer-info">
+        <h3>Bill To:</h3>
+        <p>
+            {{ invoice.customer.company_name|default:invoice.customer.full_name }}<br>
+            {% if invoice.customer.address %}{{ invoice.customer.address }}<br>{% endif %}
+            Phone: {{ invoice.customer.phone }}<br>
+            {% if invoice.customer.tax_number %}Tax Number: {{ invoice.customer.tax_number }}{% endif %}
+        </p>
+    </div>
+
+    <!-- Invoice Items Table -->
+    <table>
+        <thead>
+            <tr>
+                <th class="text-center">No.</th>
+                <th>Product</th>
+                <th>SKU</th>
+                <th class="text-center">Quantity</th>
+                <th class="text-right">Unit Price</th>
+                <th class="text-right">Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in invoice.items.all %}
+            <tr>
+                <td class="text-center">{{ forloop.counter }}</td>
+                <td>{{ item.product.name }}</td>
+                <td>{{ item.product.sku|default:"-" }}</td>
+                <td class="text-center">{{ item.quantity }}</td>
+                <td class="text-right"><span class="currency">QAR</span> {{ item.selling_price|floatformat:2 }}</td>
+                <td class="text-right"><span class="currency">QAR</span> {{ item.total|floatformat:2 }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6" class="text-center" style="color: #6c757d; font-style: italic;">
+                    No items found for this invoice
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Totals Section -->
+    <div class="totals-section">
+        <table class="totals-table">
+            <tr>
+                <th class="bilingual-header">Subtotal: <span class="arabic">المجموع الفرعي:</span></th>
+                <td class="text-right"><span class="currency">QAR</span> {{ invoice.subtotal|floatformat:2 }}</td>
+            </tr>
+            {% if invoice.tax > 0 %}
+            <tr>
+                <th>Tax:</th>
+                <td class="text-right"><span class="currency">QAR</span> {{ invoice.tax|floatformat:2 }}</td>
+            </tr>
+            {% endif %}
+            {% if invoice.discount_amount > 0 %}
+            <tr>
+                <th>
+                    Discount 
+                    {% if invoice.discount_type == 'percent' %}
+                        ({{ invoice.discount_value }}%)
+                    {% else %}
+                        ({{ invoice.discount_value }} QAR)
+                    {% endif %}:
+                </th>
+                <td class="text-right">-<span class="currency">QAR</span> {{ invoice.discount_amount|floatformat:2 }}</td>
+            </tr>
+            {% endif %}
+            <tr class="grand-total">
+                <th>Grand Total:</th>
+                <td class="text-right"><span class="currency">QAR</span> {{ invoice.grand_total|floatformat:2 }}</td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- Bank Transfer Details -->
+    <div class="bank-details">
+        <h4>Bank Transfer Details</h4>
+        <p>
+            <strong>Bank:</strong> CBQ (Commercial Bank of Qatar)<br>
+            <strong>IBAN No:</strong> QA48CBQA00000481074980016001<br>
+            <strong>SWIFT/BIC:</strong> CBQAQAQA
+        </p>
+    </div>
+
+    <!-- Notes Section -->
+    {% if invoice.notes %}
+    <div style="margin: 30px 0;">
+        <h4>Notes:</h4>
+        <div style="padding: 15px; background-color: #f8f9fa; border-radius: 5px;">
+            {{ invoice.notes|linebreaksbr }}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Footer -->
+    <div class="footer">
+        <p>
+            CR No: 100019, Door No: 72, Ground Floor, Sofitel Complex, Msheireb Street<br>
+            Doha, Qatar. Tel: +974 3051 4865 | Email: info@trendzqtr.com | Website: www.trendzqtr.com
+        </p>
+    </div>
+</body>
+</html>

@@ -1,0 +1,180 @@
+<!-- templates/portal/purchase_payment_form.html -->
+{% extends 'portal/procurement_base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}
+    {% if object %}Edit Payment{% else %}Record Payment{% endif %} - Trendz Finance
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="content-card">
+            <div class="card-header" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+                <h4>
+                    <i class="fas fa-credit-card me-2"></i>
+                    {% if object %}Edit Payment for PO-{{ object.purchase_order.reference }}{% else %}Record Purchase Payment{% endif %}
+                </h4>
+            </div>
+            <div class="card-body">
+                <form method="post" novalidate>
+                    {% csrf_token %}
+                    
+                    {% if not object %}
+                        <!-- Purchase Order Selection -->
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="mb-3">
+                                    <label for="id_purchase_order" class="form-label">Purchase Order *</label>
+                                    {{ form.purchase_order|add_class:"form-select" }}
+                                    {% if form.purchase_order.errors %}
+                                        <div class="text-danger">{{ form.purchase_order.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info">
+                            <strong>Purchase Order:</strong> PO-{{ object.purchase_order.reference }}<br>
+                            <strong>Supplier:</strong> {{ object.purchase_order.supplier.name }}<br>
+                            <strong>Order Total:</strong> QAR {{ object.purchase_order.total|floatformat:2 }}
+                        </div>
+                    {% endif %}
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="id_amount_due" class="form-label">Amount Due *</label>
+                                {{ form.amount_due|add_class:"form-control" }}
+                                {% if form.amount_due.errors %}
+                                    <div class="text-danger">{{ form.amount_due.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="id_amount_paid" class="form-label">Amount Paid</label>
+                                {{ form.amount_paid|add_class:"form-control" }}
+                                {% if form.amount_paid.errors %}
+                                    <div class="text-danger">{{ form.amount_paid.errors }}</div>
+                                {% endif %}
+                                <small class="text-muted">Leave empty if no payment made yet</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="id_due_date" class="form-label">Due Date *</label>
+                                {{ form.due_date|add_class:"form-control" }}
+                                {% if form.due_date.errors %}
+                                    <div class="text-danger">{{ form.due_date.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="id_payment_date" class="form-label">Payment Date</label>
+                                {{ form.payment_date|add_class:"form-control" }}
+                                {% if form.payment_date.errors %}
+                                    <div class="text-danger">{{ form.payment_date.errors }}</div>
+                                {% endif %}
+                                <small class="text-muted">Date when payment was actually made</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="id_payment_method" class="form-label">Payment Method *</label>
+                                {{ form.payment_method|add_class:"form-select" }}
+                                {% if form.payment_method.errors %}
+                                    <div class="text-danger">{{ form.payment_method.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="id_payment_reference" class="form-label">Payment Reference</label>
+                                {{ form.payment_reference|add_class:"form-control" }}
+                                {% if form.payment_reference.errors %}
+                                    <div class="text-danger">{{ form.payment_reference.errors }}</div>
+                                {% endif %}
+                                <small class="text-muted">Bank reference, cheque number, etc.</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="id_notes" class="form-label">Notes</label>
+                        {{ form.notes|add_class:"form-control" }}
+                        {% if form.notes.errors %}
+                            <div class="text-danger">{{ form.notes.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    {% if object %}
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="stats-card">
+                                    <div class="stats-number text-primary">QAR {{ object.amount_due|floatformat:2 }}</div>
+                                    <div class="stats-label">Total Due</div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="stats-card">
+                                    <div class="stats-number text-success">QAR {{ object.amount_paid|floatformat:2 }}</div>
+                                    <div class="stats-label">Paid</div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="stats-card">
+                                    <div class="stats-number text-warning">QAR {{ object.balance_due|floatformat:2 }}</div>
+                                    <div class="stats-label">Balance</div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    <div class="d-flex justify-content-between pt-3">
+                        <a href="{% url 'finance:purchase_payment_list' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-1"></i>Back to Payments
+                        </a>
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-save me-1"></i>
+                            {% if object %}Update Payment{% else %}Record Payment{% endif %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Auto-fill today's date for payment date when amount paid is entered
+document.getElementById('id_amount_paid').addEventListener('input', function() {
+    const paymentDateField = document.getElementById('id_payment_date');
+    if (this.value && this.value > 0 && !paymentDateField.value) {
+        const today = new Date().toISOString().split('T')[0];
+        paymentDateField.value = today;
+    }
+});
+
+// Calculate balance automatically
+function updateBalance() {
+    const amountDue = parseFloat(document.getElementById('id_amount_due').value) || 0;
+    const amountPaid = parseFloat(document.getElementById('id_amount_paid').value) || 0;
+    const balance = amountDue - amountPaid;
+    
+    // You could add a balance display here if needed
+}
+
+document.getElementById('id_amount_due').addEventListener('input', updateBalance);
+document.getElementById('id_amount_paid').addEventListener('input', updateBalance);
+</script>
+{% endblock %}
