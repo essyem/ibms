@@ -35,18 +35,23 @@ class Category(FinanceSiteModel):
 class FinanceTransaction(FinanceSiteModel):
     TRANSACTION_TYPES = [
         ('purchase', 'Purchase'),
+        ('purchase_payment', 'Purchase Payment'),
         ('sale', 'Sale'),
+        ('sale_receipt', 'Sale Receipt'),
         ('expense', 'Expense'),
     ]
     
     PAYMENT_METHODS = [
         ('cash', 'Cash'),
+        ('credit', 'Credit'),
+        ('pos', 'POS'),
         ('bank', 'Bank Transfer'),
+        ('transfer', 'Transfer'),
         ('card', 'Credit Card'),
         ('other', 'Other'),
     ]
     
-    type = models.CharField(max_length=10, choices=TRANSACTION_TYPES)
+    type = models.CharField(max_length=20, choices=TRANSACTION_TYPES)
     category = models.ForeignKey(Category, on_delete=models.PROTECT)
     amount = models.DecimalField(max_digits=12, decimal_places=2)
     date = models.DateField()
@@ -55,14 +60,19 @@ class FinanceTransaction(FinanceSiteModel):
     reference = models.CharField(max_length=50, blank=True)
     recurring = models.BooleanField(default=False)
     frequency = models.CharField(max_length=10, choices=[
-    ('daily', 'Daily'),
-    ('weekly', 'Weekly'),
-    ('monthly', 'Monthly'),
-    ('yearly', 'Yearly')
+        ('daily', 'Daily'),
+        ('weekly', 'Weekly'),
+        ('monthly', 'Monthly'),
+        ('yearly', 'Yearly')
     ], blank=True)
     created_by = models.ForeignKey(User, on_delete=models.PROTECT)
     created_at = models.DateTimeField(auto_now_add=True)
     document = models.FileField(upload_to='finance_documents/', blank=True, null=True)
+    
+    # Auto-sync fields for ERP integration
+    auto_generated = models.BooleanField(default=False, help_text="True if auto-generated from procurement/sales")
+    source_type = models.CharField(max_length=20, blank=True, help_text="Source model type (invoice, purchase_order, etc.)")
+    source_id = models.PositiveIntegerField(blank=True, null=True, help_text="Source model ID")
     
     class Meta:
         ordering = ['-date', 'site']
@@ -70,4 +80,79 @@ class FinanceTransaction(FinanceSiteModel):
         verbose_name_plural = 'Finance Transactions'
     
     def __str__(self):
-        return f"{self.site.domain}: {self.get_type_display()} - {self.category}: {self.amount} ({self.date})"
+        return f"{self.site.domain}: {self.get_type_display()} - ${self.amount}"
+
+
+class FinancialSummary(FinanceSiteModel):
+    """Monthly/Yearly financial summary for business intelligence"""
+    year = models.IntegerField()
+    month = models.IntegerField()
+    
+    # Sales metrics
+    total_sales = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    total_invoices = models.IntegerField(default=0)
+    average_sale_value = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    
+    # Purchase metrics
+    total_purchases = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    total_purchase_orders = models.IntegerField(default=0)
+    total_purchase_payments = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    
+    # Profit metrics
+    gross_profit = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    profit_margin = models.DecimalField(max_digits=5, decimal_places=2, default=0)  # Percentage
+    
+    # Cash flow metrics
+    cash_inflow = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    cash_outflow = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    net_cash_flow = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        unique_together = ['site', 'year', 'month']
+        ordering = ['-year', '-month', 'site']
+        verbose_name = 'Financial Summary'
+        verbose_name_plural = 'Financial Summaries'
+    
+    def __str__(self):
+        return f"{self.site.domain}: {self.year}-{self.month:02d} Summary"
+
+
+class InventoryTransaction(FinanceSiteModel):
+    """Track inventory movements for cost analysis and profit calculations"""
+    TRANSACTION_TYPES = [
+        ('purchase', 'Purchase'),
+        ('sale', 'Sale'),
+        ('adjustment', 'Adjustment'),
+        ('return', 'Return'),
+    ]
+    
+    product = models.ForeignKey('portal.Product', on_delete=models.CASCADE)
+    type = models.CharField(max_length=20, choices=TRANSACTION_TYPES)
+    quantity = models.IntegerField()  # Positive for inbound, negative for outbound
+    unit_cost = models.DecimalField(max_digits=10, decimal_places=2)
+    unit_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    total_cost = models.DecimalField(max_digits=12, decimal_places=2)
+    total_revenue = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    
+    # Source tracking
+    invoice = models.ForeignKey('portal.Invoice', on_delete=models.CASCADE, null=True, blank=True)
+    purchase_order = models.ForeignKey('procurement.PurchaseOrder', on_delete=models.CASCADE, null=True, blank=True)
+    
+    date = models.DateTimeField()
+    notes = models.TextField(blank=True)
+    
+    class Meta:
+        ordering = ['-date', 'site']
+        verbose_name = 'Inventory Transaction'
+        verbose_name_plural = 'Inventory Transactions'
+    
+    def profit(self):
+        """Calculate profit for sales transactions"""
+        if self.total_revenue and self.total_cost:
+            return self.total_revenue - self.total_cost
+        return 0
+    
+    def __str__(self):
+        return f"{self.site.domain}: {self.product.name} - {self.type} ({self.quantity})"

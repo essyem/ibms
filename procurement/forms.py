@@ -140,8 +140,18 @@ class PurchaseItemForm(forms.ModelForm):
 class PurchasePaymentForm(forms.ModelForm):
     class Meta:
         model = PurchasePayment
-        fields = ['amount', 'payment_date', 'payment_method', 'reference', 'notes']
+        fields = ['amount', 'amount_due', 'due_date', 'payment_date', 'payment_method', 'reference', 'status', 'notes']
         widgets = {
+            'due_date': forms.DateInput(attrs={'type': 'date'}),
             'payment_date': forms.DateInput(attrs={'type': 'date'}),
             'notes': forms.Textarea(attrs={'rows': 2}),
+            'amount': forms.NumberInput(attrs={'step': '0.01'}),
+            'amount_due': forms.NumberInput(attrs={'step': '0.01'}),
         }
+        
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # If creating a new payment and a purchase order is provided, auto-fill amount_due
+        if not self.instance.pk and 'initial' in kwargs and 'purchase_order' in kwargs['initial']:
+            purchase_order = kwargs['initial']['purchase_order']
+            self.fields['amount_due'].initial = purchase_order.total

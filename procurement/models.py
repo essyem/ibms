@@ -114,18 +114,72 @@ class PurchaseItem(models.Model):  # Note: This doesn't inherit from SiteModel d
             purchase_order.save(update_fields=['subtotal', 'total'])
 
 class PurchasePayment(models.Model):
-    purchase_order = models.ForeignKey(PurchaseOrder, on_delete=models.CASCADE, related_name='payments')
-    amount = models.DecimalField(max_digits=10, decimal_places=2)
-    payment_date = models.DateField()
-    payment_method = models.CharField(max_length=20, choices=[
+    """Enhanced payment tracking for purchase orders"""
+    PAYMENT_STATUS = [
+        ('pending', 'Pending'),
+        ('partial', 'Partial'),
+        ('paid', 'Paid'),
+        ('overdue', 'Overdue'),
+    ]
+    
+    PAYMENT_METHODS = [
         ('cash', 'Cash'),
         ('cheque', 'Cheque'),
         ('transfer', 'Bank Transfer'),
         ('card', 'Credit Card'),
-    ])
-    reference = models.CharField(max_length=50, blank=True)
+        ('other', 'Other'),
+    ]
+    
+    purchase_order = models.ForeignKey(PurchaseOrder, on_delete=models.CASCADE, related_name='payments')
+    amount = models.DecimalField(max_digits=10, decimal_places=2, help_text="Payment amount")
+    amount_due = models.DecimalField(max_digits=12, decimal_places=2, default=0, help_text="Total amount due for this purchase order")
+    payment_date = models.DateField()
+    due_date = models.DateField(blank=True, null=True, help_text="Payment due date")
+    payment_method = models.CharField(max_length=20, choices=PAYMENT_METHODS, default='transfer')
+    reference = models.CharField(max_length=100, blank=True, help_text="Bank reference, cheque number, etc.")
+    status = models.CharField(max_length=10, choices=PAYMENT_STATUS, default='pending')
     notes = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-payment_date']
+        verbose_name = 'Purchase Payment'
+        verbose_name_plural = 'Purchase Payments'
+
+    def save(self, *args, **kwargs):
+        # Auto-set amount_due from purchase order if not set
+        if not self.amount_due and self.purchase_order:
+            self.amount_due = self.purchase_order.total
+            
+        # Auto-calculate status based on payment amount
+        if self.amount == 0:
+            self.status = 'pending'
+        elif self.amount < self.amount_due:
+            self.status = 'partial'
+        else:
+            self.status = 'paid'
+            
+        # Check if overdue
+        from django.utils import timezone
+        if self.due_date and self.due_date < timezone.now().date() and self.status != 'paid':
+            self.status = 'overdue'
+            
+        super().save(*args, **kwargs)
+
+    @property
+    def balance_due(self):
+        amount_due = self.amount_due or 0
+        amount = self.amount or 0
+        return amount_due - amount
+
+    @property
+    def payment_percentage(self):
+        amount_due = self.amount_due or 0
+        amount = self.amount or 0
+        if amount_due == 0:
+            return 0
+        return (amount / amount_due) * 100
 
     def __str__(self):
-        return f"Payment for PO-{self.purchase_order.reference}"
+        return f"Payment for PO-{self.purchase_order.reference} - {self.get_status_display()}"

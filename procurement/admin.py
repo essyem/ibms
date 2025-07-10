@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Supplier, PurchaseOrder, PurchaseItem
+from .models import Supplier, PurchaseOrder, PurchaseItem, PurchasePayment
 from .forms import PurchaseOrderForm, PurchaseItemForm
 from django import forms
 from portal.models import Product
@@ -151,3 +151,25 @@ class PurchaseItemAdmin(admin.ModelAdmin):
             # Tax is manually entered, only calculate total
             po.total = po.subtotal + (po.tax or Decimal('0.00'))
             po.save(update_fields=['subtotal', 'total'])
+
+@admin.register(PurchasePayment)
+class PurchasePaymentAdmin(admin.ModelAdmin):
+    list_display = ('purchase_order', 'amount', 'payment_date', 'payment_method', 'reference')
+    list_filter = ('payment_method', 'payment_date')
+    search_fields = ('purchase_order__reference', 'reference', 'purchase_order__supplier__name')
+    date_hierarchy = 'payment_date'
+    ordering = ['-payment_date']
+    
+    fieldsets = (
+        ('Payment Details', {
+            'fields': ('purchase_order', 'amount', 'payment_date', 'payment_method')
+        }),
+        ('Reference & Notes', {
+            'fields': ('reference', 'notes')
+        }),
+    )
+    
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        # Update purchase order paid amount
+        obj.purchase_order.update_paid_amount()
