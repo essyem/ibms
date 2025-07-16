@@ -1,10 +1,17 @@
 # rbac/urls.py
 from django.urls import path
-from . import views
+from . import views 
+from .views import RegistrationView
+
 
 app_name = 'rbac'
 
 urlpatterns = [
+    # Registration and verification
+    path('register/', RegistrationView.as_view(), name='register'),
+    path('verify/<str:token>/', views.verify_email, name='verify_email'),
+    path('registration-pending/', views.registration_pending, name='registration_pending'),
+    path('resend-verification/', views.ResendVerificationEmail.as_view(), name='resend_verification'),
     # User management
     path('users/', views.user_management, name='user_management'),
     path('users/create/', views.user_profile_create, name='user_profile_create'),

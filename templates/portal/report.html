@@ -1,4 +1,4 @@
-{% extends "portal/base.html" %}
+{% extends "portal/invoice_base.html" %}
 {% load static %}
 {% load humanizelib %}
 
@@ -8,13 +8,13 @@
 <div class="container-fluid mt-4">
     <h1 class="h3 mb-4 text-gradient">📊 Business Reports</h1>
     
-    <!-- Filter Form -->
-    <div class="card shadow mb-4" style="background: var(--section-bg); border: var(--border);">
-        <div class="card-header py-3">
-            <h6 class="m-0 font-weight-bold text-gradient">Filter Options</h6>
+    <!-- Filter Form with Fixed Date Handling -->
+    <div class="card shadow mb-4 filter-card">
+        <div class="card-header py-3 bg-gradient-primary">
+            <h6 class="m-0 font-weight-bold text-white">Filter Options</h6>
         </div>
         <div class="card-body">
-            <form method="get" class="form-inline">
+            <form method="get" class="form-inline" id="reportFilterForm">
                 <div class="row g-3">
                     <div class="col-md-3">
                         <label for="customer_id" class="form-label">Customer</label>
@@ -53,15 +53,15 @@
                     </div>
                     
                     <div class="col-md-3">
-                        <label for="start_date" class="form-label">From Date</label>
-                        <input type="date" name="start_date" id="start_date" 
-                               class="form-control" value="{{ filters.start_date }}">
+                        <label for="date_from" class="form-label">From Date</label>
+                        <input type="date" name="date_from" id="date_from" 
+                               class="form-control" value="{{ filters.date_from }}">
                     </div>
                     
                     <div class="col-md-3">
-                        <label for="end_date" class="form-label">To Date</label>
-                        <input type="date" name="end_date" id="end_date" 
-                               class="form-control" value="{{ filters.end_date }}">
+                        <label for="date_to" class="form-label">To Date</label>
+                        <input type="date" name="date_to" id="date_to" 
+                               class="form-control" value="{{ filters.date_to }}">
                     </div>
                     
                     <div class="col-md-3">
@@ -83,60 +83,60 @@
     <!-- Summary Cards -->
     <div class="row mb-4">
         <div class="col-md-3">
-            <div class="card summary-card" style="background: var(--section-bg); border: var(--border);">
+            <div class="card summary-card bg-gradient-info text-white">
                 <div class="card-body text-center">
-                    <h5 class="text-gradient">Invoice Summary</h5>
+                    <h5 class="card-title">Invoice Summary</h5>
                     <div class="metric">
-                        <span class="number">{{ invoice_totals.count|intcomma }}</span>
+                        <span class="number display-6">{{ invoice_totals.count|intcomma }}</span>
                         <span class="label">Total Invoices</span>
                     </div>
                     <div class="metric">
-                        <span class="number">QAR {{ invoice_totals.total_amount|floatformat:2|intcomma|default:"0.00" }}</span>
+                        <span class="number display-6">QAR {{ invoice_totals.total_amount|floatformat:2|intcomma|default:"0.00" }}</span>
                         <span class="label">Total Amount</span>
                     </div>
                 </div>
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card summary-card" style="background: var(--section-bg); border: var(--border);">
+            <div class="card summary-card bg-gradient-success text-white">
                 <div class="card-body text-center">
-                    <h5 class="text-gradient">Purchase Orders</h5>
+                    <h5 class="card-title">Purchase Orders</h5>
                     <div class="metric">
-                        <span class="number">{{ po_totals.count|intcomma }}</span>
+                        <span class="number display-6">{{ po_totals.count|intcomma }}</span>
                         <span class="label">Total Orders</span>
                     </div>
                     <div class="metric">
-                        <span class="number">QAR {{ po_totals.total_amount|floatformat:2|intcomma|default:"0.00" }}</span>
+                        <span class="number display-6">QAR {{ po_totals.total_amount|floatformat:2|intcomma|default:"0.00" }}</span>
                         <span class="label">Total Amount</span>
                     </div>
                 </div>
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card summary-card" style="background: var(--section-bg); border: var(--border);">
+            <div class="card summary-card bg-gradient-warning text-dark">
                 <div class="card-body text-center">
-                    <h5 class="text-gradient">Cost Analysis</h5>
+                    <h5 class="card-title">Cost Analysis</h5>
                     <div class="metric">
-                        <span class="number">QAR {{ total_cost_value|floatformat:2|intcomma|default:"0.00" }}</span>
+                        <span class="number display-6">QAR {{ total_cost_value|floatformat:2|intcomma|default:"0.00" }}</span>
                         <span class="label">Total Cost Value</span>
                     </div>
                     <div class="metric">
-                        <span class="number">{{ profit_margin|floatformat:1|default:"0.0" }}%</span>
+                        <span class="number display-6">{{ profit_margin|floatformat:1|default:"0.0" }}%</span>
                         <span class="label">Profit Margin</span>
                     </div>
                 </div>
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card summary-card" style="background: var(--section-bg); border: var(--border);">
+            <div class="card summary-card bg-gradient-danger text-white">
                 <div class="card-body text-center">
-                    <h5 class="text-gradient">Profitability</h5>
+                    <h5 class="card-title">Profitability</h5>
                     <div class="metric">
-                        <span class="number">QAR {{ total_profit|floatformat:2|intcomma|default:"0.00" }}</span>
+                        <span class="number display-6">QAR {{ total_profit|floatformat:2|intcomma|default:"0.00" }}</span>
                         <span class="label">Total Profit</span>
                     </div>
                     <div class="metric">
-                        <span class="number">{{ avg_margin|floatformat:1|default:"0.0" }}%</span>
+                        <span class="number display-6">{{ avg_margin|floatformat:1|default:"0.0" }}%</span>
                         <span class="label">Avg Margin</span>
                     </div>
                 </div>
@@ -144,17 +144,67 @@
         </div>
     </div>
 
+    <!-- Daily/Monthly Gross Profit Breakdown -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 bg-gradient-primary text-white">
+            <h6 class="m-0 font-weight-bold">💰 Daily/Monthly Gross Profit Breakdown</h6>
+        </div>
+        <div class="card-body">
+            <ul class="nav nav-tabs mb-4" id="profitTab" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="daily-tab" data-bs-toggle="tab" data-bs-target="#daily" type="button" role="tab">
+                        Daily Breakdown
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="monthly-tab" data-bs-toggle="tab" data-bs-target="#monthly" type="button" role="tab">
+                        Monthly Breakdown
+                    </button>
+                </li>
+            </ul>
+            
+            <table class="table table-striped table-hover">
+    <thead class="table-dark">
+        <tr>
+            <th>Date</th>
+            <th class="text-end">Sales Value</th>
+            <th class="text-end">Cost Value</th>
+            <th class="text-end">Gross Profit</th>
+            <th class="text-end">Margin</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for day in daily_profit_breakdown %}
+        <tr>
+            <td>{{ day.date_trunc|date:"M d, Y" }}</td>
+            <td class="text-end">QAR {{ day.sales_value|floatformat:2|intcomma }}</td>
+            <td class="text-end">QAR {{ day.cost_value|floatformat:2|intcomma }}</td>
+            <td class="text-end">QAR {{ day.gross_profit|floatformat:2|intcomma }}</td>
+            <td class="text-end">
+                <span class="badge {% if day.margin >= 30 %}bg-success{% elif day.margin >= 15 %}bg-warning{% else %}bg-danger{% endif %}">
+                    {{ day.margin|floatformat:1 }}%
+                </span>
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="5" class="text-center text-muted py-4">No daily data available</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+    </table>
+        
     <!-- Advanced Analytics -->
     <div class="row mb-4">
         <div class="col-md-6">
-            <div class="card" style="background: var(--section-bg); border: var(--border);">
-                <div class="card-header">
-                    <h6 class="text-gradient mb-0">📊 Product Performance Analysis</h6>
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-gradient-primary text-white">
+                    <h6 class="mb-0">📊 Product Performance Analysis</h6>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
-                        <table class="table table-dark table-sm">
-                            <thead>
+                        <table class="table table-hover">
+                            <thead class="table-dark">
                                 <tr>
                                     <th>Category</th>
                                     <th>Products</th>
@@ -171,7 +221,10 @@
                                     <td>QAR {{ category.total_cost|floatformat:0|intcomma }}</td>
                                     <td>QAR {{ category.total_selling|floatformat:0|intcomma }}</td>
                                     <td>
-                                        <span class="badge {% if category.margin >= 30 %}bg-success{% elif category.margin >= 15 %}bg-warning{% else %}bg-danger{% endif %}">
+                                        <span class="badge 
+                                            {% if category.margin >= 30 %}bg-success
+                                            {% elif category.margin >= 15 %}bg-warning
+                                            {% else %}bg-danger{% endif %}">
                                             {{ category.margin|floatformat:1 }}%
                                         </span>
                                     </td>
@@ -184,14 +237,91 @@
             </div>
         </div>
         <div class="col-md-6">
-            <div class="card" style="background: var(--section-bg); border: var(--border);">
-                <div class="card-header">
-                    <h6 class="text-gradient mb-0">🎯 Top Performing Products</h6>
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-gradient-primary text-white">
+                    <h6 class="mb-0">🎯 Top Performing Products</h6>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
-                        <table class="table table-dark table-sm">
-                            <thead>
+                        <table class="table table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Product</th>
+                                    <th>Units Sold</th>
+                                    <th>Revenue</th>
+                                    <th>Profit</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for product in top_products %}
+                                <tr>
+                                    <td>{{ product.product__name|truncatechars:25 }}</td>
+                                    <td>{{ product.total_qty }}</td>
+                                    <td>QAR {{ product.total_revenue|floatformat:0|intcomma }}</td>
+                                    <td>QAR {{ product.total_profit|floatformat:0|intcomma }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rest of your template remains the same... -->
+
+    <!-- Advanced Analytics -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-gradient-primary text-white">
+                    <h6 class="mb-0">📊 Product Performance Analysis</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Category</th>
+                                    <th>Products</th>
+                                    <th>Cost Value</th>
+                                    <th>Selling Value</th>
+                                    <th>Margin %</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for category in category_analysis %}
+                                <tr>
+                                    <td>{{ category.category__name|default:"Uncategorized" }}</td>
+                                    <td>{{ category.count }}</td>
+                                    <td>QAR {{ category.total_cost|floatformat:0|intcomma }}</td>
+                                    <td>QAR {{ category.total_selling|floatformat:0|intcomma }}</td>
+                                    <td>
+                                        <span class="badge 
+                                            {% if category.margin >= 30 %}bg-success
+                                            {% elif category.margin >= 15 %}bg-warning
+                                            {% else %}bg-danger{% endif %}">
+                                            {{ category.margin|floatformat:1 }}%
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-gradient-primary text-white">
+                    <h6 class="mb-0">🎯 Top Performing Products</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-dark">
                                 <tr>
                                     <th>Product</th>
                                     <th>Units Sold</th>
@@ -219,32 +349,32 @@
     <!-- Financial Overview -->
     <div class="row mb-4">
         <div class="col-md-12">
-            <div class="card" style="background: var(--section-bg); border: var(--border);">
-                <div class="card-header">
-                    <h6 class="text-gradient mb-0">💰 Financial Overview</h6>
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-gradient-primary text-white">
+                    <h6 class="mb-0">💰 Financial Overview</h6>
                 </div>
                 <div class="card-body">
                     <div class="row">
                         <div class="col-md-3 text-center">
-                            <div class="metric-box">
+                            <div class="metric-box bg-success bg-opacity-10 p-3 rounded">
                                 <h4 class="text-success">QAR {{ total_revenue|floatformat:0|intcomma }}</h4>
                                 <p class="text-muted">Total Revenue</p>
                             </div>
                         </div>
                         <div class="col-md-3 text-center">
-                            <div class="metric-box">
+                            <div class="metric-box bg-warning bg-opacity-10 p-3 rounded">
                                 <h4 class="text-warning">QAR {{ total_costs|floatformat:0|intcomma }}</h4>
                                 <p class="text-muted">Total Costs</p>
                             </div>
                         </div>
                         <div class="col-md-3 text-center">
-                            <div class="metric-box">
+                            <div class="metric-box bg-info bg-opacity-10 p-3 rounded">
                                 <h4 class="text-info">QAR {{ gross_profit|floatformat:0|intcomma }}</h4>
                                 <p class="text-muted">Gross Profit</p>
                             </div>
                         </div>
                         <div class="col-md-3 text-center">
-                            <div class="metric-box">
+                            <div class="metric-box bg-primary bg-opacity-10 p-3 rounded">
                                 <h4 class="text-primary">{{ gross_margin|floatformat:1 }}%</h4>
                                 <p class="text-muted">Gross Margin</p>
                             </div>
@@ -256,15 +386,15 @@
     </div>
 
     <!-- Invoices Table -->
-    <div class="card shadow mb-4" style="background: var(--section-bg); border: var(--border);">
-        <div class="card-header py-3">
-            <h6 class="m-0 font-weight-bold text-gradient">📄 Invoice Report</h6>
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 bg-gradient-primary text-white">
+            <h6 class="m-0 font-weight-bold">📄 Invoice Report</h6>
         </div>
         <div class="card-body">
             {% if invoices %}
             <div class="table-responsive">
-                <table class="table table-dark table-striped">
-                    <thead>
+                <table class="table table-striped table-hover">
+                    <thead class="table-dark">
                         <tr>
                             <th>Invoice #</th>
                             <th>Customer</th>
@@ -293,7 +423,7 @@
                             </td>
                             <td>
                                 <a href="{% url 'admin:portal_invoice_change' invoice.id %}" 
-                                   class="btn btn-sm btn-outline-info">
+                                   class="btn btn-sm btn-outline-primary">
                                     <i class="fas fa-eye"></i>
                                 </a>
                             </td>
@@ -309,15 +439,15 @@
     </div>
 
     <!-- Purchase Orders Table -->
-    <div class="card shadow mb-4" style="background: var(--section-bg); border: var(--border);">
-        <div class="card-header py-3">
-            <h6 class="m-0 font-weight-bold text-gradient">🛒 Purchase Order Report</h6>
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 bg-gradient-primary text-white">
+            <h6 class="m-0 font-weight-bold">🛒 Purchase Order Report</h6>
         </div>
         <div class="card-body">
             {% if purchase_orders %}
             <div class="table-responsive">
-                <table class="table table-dark table-striped">
-                    <thead>
+                <table class="table table-striped table-hover">
+                    <thead class="table-dark">
                         <tr>
                             <th>PO Reference</th>
                             <th>Supplier</th>
@@ -348,7 +478,7 @@
                             </td>
                             <td>
                                 <a href="{% url 'procurement:purchase_order_detail' po.id %}" 
-                                   class="btn btn-sm btn-outline-info">
+                                   class="btn btn-sm btn-outline-primary">
                                     <i class="fas fa-eye"></i>
                                 </a>
                             </td>
@@ -364,15 +494,15 @@
     </div>
 
     <!-- Payments Table -->
-    <div class="card shadow mb-4" style="background: var(--section-bg); border: var(--border);">
-        <div class="card-header py-3">
-            <h6 class="m-0 font-weight-bold text-gradient">💰 Payment Report</h6>
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 bg-gradient-primary text-white">
+            <h6 class="m-0 font-weight-bold">💰 Payment Report</h6>
         </div>
         <div class="card-body">
             {% if payments %}
             <div class="table-responsive">
-                <table class="table table-dark table-striped">
-                    <thead>
+                <table class="table table-striped table-hover">
+                    <thead class="table-dark">
                         <tr>
                             <th>Date</th>
                             <th>PO Reference</th>
@@ -398,7 +528,7 @@
                             <td>{{ payment.reference|default:"-" }}</td>
                             <td>
                                 <a href="{% url 'procurement:payment_detail' payment.id %}" 
-                                   class="btn btn-sm btn-outline-info">
+                                   class="btn btn-sm btn-outline-primary">
                                     <i class="fas fa-eye"></i>
                                 </a>
                             </td>
@@ -414,9 +544,9 @@
     </div>
 
     <!-- Export Options -->
-    <div class="card shadow" style="background: var(--section-bg); border: var(--border);">
-        <div class="card-header py-3">
-            <h6 class="m-0 font-weight-bold text-gradient">📥 Export Options</h6>
+    <div class="card shadow">
+        <div class="card-header py-3 bg-gradient-primary text-white">
+            <h6 class="m-0 font-weight-bold">📥 Export Options</h6>
         </div>
         <div class="card-body">
             <div class="row">
@@ -441,98 +571,350 @@
 </div>
 
 <style>
-.text-gradient {
-    background: var(--gradient);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    font-weight: bold;
-}
+    /* Color Scheme */
+    .bg-gradient-primary {
+        background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+    }
+    
+    .bg-gradient-info {
+        background: linear-gradient(135deg, #17ead9 0%, #6078ea 100%);
+    }
+    
+    .bg-gradient-success {
+        background: linear-gradient(135deg, #43e695 0%, #3bb2b8 100%);
+    }
+    
+    .bg-gradient-warning {
+        background: linear-gradient(135deg, #fad961 0%, #f76b1c 100%);
+    }
+    
+    .bg-gradient-danger {
+        background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%);
+    }
+    
+    .text-gradient {
+        background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        font-weight: bold;
+    }
+    
+    /* Summary Cards */
+    .summary-card {
+        border-radius: 10px;
+        overflow: hidden;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        border: none;
+    }
+    
+    .summary-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+    }
+    
+    .summary-card .metric {
+        margin: 1rem 0;
+    }
+    
+    .summary-card .number {
+        display: block;
+        font-size: 1.8rem;
+        font-weight: bold;
+        color: inherit;
+    }
+    
+    .summary-card .label {
+        display: block;
+        font-size: 0.9rem;
+        opacity: 0.9;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    /* Filter Card */
+    .filter-card {
+        border: none;
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
+    }
+    
+    /* Table Styling */
+    .table-dark {
+        --bs-table-bg: #212529;
+        --bs-table-striped-bg: #2c3034;
+        --bs-table-hover-bg: #373b3e;
+    }
+    
+    /* Badge Styling */
+    .badge {
+        font-size: 0.75rem;
+        padding: 0.35rem 0.65rem;
+        font-weight: 500;
+    }
+    
+    /* Form Elements */
+    .form-control, .form-select {
+        background-color: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: white;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        background-color: rgba(255, 255, 255, 0.15);
+        border-color: #2575fc;
+        box-shadow: 0 0 0 0.2rem rgba(37, 117, 252, 0.25);
+        color: white;
+    }
+    
+    .form-label {
+        color: rgba(255, 255, 255, 0.9);
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+    }
+    
+    /* Buttons */
+    .btn-primary {
+        background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+        border: none;
+    }
+    
+    .btn-secondary {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: white;
+    }
+    
+    /* Metric Box */
+    .metric-box {
+        transition: all 0.3s ease;
+    }
+    
+    .metric-box:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    /* Responsive Adjustments */
+    @media (max-width: 768px) {
+        .summary-card .number {
+            font-size: 1.5rem;
+        }
+        
+        .summary-card .label {
+            font-size: 0.8rem;
+        }
+    }
+    /* Additional style for Daily Gross Profit card */
+    .bg-gradient-secondary {
+        background: linear-gradient(135deg, #757f9a 0%, #d7dde8 100%);
+    }
+    .daily-gross-profit-card {
+        border-radius: 10px;
+        overflow: hidden;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        border: none;
+    }
+    .daily-gross-profit-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+    }
+    .daily-gross-profit-card .metric {
+        margin: 1rem 0;
+    }
+    .daily-gross-profit-card .number {
+        display: block;
+        font-size: 1.8rem;
+        font-weight: bold;
+        color: inherit;
+    }
+    .daily-gross-profit-card .label {
+        display: block;
+        font-size: 0.9rem;
+        opacity: 0.9;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
 
-.summary-card {
-    backdrop-filter: blur(12px);
-    transition: transform 0.3s ease;
-}
-
-.summary-card:hover {
-    transform: translateY(-3px);
-}
-
-.metric {
-    margin-bottom: 1rem;
-}
-
-.metric .number {
-    display: block;
-    font-size: 1.8rem;
-    font-weight: bold;
-    background: var(--gradient);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
-
-.metric .label {
-    display: block;
-    font-size: 0.9rem;
-    color: rgba(255, 255, 255, 0.7);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-
-.form-control, .form-select {
-    background-color: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    color: white;
-}
-
-.form-control:focus, .form-select:focus {
-    background-color: rgba(255, 255, 255, 0.15);
-    border-color: #4834d4;
-    box-shadow: 0 0 0 0.2rem rgba(72, 52, 212, 0.25);
-    color: white;
-}
-
-.form-control::placeholder {
-    color: rgba(255, 255, 255, 0.6);
-}
-
-.form-label {
-    color: rgba(255, 255, 255, 0.9);
-    font-weight: 500;
-    margin-bottom: 0.5rem;
-}
-
-.btn-primary {
-    background: var(--gradient);
-    border: none;
-}
-
-.btn-secondary {
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    color: white;
-}
-
-.table-dark {
-    --bs-table-bg: transparent;
-}
-
-.table-dark th {
-    background: rgba(255, 255, 255, 0.1);
-    border-color: rgba(255, 255, 255, 0.1);
-}
-
-.table-dark td {
-    border-color: rgba(255, 255, 255, 0.05);
-}
-
-.table-striped > tbody > tr:nth-of-type(odd) > td {
-    background-color: rgba(255, 255, 255, 0.02);
-}
+    /* Tab Navigation */
+    .nav-tabs .nav-link {
+        color: #6c757d;
+        border: 1px solid transparent;
+        border-bottom: none;
+    }
+    
+    .nav-tabs .nav-link.active {
+        color: #495057;
+        background-color: #fff;
+        border-color: #dee2e6 #dee2e6 #fff;
+        font-weight: 600;
+    }
+    
+    .nav-tabs .nav-link:hover:not(.active) {
+        border-color: transparent;
+        color: #0d6efd;
+    }
+    
+    .table-active {
+        background-color: rgba(0, 0, 0, 0.05) !important;
+    }
+    .tab-pane {
+        transition: opacity 0.3s ease;
+    }
+    .tab-pane.fade {
+        opacity: 0;
+    }
+    .tab-pane.show.active {
+        opacity: 1;
+    }
+    /* Export Button */
+    .export-btn {
+        background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+        border: none;
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 0.5rem;
+        cursor: pointer;
+        transition: background 0.3s ease;
+    }
+    .export-btn:hover {
+        background: linear-gradient(135deg, #6a11cb 0%, #1e5bbf 100%);
+    }
+    .export-btn i {
+        margin-right: 0.5rem;
+    }   
 </style>
 
 <script>
+// Enhanced Date Filter Handling with proper parameter names
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize date pickers with default ranges if empty
+    const today = new Date();
+    const oneMonthAgo = new Date();
+    oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+    
+    const formatDate = (date) => {
+        return date.toISOString().split('T')[0];
+    };
+    
+    const dateFrom = document.getElementById('date_from');
+    const dateTo = document.getElementById('date_to');
+    
+    if (!dateFrom.value) {
+        dateFrom.value = formatDate(oneMonthAgo);
+    }
+    
+    if (!dateTo.value) {
+        dateTo.value = formatDate(today);
+    }
+
+    // Ensure the form submits with the correct date parameters
+    document.getElementById('reportFilterForm').addEventListener('submit', function(e) {
+        // Validate date range
+        if (dateFrom.value && dateTo.value) {
+            const start = new Date(dateFrom.value);
+            const end = new Date(dateTo.value);
+            
+            if (start > end) {
+                alert('End date must be after start date');
+                e.preventDefault();
+                return;
+            }
+        }
+        
+        // Ensure dates are properly formatted for backend
+        if (dateFrom.value) {
+            dateFrom.value = formatDate(new Date(dateFrom.value));
+        }
+        if (dateTo.value) {
+            dateTo.value = formatDate(new Date(dateTo.value));
+        }
+    });
+});
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize date pickers with default ranges if empty
+    const today = new Date();
+    const oneMonthAgo = new Date();
+    oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+    
+    const formatDate = (date) => {
+        return date.toISOString().split('T')[0];
+    };
+    
+    const startDate = document.getElementById('start_date');
+    const endDate = document.getElementById('end_date');
+    
+    if (!startDate.value) {
+        startDate.value = formatDate(oneMonthAgo);
+    }
+    
+    if (!endDate.value) {
+        endDate.value = formatDate(today);
+    }
+
+// Date Filter Validation
+document.getElementById('reportFilterForm').addEventListener('submit', function(e) {
+    const startDate = document.getElementById('start_date').value;
+    const endDate = document.getElementById('end_date').value;
+    
+    if (startDate && endDate && new Date(startDate) > new Date(endDate)) {
+        alert('End date must be after start date');
+        e.preventDefault();
+    }
+});
+
+
+// Initialize date pickers with default ranges if empty
+document.addEventListener('DOMContentLoaded', function() {
+    const today = new Date();
+    const oneMonthAgo = new Date();
+    oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+    
+    const formatDate = (date) => {
+        return date.toISOString().split('T')[0];
+    };
+    
+    const startDate = document.getElementById('start_date');
+    const endDate = document.getElementById('end_date');
+    
+    if (!startDate.value) {
+        startDate.value = formatDate(oneMonthAgo);
+    }
+    
+    if (!endDate.value) {
+        endDate.value = formatDate(today);
+    }
+});
+
+// Add this to your existing JavaScript
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize tabs if not already done
+    if (typeof bootstrap !== 'undefined' && bootstrap.Tab) {
+        var tabEls = document.querySelectorAll('button[data-bs-toggle="tab"]');
+        tabEls.forEach(function(tabEl) {
+            new bootstrap.Tab(tabEl);
+        });
+    }
+    
+    // You might want to preserve the active tab when filters change
+    const urlParams = new URLSearchParams(window.location.search);
+    const activeTab = urlParams.get('tab');
+    if (activeTab) {
+        const tab = new bootstrap.Tab(document.querySelector(`#${activeTab}-tab`));
+        tab.show();
+    }
+    
+    // Update URL when tabs change
+    document.querySelectorAll('button[data-bs-toggle="tab"]').forEach(tab => {
+        tab.addEventListener('click', function() {
+            const tabId = this.getAttribute('id').replace('-tab', '');
+            const url = new URL(window.location);
+            url.searchParams.set('tab', tabId);
+            window.history.replaceState(null, '', url);
+        });
+    });
+});
+// Export to CSV Function
 function exportToCSV(type) {
     // Get current filter parameters
     const urlParams = new URLSearchParams(window.location.search);
@@ -544,92 +926,4 @@ function exportToCSV(type) {
     window.open(downloadUrl, '_blank');
 }
 </script>
-
-<style>
-.metric-box {
-    padding: 1rem;
-    margin: 0.5rem 0;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 8px;
-    backdrop-filter: blur(10px);
-}
-
-.metric-box h4 {
-    margin-bottom: 0.5rem;
-    font-weight: bold;
-}
-
-.text-gradient {
-    background: linear-gradient(135deg, #ff3366, #33ccff);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    font-weight: 600;
-}
-
-.summary-card {
-    backdrop-filter: blur(12px);
-    transition: transform 0.3s ease;
-}
-
-.summary-card:hover {
-    transform: translateY(-3px);
-}
-
-.summary-card .metric {
-    margin: 0.75rem 0;
-}
-
-.summary-card .number {
-    display: block;
-    font-size: 1.5rem;
-    font-weight: bold;
-    color: #fff;
-}
-
-.summary-card .label {
-    display: block;
-    font-size: 0.9rem;
-    color: rgba(255, 255, 255, 0.7);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.table-dark {
-    background: rgba(0, 0, 0, 0.3);
-}
-
-.table-dark th {
-    border-color: rgba(255, 255, 255, 0.1);
-    background: rgba(255, 255, 255, 0.1);
-}
-
-.table-dark td {
-    border-color: rgba(255, 255, 255, 0.05);
-}
-
-.card {
-    backdrop-filter: blur(12px);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-}
-
-.badge {
-    font-size: 0.75rem;
-    padding: 0.375rem 0.75rem;
-}
-
-@media (max-width: 768px) {
-    .metric-box h4 {
-        font-size: 1.2rem;
-    }
-    
-    .summary-card .number {
-        font-size: 1.2rem;
-    }
-    
-    .table-responsive {
-        font-size: 0.85rem;
-    }
-}
-</style>
 {% endblock %}

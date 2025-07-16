@@ -55,8 +55,7 @@
                 <div class="search-result-item" data-product-id="${product.id}" data-product-data='${JSON.stringify(product)}'>
                     <div class="search-result-name">${product.name}</div>
                     <div class="search-result-details">
-                        <span class="search-result-price">Selling: QAR ${product.unit_price}</span> |
-                        <span class="search-result-cost">Cost: QAR ${product.cost_price || 'N/A'}</span> |
+                        <span class="search-result-price">QAR ${product.unit_price}</span> |
                         <span class="search-result-stock ${stockClass}">${product.stock_text}</span> |
                         <span>${product.category}</span>
                         ${product.barcode ? `| Barcode: ${product.barcode}` : ''}
@@ -125,8 +124,7 @@
             <div class="product-details">
                 <div class="product-name">${productData.name}</div>
                 <div class="product-meta">
-                    Selling: QAR ${productData.unit_price} | 
-                    Cost: QAR ${productData.cost_price || 'N/A'} |
+                    Price: QAR ${productData.unit_price} | 
                     <span class="${stockClass}">${productData.stock_text}</span> | 
                     Category: ${productData.category}
                     ${productData.barcode ? `| Barcode: ${productData.barcode}` : ''}

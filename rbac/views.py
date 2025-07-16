@@ -11,6 +11,178 @@ from django.db.models import Q
 from .models import SiteRole, SiteUserProfile, SitePermissionLog
 from .forms import SiteUserProfileForm, SiteRoleForm
 import json
+from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth import login
+from django.views.generic import CreateView
+from django.urls import reverse_lazy, reverse
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
+from django.core.mail import send_mail
+from django.template.loader import render_to_string
+from django.contrib.sites.shortcuts import get_current_site
+from .models import EmailVerification
+from django.utils.crypto import get_random_string
+
+
+
+# Basic function-based view
+def register(request):
+    if request.method == 'POST':
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            login(request, user)
+            messages.success(request, 'Registration successful!')
+            return redirect('portal:dashboard')
+    else:
+        form = UserCreationForm()
+    return render(request, 'rbac/register.html', {'form': form})
+
+
+class RegistrationView(CreateView):
+    form_class = UserCreationForm
+    template_name = 'rbac/register.html'
+    success_url = reverse_lazy('registration_pending')
+
+    def form_valid(self, form):
+        user = form.save(commit=False)
+        user.is_active = False  # User can't login until verified
+        user.save()
+        
+        # Create and send verification
+        verification = EmailVerification.create_verification(user)
+        self.send_verification_email(user, verification.token)
+        
+        messages.info(self.request, 
+                     'Please check your email to verify your account. '
+                     'The link will expire in 24 hours.')
+        return super().form_valid(form)
+
+    def send_verification_email(self, user, token):
+        current_site = get_current_site(self.request)
+        verification_url = reverse('verify_email', kwargs={'token': token})
+        full_url = f"https://{current_site.domain}{verification_url}"
+        
+        subject = 'Verify your Trendz Portal account'
+        message = render_to_string('rbac/emails/verification_email.html', {
+            'user': user,
+            'verification_url': full_url,
+            'expiry_hours': 24
+        })
+        
+        send_mail(
+            subject,
+            message,
+            None,  # Uses DEFAULT_FROM_EMAIL
+            [user.email],
+            html_message=message
+        )
+
+
+
+
+def verify_email(request, token):
+    verification = get_object_or_404(EmailVerification, token=token)
+    
+    if verification.verified:
+        messages.warning(request, 'This email has already been verified.')
+    elif verification.is_expired():
+        messages.error(request, 'The verification link has expired. Please request a new one.')
+    else:
+        user = verification.user
+        user.is_active = True
+        user.save()
+        verification.verified = True
+        verification.save()
+        login(request, user)
+        messages.success(request, 'Email successfully verified! You are now logged in.')
+        return redirect('portal:dashboard')
+    
+    return redirect('login')
+
+def registration_pending(request):
+    return render(request, 'rbac/registration_pending.html')
+
+# In views.py
+from django.views.generic import View
+from django.contrib.auth.mixins import LoginRequiredMixin
+
+class ResendVerificationEmail(LoginRequiredMixin, View):
+    def get(self, request):
+        if request.user.is_verified:  # Add this property to your User model
+            messages.warning(request, 'Your email is already verified.')
+            return redirect('portal:dashboard')
+            
+        verification, created = EmailVerification.objects.get_or_create(
+            user=request.user,
+            defaults={'token': get_random_string(length=64)}
+        )
+        
+        if not created and verification.is_expired():
+            verification.token = get_random_string(length=64)
+            verification.created_at = timezone.now()
+            verification.save()
+        
+        self.send_verification_email(request.user, verification.token)
+        messages.info(request, 'New verification email sent. Please check your inbox.')
+        return redirect('registration_pending')
+    
+    def send_verification_email(self, user, token):
+        # Same implementation as in RegistrationView
+        ...
+
+'''
+# Class-based view (more robust)
+class RegistrationView(CreateView):
+    form_class = UserCreationForm
+    template_name = 'rbac/register.html'
+    success_url = reverse_lazy('portal:dashboard')
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        login(self.request, self.object)  # Auto-login after registration
+        messages.success(self.request, 'Registration successful!')
+        return response
+    
+    def validate_passwords(self, form):
+        password1 = form.cleaned_data.get('password1')
+        password2 = form.cleaned_data.get('password2')
+        
+        if password1 and password2 and password1 != password2:
+            form.add_error('password2', "Passwords don't match")
+            return False
+        
+        try:
+            validate_password(password1, self.request.user)
+        except ValidationError as e:
+            form.add_error('password1', e)
+            return False
+            
+        return True
+    
+    def form_valid_with_email_verification(self, form):
+        user = form.save(commit=False)
+        user.is_active = False  # Deactivate until email verification
+        user.save()
+        
+        # Send verification email
+        self.send_verification_email(user)
+        messages.info(self.request, 'Please check your email to verify your account')
+        return redirect('registration_pending')
+
+    def send_verification_email(self, user):
+        subject = 'Verify your Trendz Portal account'
+        message = render_to_string('rbac/verification_email.txt', {
+            'user': user,
+            'verification_link': self.generate_verification_link(user)
+        })
+        send_mail(subject, message, 'noreply@trendzqtr.com', [user.email])
+    
+    def form_valid(self, form):
+        if not self.validate_passwords(form):
+            return self.form_invalid(form)
+        return super().form_valid(form)
+'''
 
 def rbac_permission_required(permission_name):
     """Decorator to check RBAC permissions"""
@@ -257,3 +429,5 @@ def permission_logs(request):
     }
     
     return render(request, 'rbac/permission_logs.html', context)
+
+

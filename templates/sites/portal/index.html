@@ -1,561 +1,178 @@
-{% extends "sites/portal/base.html" %}
+{% extends "portal/invoice_base.html" %}
 
-{% block title %}TRENDZ Trading & Services - Your IT Solutions Partner in Qatar{% endblock %}
+{% block title %}Welcome to Trendz Portal{% endblock %}
 
 {% block extra_css %}
 <style>
-    .admin-shortcut {
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        z-index: 1050;
-        background: linear-gradient(45deg, #dc3545, #fd7e14);
+    .landing-hero {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
-        padding: 12px 20px;
-        border-radius: 25px;
-        text-decoration: none;
-        font-weight: bold;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-        transition: all 0.3s ease;
-    }
-    .admin-shortcut:hover {
-        color: white;
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+        padding: 120px 0;
+        text-align: center;
     }
     
-    /* Company Profile Styles */
-    .company-hero {
-        background: linear-gradient(135deg, #336699 0%, #50b3a2 100%);
-        color: white;
-        padding: 80px 0;
-        margin-bottom: 0;
-    }
-    .company-stats {
-        background: #f8f9fa;
-        padding: 60px 0;
-    }
-    .stat-card {
-        text-align: center;
-        padding: 30px;
-        background: white;
-        border-radius: 15px;
-        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-        transition: transform 0.3s ease;
-    }
-    .stat-card:hover {
-        transform: translateY(-10px);
-    }
-    .stat-number {
-        font-size: 3rem;
-        font-weight: bold;
-        color: #336699;
-    }
-    .section-divider {
-        height: 3px;
-        background: linear-gradient(90deg, #336699, #50b3a2);
-        border: none;
-        margin: 50px 0;
-    }
-    .services-grid {
-        padding: 60px 0;
-    }
-    .service-card {
-        background: white;
-        border-radius: 15px;
-        padding: 40px 30px;
-        text-align: center;
-        box-shadow: 0 8px 30px rgba(0,0,0,0.1);
-        transition: all 0.3s ease;
-        height: 100%;
-        border: 2px solid transparent;
-    }
-    .service-card:hover {
-        transform: translateY(-10px);
-        border-color: #336699;
-        box-shadow: 0 15px 40px rgba(51, 102, 153, 0.2);
-    }
-    .service-icon {
-        font-size: 4rem;
-        color: #336699;
-        margin-bottom: 20px;
-    }
-    .about-section {
-        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-        padding: 80px 0;
-    }
-    .mission-vision {
-        background: white;
-        border-radius: 20px;
-        padding: 40px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-        margin-bottom: 30px;
-    }
-    .contact-section {
-        background: #336699;
-        color: white;
-        padding: 60px 0;
-    }
-    .contact-card {
+    .feature-card {
         background: rgba(255,255,255,0.1);
+        backdrop-filter: blur(10px);
         border-radius: 15px;
         padding: 30px;
-        backdrop-filter: blur(10px);
+        height: 100%;
+        transition: transform 0.3s ease;
         border: 1px solid rgba(255,255,255,0.2);
     }
-    .timeline {
-        position: relative;
-        padding: 20px 0;
+    
+    .feature-card:hover {
+        transform: translateY(-10px);
+        background: rgba(255,255,255,0.15);
     }
-    .timeline::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 50%;
-        width: 3px;
-        height: 100%;
-        background: #336699;
-        transform: translateX(-50%);
+    
+    .feature-icon {
+        font-size: 3rem;
+        margin-bottom: 20px;
+        color: #fff;
     }
-    .timeline-item {
-        position: relative;
-        margin: 30px 0;
-        padding: 0 50px;
+    
+    .auth-section {
+        background: rgba(0,0,0,0.1);
+        padding: 60px 0;
+        border-radius: 15px;
     }
-    .timeline-item:nth-child(odd) {
-        text-align: right;
-        padding-right: 50%;
-    }
-    .timeline-item:nth-child(even) {
-        text-align: left;
-        padding-left: 50%;
-    }
-    .timeline-dot {
-        position: absolute;
-        top: 0;
-        left: 50%;
-        width: 20px;
-        height: 20px;
-        background: #50b3a2;
-        border-radius: 50%;
-        transform: translateX(-50%);
-        border: 4px solid white;
-        box-shadow: 0 0 0 4px #336699;
-    }
-    .cta-section {
-        background: linear-gradient(135deg, #50b3a2 0%, #336699 100%);
-        color: white;
-        padding: 80px 0;
-        text-align: center;
-    }
-    .btn-cta {
-        background: white;
-        color: #336699;
-        border: none;
-        padding: 15px 40px;
+    
+    .cta-btn {
+        padding: 12px 30px;
         border-radius: 50px;
         font-weight: bold;
-        font-size: 1.1rem;
         transition: all 0.3s ease;
     }
-    .btn-cta:hover {
-        color: #336699;
-        transform: translateY(-3px);
-        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-    }
+    
     @media (max-width: 768px) {
-        .admin-shortcut {
-            position: relative;
-            top: auto;
-            right: auto;
-            margin: 10px auto;
-            display: block;
-            width: fit-content;
-        }
-        .company-hero {
-            padding: 40px 0;
-        }
-        .timeline::before {
-            left: 30px;
-        }
-        .timeline-item {
-            padding-left: 60px !important;
-            padding-right: 20px !important;
-            text-align: left !important;
-        }
-        .timeline-dot {
-            left: 30px;
-        }
-        .stat-card {
-            margin-bottom: 20px;
-        }
-        .service-card {
-            margin-bottom: 30px;
+        .landing-hero {
+            padding: 80px 0;
         }
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<!-- Admin Portal Shortcut (Floating Button) -->
-<a href="{% url 'admin:index' %}" class="admin-shortcut" title="Access Admin Portal">
-    <i class="fas fa-cog"></i> Admin Portal
-</a>
-
-<!-- Company Hero Section -->
-<section class="company-hero">
+<!-- Hero Section -->
+<section class="landing-hero">
     <div class="container">
-        <div class="row align-items-center">
-            <div class="col-lg-8">
-                <h1 class="display-3 mb-4">TRENDZ Trading & Services</h1>
-                <p class="lead mb-4">Your Trusted IT Solutions Partner in Qatar</p>
-                <p class="fs-5 mb-4">Leading provider of comprehensive IT hardware, software solutions, and professional services tailored to meet the evolving needs of businesses across Qatar.</p>
-                <div class="d-flex gap-3 flex-wrap">
-                    <a href="#services" class="btn btn-light btn-lg">
-                        <i class="fas fa-rocket"></i> Our Services
-                    </a>
-                    <a href="{% url 'admin:index' %}" class="btn btn-outline-light btn-lg">
-                        <i class="fas fa-shield-alt"></i> Admin Portal
-                    </a>
-                </div>
+        <h1 class="display-3 mb-4">Welcome to Trendz Portal</h1>
+        
+        {% if user.is_authenticated %}
+            <!-- Content for logged-in users -->
+            <p class="lead mb-4">Welcome back, {{ user.username }}!</p>
+            <div class="d-flex gap-3 justify-content-center flex-wrap">
+                <a href="{% url 'portal:dashboard' %}" class="btn btn-light btn-lg cta-btn">
+                    <i class="fas fa-tachometer-alt me-2"></i>Go to Dashboard
+                </a>
+                <a href="{% url 'logout' %}" class="btn btn-outline-light btn-lg cta-btn">
+                    <i class="fas fa-sign-out-alt me-2"></i>Logout
+                </a>
             </div>
-            <div class="col-lg-4 text-center">
-                <div class="contact-card">
-                    <h4><i class="fas fa-handshake"></i> Get In Touch</h4>
-                    <p><i class="fas fa-phone"></i> +974 3051 4865</p>
-                    <p><i class="fas fa-envelope"></i> info@trendzqtr.com</p>
-                    <p><i class="fas fa-map-marker-alt"></i> Doha, Qatar</p>
-                </div>
+        {% else %}
+            <!-- Content for anonymous users -->
+            <p class="lead mb-4">Your comprehensive business management solution</p>
+            <div class="d-flex gap-3 justify-content-center flex-wrap">
+                <a href="{% url 'login' %}" class="btn btn-light btn-lg cta-btn">
+                    <i class="fas fa-sign-in-alt me-2"></i>Login
+                </a>
+                <a href="#features" class="btn btn-outline-light btn-lg cta-btn">
+                    <i class="fas fa-info-circle me-2"></i>Learn More
+                </a>
             </div>
-        </div>
+        {% endif %}
     </div>
 </section>
 
-<!-- Company Statistics -->
-<section class="company-stats">
-    <div class="container">
-        <div class="row">
-            <div class="col-md-3 mb-4">
-                <div class="stat-card">
-                    <div class="stat-number">10+</div>
-                    <h5>Years Experience</h5>
-                    <p>Serving Qatar's IT needs</p>
-                </div>
-            </div>
-            <div class="col-md-3 mb-4">
-                <div class="stat-card">
-                    <div class="stat-number">500+</div>
-                    <h5>Happy Clients</h5>
-                    <p>Trusted by businesses</p>
-                </div>
-            </div>
-            <div class="col-md-3 mb-4">
-                <div class="stat-card">
-                    <div class="stat-number">24/7</div>
-                    <h5>Support</h5>
-                    <p>Round-the-clock service</p>
-                </div>
-            </div>
-            <div class="col-md-3 mb-4">
-                <div class="stat-card">
-                    <div class="stat-number">100%</div>
-                    <h5>Satisfaction</h5>
-                    <p>Quality guaranteed</p>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- Services Section -->
-<section id="services" class="services-grid">
+<!-- Features Section -->
+<section id="features" class="py-5">
     <div class="container">
         <div class="text-center mb-5">
-            <h2 class="display-4 mb-3">Our Core Services</h2>
-            <p class="lead">Comprehensive IT solutions designed to drive your business forward</p>
-            <hr class="section-divider">
+            <h2 class="display-4 mb-3">Powerful Features</h2>
+            <p class="lead">Everything you need to manage your business efficiently</p>
         </div>
         
-        <div class="row">
-            <div class="col-lg-4 col-md-6 mb-4">
-                <div class="service-card">
-                    <div class="service-icon">
-                        <i class="fas fa-desktop"></i>
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-file-invoice-dollar"></i>
                     </div>
-                    <h4>IT Hardware Solutions</h4>
-                    <p>Complete range of computers, servers, networking equipment, and peripherals from leading global brands. Custom configurations available.</p>
-                    <ul class="list-unstyled">
-                        <li><i class="fas fa-check text-success"></i> Desktop & Laptop Computers</li>
-                        <li><i class="fas fa-check text-success"></i> Servers & Networking</li>
-                        <li><i class="fas fa-check text-success"></i> Printers & Peripherals</li>
-                        <li><i class="fas fa-check text-success"></i> Custom Configurations</li>
-                    </ul>
+                    <h3>Invoice Management</h3>
+                    <p>Create, track, and manage invoices with our comprehensive invoicing system.</p>
                 </div>
             </div>
             
-            <div class="col-lg-4 col-md-6 mb-4">
-                <div class="service-card">
-                    <div class="service-icon">
-                        <i class="fas fa-tools"></i>
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-barcode"></i>
                     </div>
-                    <h4>Professional Repair Services</h4>
-                    <p>Expert chip-level repairs for computers, laptops, and electronic devices. Quick turnaround with quality assurance.</p>
-                    <ul class="list-unstyled">
-                        <li><i class="fas fa-check text-success"></i> Chip-Level Repairs</li>
-                        <li><i class="fas fa-check text-success"></i> Laptop & Desktop Service</li>
-                        <li><i class="fas fa-check text-success"></i> Data Recovery</li>
-                        <li><i class="fas fa-check text-success"></i> Hardware Diagnostics</li>
-                    </ul>
+                    <h3>Barcode System</h3>
+                    <p>Generate and manage barcodes for your products with our advanced tools.</p>
                 </div>
             </div>
             
-            <div class="col-lg-4 col-md-6 mb-4">
-                <div class="service-card">
-                    <div class="service-icon">
-                        <i class="fas fa-cogs"></i>
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-truck"></i>
                     </div>
-                    <h4>Custom IT Solutions</h4>
-                    <p>Tailored software development and IT infrastructure solutions designed specifically for your business requirements.</p>
-                    <ul class="list-unstyled">
-                        <li><i class="fas fa-check text-success"></i> Custom Software Development</li>
-                        <li><i class="fas fa-check text-success"></i> System Integration</li>
-                        <li><i class="fas fa-check text-success"></i> Cloud Solutions</li>
-                        <li><i class="fas fa-check text-success"></i> IT Consulting</li>
-                    </ul>
+                    <h3>Procurement</h3>
+                    <p>Streamline your purchasing process with our procurement management system.</p>
                 </div>
             </div>
             
-            <div class="col-lg-4 col-md-6 mb-4">
-                <div class="service-card">
-                    <div class="service-icon">
-                        <i class="fas fa-shield-alt"></i>
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-chart-line"></i>
                     </div>
-                    <h4>Cybersecurity Solutions</h4>
-                    <p>Comprehensive security solutions to protect your business from cyber threats and ensure data integrity.</p>
-                    <ul class="list-unstyled">
-                        <li><i class="fas fa-check text-success"></i> Network Security</li>
-                        <li><i class="fas fa-check text-success"></i> Data Protection</li>
-                        <li><i class="fas fa-check text-success"></i> Security Audits</li>
-                        <li><i class="fas fa-check text-success"></i> Compliance Solutions</li>
-                    </ul>
+                    <h3>Analytics</h3>
+                    <p>Get valuable insights with our comprehensive business analytics dashboard.</p>
                 </div>
             </div>
             
-            <div class="col-lg-4 col-md-6 mb-4">
-                <div class="service-card">
-                    <div class="service-icon">
-                        <i class="fas fa-headset"></i>
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-users-cog"></i>
                     </div>
-                    <h4>Technical Support</h4>
-                    <p>24/7 technical support and maintenance services to ensure your systems run smoothly without interruption.</p>
-                    <ul class="list-unstyled">
-                        <li><i class="fas fa-check text-success"></i> 24/7 Help Desk</li>
-                        <li><i class="fas fa-check text-success"></i> Remote Support</li>
-                        <li><i class="fas fa-check text-success"></i> On-site Services</li>
-                        <li><i class="fas fa-check text-success"></i> Preventive Maintenance</li>
-                    </ul>
+                    <h3>User Management</h3>
+                    <p>Control access and permissions with our robust user management system.</p>
                 </div>
             </div>
             
-            <div class="col-lg-4 col-md-6 mb-4">
-                <div class="service-card">
-                    <div class="service-icon">
-                        <i class="fas fa-graduation-cap"></i>
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-cloud"></i>
                     </div>
-                    <h4>Training & Consulting</h4>
-                    <p>Professional training programs and IT consulting services to empower your team and optimize your technology investments.</p>
-                    <ul class="list-unstyled">
-                        <li><i class="fas fa-check text-success"></i> Staff Training</li>
-                        <li><i class="fas fa-check text-success"></i> IT Strategy Consulting</li>
-                        <li><i class="fas fa-check text-success"></i> Digital Transformation</li>
-                        <li><i class="fas fa-check text-success"></i> Technology Assessment</li>
-                    </ul>
+                    <h3>Cloud-Based</h3>
+                    <p>Access your data anytime, anywhere with our secure cloud platform.</p>
                 </div>
             </div>
         </div>
     </div>
 </section>
 
-<!-- About Section -->
-<section class="about-section">
-    <div class="container">
-        <div class="text-center mb-5">
-            <h2 class="display-4 mb-3">About TRENDZ Trading & Services</h2>
-            <p class="lead">Building the future of technology in Qatar</p>
-            <hr class="section-divider">
-        </div>
-        
-        <div class="row">
-            <div class="col-lg-6 mb-4">
-                <div class="mission-vision">
-                    <div class="text-center mb-4">
-                        <i class="fas fa-bullseye fa-3x text-primary"></i>
-                    </div>
-                    <h3 class="text-center mb-3">Our Mission</h3>
-                    <p>To provide innovative, reliable, and cost-effective IT solutions that empower businesses across Qatar to achieve their digital transformation goals while maintaining the highest standards of service excellence.</p>
-                </div>
-            </div>
-            <div class="col-lg-6 mb-4">
-                <div class="mission-vision">
-                    <div class="text-center mb-4">
-                        <i class="fas fa-eye fa-3x text-success"></i>
-                    </div>
-                    <h3 class="text-center mb-3">Our Vision</h3>
-                    <p>To be the leading IT solutions provider in Qatar, recognized for our commitment to innovation, quality, and customer satisfaction, driving technological advancement across all business sectors.</p>
-                </div>
-            </div>
-        </div>
-        
-        <div class="row mt-5">
-            <div class="col-lg-12">
-                <h3 class="text-center mb-5">Our Journey</h3>
-                <div class="timeline">
-                    <div class="timeline-item">
-                        <div class="timeline-dot"></div>
-                        <div class="card">
-                            <div class="card-body">
-                                <h5 class="card-title">Company Founded</h5>
-                                <p class="text-muted">2014</p>
-                                <p>Established as a small IT hardware supplier with a vision to serve Qatar's growing technology needs.</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="timeline-item">
-                        <div class="timeline-dot"></div>
-                        <div class="card">
-                            <div class="card-body">
-                                <h5 class="card-title">Service Expansion</h5>
-                                <p class="text-muted">2017</p>
-                                <p>Expanded services to include professional repair services and custom IT solutions.</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="timeline-item">
-                        <div class="timeline-dot"></div>
-                        <div class="card">
-                            <div class="card-body">
-                                <h5 class="card-title">Digital Transformation</h5>
-                                <p class="text-muted">2020</p>
-                                <p>Launched comprehensive digital transformation services and cloud solutions.</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="timeline-item">
-                        <div class="timeline-dot"></div>
-                        <div class="card">
-                            <div class="card-body">
-                                <h5 class="card-title">Market Leadership</h5>
-                                <p class="text-muted">2025</p>
-                                <p>Recognized as a leading IT solutions provider with 500+ satisfied clients across Qatar.</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- Core Values Section -->
+<!-- Authentication Section -->
 <section class="py-5">
     <div class="container">
-        <div class="text-center mb-5">
-            <h2 class="display-4 mb-3">Our Core Values</h2>
-            <hr class="section-divider">
-        </div>
-        <div class="row">
-            <div class="col-md-3 mb-4">
-                <div class="text-center">
-                    <i class="fas fa-handshake fa-3x text-primary mb-3"></i>
-                    <h4>Integrity</h4>
-                    <p>We conduct business with the highest ethical standards and transparency.</p>
-                </div>
-            </div>
-            <div class="col-md-3 mb-4">
-                <div class="text-center">
-                    <i class="fas fa-lightbulb fa-3x text-warning mb-3"></i>
-                    <h4>Innovation</h4>
-                    <p>We embrace cutting-edge technologies to deliver innovative solutions.</p>
-                </div>
-            </div>
-            <div class="col-md-3 mb-4">
-                <div class="text-center">
-                    <i class="fas fa-award fa-3x text-success mb-3"></i>
-                    <h4>Excellence</h4>
-                    <p>We strive for excellence in every project and service we deliver.</p>
-                </div>
-            </div>
-            <div class="col-md-3 mb-4">
-                <div class="text-center">
-                    <i class="fas fa-users fa-3x text-info mb-3"></i>
-                    <h4>Partnership</h4>
-                    <p>We build long-term partnerships based on trust and mutual success.</p>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- Contact Section -->
-<section class="contact-section">
-    <div class="container">
-        <div class="text-center mb-5">
-            <h2 class="display-4 mb-3">Get In Touch</h2>
-            <p class="lead">Ready to transform your IT infrastructure? Contact us today!</p>
-        </div>
-        
-        <div class="row">
-            <div class="col-lg-4 mb-4">
-                <div class="contact-card h-100">
-                    <div class="text-center">
-                        <i class="fas fa-map-marker-alt fa-3x mb-3"></i>
-                        <h4>Visit Us</h4>
-                        <p>Doha, Qatar<br>
-                        State of Qatar</p>
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="auth-section text-center">
+                    <h2 class="mb-4">Ready to Get Started?</h2>
+                    <p class="lead mb-4">Join hundreds of businesses using Trendz Portal to streamline their operations.</p>
+                    <div class="d-flex gap-3 justify-content-center flex-wrap">
+                        <a href="{% url 'admin:login' %}" class="btn btn-light btn-lg cta-btn">
+                            <i class="fas fa-sign-in-alt me-2"></i>Login
+                        </a>
+                        <a href="{% url 'admin:index' %}" class="btn btn-outline-light btn-lg cta-btn">
+                            <i class="fas fa-user-shield me-2"></i>Admin Portal
+                        </a>
                     </div>
-                </div>
-            </div>
-            <div class="col-lg-4 mb-4">
-                <div class="contact-card h-100">
-                    <div class="text-center">
-                        <i class="fas fa-phone fa-3x mb-3"></i>
-                        <h4>Call Us</h4>
-                        <p>+974 XXXX XXXX<br>
-                        24/7 Support Available</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-lg-4 mb-4">
-                <div class="contact-card h-100">
-                    <div class="text-center">
-                        <i class="fas fa-envelope fa-3x mb-3"></i>
-                        <h4>Email Us</h4>
-                        <p>info@trendztrading.com<br>
-                        support@trendztrading.com</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- Call to Action Section -->
-<section class="cta-section">
-    <div class="container">
-        <div class="row">
-            <div class="col-lg-8 mx-auto">
-                <h2 class="display-4 mb-4">Ready to Get Started?</h2>
-                <p class="lead mb-4">Join hundreds of satisfied clients who trust TRENDZ Trading & Services for their IT needs.</p>
-                <div class="d-flex gap-3 justify-content-center flex-wrap">
-                    <a href="#contact" class="btn btn-cta btn-lg">
-                        <i class="fas fa-phone"></i> Contact Us Today
-                    </a>
-                    <a href="/products/" class="btn btn-outline-light btn-lg">
-                        <i class="fas fa-shopping-cart"></i> Browse Products
-                    </a>
-                    <a href="{% url 'admin:index' %}" class="btn btn-outline-light btn-lg">
-                        <i class="fas fa-user-shield"></i> Admin Portal
-                    </a>
                 </div>
             </div>
         </div>
@@ -580,106 +197,25 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
-    // Add animation on scroll
-    const observerOptions = {
-        threshold: 0.1,
-        rootMargin: '0px 0px -50px 0px'
-    };
+    // Animation for feature cards
+    const featureCards = document.querySelectorAll('.feature-card');
+    featureCards.forEach(card => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(30px)';
+        card.style.transition = 'all 0.6s ease';
+    });
     
-    const observer = new IntersectionObserver(function(entries) {
+    const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
                 entry.target.style.opacity = '1';
                 entry.target.style.transform = 'translateY(0)';
             }
         });
-    }, observerOptions);
+    }, { threshold: 0.1 });
     
-    // Observe service cards and stat cards
-    document.querySelectorAll('.service-card, .stat-card, .timeline-item').forEach(card => {
-        card.style.opacity = '0';
-        card.style.transform = 'translateY(30px)';
-        card.style.transition = 'all 0.6s ease';
+    featureCards.forEach(card => {
         observer.observe(card);
-    });
-    
-    // Counter animation for statistics
-    function animateCounters() {
-        const counters = document.querySelectorAll('.stat-number');
-        
-        counters.forEach(counter => {
-            const target = parseInt(counter.textContent.replace(/[^\d]/g, ''));
-            const suffix = counter.textContent.replace(/[\d]/g, '');
-            let current = 0;
-            const increment = target / 100;
-            
-            const updateCounter = () => {
-                if (current < target) {
-                    current += increment;
-                    counter.textContent = Math.floor(current) + suffix;
-                    requestAnimationFrame(updateCounter);
-                } else {
-                    counter.textContent = target + suffix;
-                }
-            };
-            
-            // Start animation when element is visible
-            const counterObserver = new IntersectionObserver(function(entries) {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        updateCounter();
-                        counterObserver.unobserve(entry.target);
-                    }
-                });
-            });
-            
-            counterObserver.observe(counter);
-        });
-    }
-    
-    animateCounters();
-    
-    // Add hover effects to service cards
-    document.querySelectorAll('.service-card').forEach(card => {
-        card.addEventListener('mouseenter', function() {
-            this.style.transform = 'translateY(-15px) scale(1.02)';
-        });
-        
-        card.addEventListener('mouseleave', function() {
-            this.style.transform = 'translateY(0) scale(1)';
-        });
-    });
-    
-    // Back to top button
-    const backToTopButton = document.createElement('button');
-    backToTopButton.innerHTML = '<i class="fas fa-arrow-up"></i>';
-    backToTopButton.className = 'btn btn-primary rounded-circle position-fixed';
-    backToTopButton.style.cssText = `
-        bottom: 30px;
-        right: 30px;
-        width: 50px;
-        height: 50px;
-        z-index: 1000;
-        opacity: 0;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-    `;
-    
-    backToTopButton.addEventListener('click', () => {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    });
-    
-    document.body.appendChild(backToTopButton);
-    
-    // Show/hide back to top button
-    window.addEventListener('scroll', () => {
-        if (window.pageYOffset > 300) {
-            backToTopButton.style.opacity = '1';
-            backToTopButton.style.pointerEvents = 'auto';
-        } else {
-            backToTopButton.style.opacity = '0';
-            backToTopButton.style.pointerEvents = 'none';
-        }
     });
 });
 </script>

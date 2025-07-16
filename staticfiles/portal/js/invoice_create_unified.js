@@ -563,21 +563,17 @@
             });
         }
 
+        // Replace the current getCSRFTokenFromCookie() with this more robust version
         getCSRFTokenFromCookie() {
-            // Get CSRF token from cookie
-            const name = 'csrftoken';
-            let cookieValue = null;
-            if (document.cookie && document.cookie !== '') {
-                const cookies = document.cookie.split(';');
-                for (let i = 0; i < cookies.length; i++) {
-                    const cookie = cookies[i].trim();
-                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                        break;
-                    }
-                }
+            // Try multiple methods to get CSRF token
+            let token = $('[name=csrfmiddlewaretoken]').val(); // Form input
+            if (!token) token = $('meta[name=csrf-token]').attr('content'); // Meta tag
+            if (!token) { // Cookie fallback
+                const cookieValue = document.cookie.match('(^|;)\\s*csrftoken\\s*=\\s*([^;]+)');
+                token = cookieValue ? cookieValue.pop() : '';
             }
-            return cookieValue;
+            console.log('CSRF Token:', token ? 'Found' : 'MISSING - This will cause 403 errors');
+            return token;
         }
 
         handleSubmissionSuccess(response) {

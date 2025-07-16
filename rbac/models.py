@@ -3,6 +3,32 @@ from django.db import models
 from django.contrib.auth.models import User, Group, Permission
 from django.contrib.sites.models import Site
 from django.utils import timezone
+from django.utils.crypto import get_random_string
+# In your custom user model or rbac/models.py
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
+
+def user_is_verified(self):
+    if hasattr(self, 'emailverification'):
+        return self.emailverification.verified
+    return False
+
+User.add_to_class('is_verified', property(user_is_verified))
+
+class EmailVerification(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    token = models.CharField(max_length=64, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    verified = models.BooleanField(default=False)
+
+    @classmethod
+    def create_verification(cls, user):
+        token = get_random_string(length=64)
+        return cls.objects.create(user=user, token=token)
+    
+    def is_expired(self):
+        return (timezone.now() - self.created_at).days > 1
 
 # Multi-tenant manager for site-based filtering
 class SiteManager(models.Manager):
@@ -155,3 +181,5 @@ class SitePermissionLog(models.Model):
     
     def __str__(self):
         return f"{self.user.username} - {self.action} @ {self.site.domain}"
+
+

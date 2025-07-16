@@ -4,8 +4,17 @@ from django.contrib import admin
 from django.urls import path, include
 from portal import barcode_views, ajax_views
 from django.shortcuts import redirect
+from django.contrib.auth import views as auth_views
+from django.views.generic import TemplateView
 
 urlpatterns = [
+    path('', TemplateView.as_view(template_name='sites/portal/index.html'), name='landing'),
+    # Authentication URLs
+    path('accounts/login/', auth_views.LoginView.as_view(template_name='registration/login.html'), name='login'),
+    path('accounts/logout/', auth_views.LogoutView.as_view(template_name='registration/logged_out.html'), name='logout'),
+    #path('accounts/registration/', auth_views.RegistrationView.as_view(template_name='registration/registration.html'), name='registration'),
+    #path('accounts/password_change/', auth_views.PasswordChangeView.as_view(template_name='registration/password_change_form.html'), name='password_change'),
+
     # Barcode admin actions (must come BEFORE admin URLs to avoid catch-all)
     path('admin/barcode/', lambda request: redirect('barcode_generator_dashboard'), name='barcode_admin_redirect'),
     path('admin/barcode/dashboard/', barcode_views.barcode_generator_dashboard, name='barcode_generator_dashboard'),
@@ -24,7 +33,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     
     # App URLs
-    path('', include('portal.urls')),  # Portal (main app) - root level
+    path('portal/', include('portal.urls')),  # Portal (main app) - root level
     path('rbac/', include('rbac.urls')),  # RBAC (Role-Based Access Control) app
     path('finance/', include('finance.urls')),  # Finance app
     path('procurement/', include('procurement.urls')),  # Procurement app

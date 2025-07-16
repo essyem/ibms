@@ -1,6 +1,6 @@
 # models.py
 from datetime import timezone
-from django.db import models
+from django.db import models, transaction
 from django.contrib.auth.models import User, Group, Permission
 from django.contrib.sites.models import Site
 from django.core.validators import MinValueValidator
@@ -189,46 +189,38 @@ class Invoice(SiteModel):
         help_text="Description of other payment method"
     )
 
+    
+
     def save(self, *args, **kwargs):
-        # Assign walk-in customer if missing
-        if not self.customer:
-            self.customer, _ = Customer.objects.get_or_create(
-                full_name="Walk-in Customer",
-                defaults={'phone': ''}
-            )
-
-        # Generate improved invoice number if needed
         if not self.invoice_number:
-            from django.utils import timezone
-            import random
+            # Define date_part at the start
+            date_part = timezone.now().strftime('%Y%m%d')  # YYYYMMDD format
+        
+            try:
+                with transaction.atomic():
+                    # Get the highest invoice number for today
+                    today_invoices = Invoice.objects.filter(
+                        invoice_number__startswith=date_part
+                    ).order_by('-invoice_number')
+                
+                    if today_invoices.exists():
+                        last_num = int(today_invoices.first().invoice_number[-2:])  # Get last 2 digits
+                        next_num = last_num + 1
+                    else:
+                        next_num = 1
+                
+                    # Ensure we don't exceed 99 invoices per day
+                    if next_num > 99:
+                        raise ValueError("Maximum daily invoice limit (99) reached")
+                
+                    self.invoice_number = f"{date_part}{next_num:02d}"
+                
+            except Exception as e:
+                # Fallback mechanism - ensure date_part is available
+                fallback_num = random.randint(1, 99)
+                self.invoice_number = f"{date_part}{fallback_num:02d}F"  # F for fallback
+                print(f"⚠️ Used fallback invoice number: {self.invoice_number}")
             
-            now = timezone.now()
-            # Format: YYMMDD + 3-digit hex (000-FFF)
-            date_part = now.strftime('%y%m%d')  # e.g., "250704" for July 4, 2025
-            
-            # Get last invoice for today to increment hex counter
-            today_invoices = Invoice.objects.filter(
-                date=now.date(),
-                invoice_number__startswith=date_part
-            ).order_by('-invoice_number')
-            
-            if today_invoices.exists():
-                # Extract hex part and increment
-                last_invoice = today_invoices.first()
-                try:
-                    hex_part = last_invoice.invoice_number[-3:]  # Last 3 characters
-                    next_num = int(hex_part, 16) + 1  # Convert from hex to int and increment
-                    if next_num > 0xFFF:  # Reset if exceeds 3-digit hex
-                        next_num = 0
-                except (ValueError, IndexError):
-                    next_num = 1
-            else:
-                next_num = 1
-            
-            # Format as 3-digit hex (uppercase)
-            hex_suffix = f"{next_num:03X}"
-            self.invoice_number = f"{date_part}{hex_suffix}"
-
         super().save(*args, **kwargs)
         self.update_totals()
 
@@ -264,13 +256,21 @@ class Invoice(SiteModel):
     def __str__(self):
         return f"Invoice #{self.invoice_number} - {self.customer}"
 
-    # Set default customer for existing invoices
-    # (This logic should be run outside the model class, e.g., in a migration or management command)
-    # default_customer, _ = Customer.objects.get_or_create(
-    #     full_name="Walk-in Customer",
-    #     defaults={'phone': ''}
-    # )
-    # Invoice.objects.filter(customer__isnull=True).update(customer=default_customer)
+    def clean(self):
+        if self.invoice_number:
+            if len(self.invoice_number) not in (10, 11):  # 10 for normal, 11 for fallback (with 'F')
+                raise ValidationError("Invoice number must be 10 digits (YYYYMMDDNN)")
+            if not self.invoice_number[:8].isdigit():
+                raise ValidationError("First 8 characters must be digits (YYYYMMDD)")
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['invoice_number'],
+                name='unique_invoice_number'
+            )
+        ]
+   
 
 class InvoiceItem(SiteModel):
     invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE, related_name='items')
@@ -449,15 +449,5 @@ class ProductEnquiry(SiteModel):
                 ['sales@trendzqtr.com'],
                 fail_silently=True,
             )
-
-# class Review(SiteModel):
-#     product = models.ForeignKey(Product, on_delete=models.CASCADE)
-#     user = models.ForeignKey(User, on_delete=models.CASCADE)
-#     rating = models.IntegerField(choices=[(i, i) for i in range(1, 6)])
-#     comment = models.TextField()
-#     created_at = models.DateTimeField(auto_now_add=True)
-#     
-#     class Meta:
-#         unique_together = ('product', 'user')
 
 
