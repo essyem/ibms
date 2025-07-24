@@ -18,14 +18,15 @@ from django.template.loader import get_template
 from django.http import HttpResponse
 from io import BytesIO
 import uuid
-from django.db.models import Sum
-from django.db.models import Value, CharField
+from django.db.models import Sum, Value, CharField
 from django.db.models.functions import Concat
 from portal.forms import InvoiceItemForm
 from xhtml2pdf import pisa
 from django.db import models
 from django.contrib.sites.shortcuts import get_current_site
 from . import barcode_views
+from django.contrib.admin.views.decorators import staff_member_required
+from .resources import ProductResource
 
 # Admin integration for barcode functionality
 class BarcodeAdminMixin:
@@ -236,7 +237,7 @@ class ProductResource(resources.ModelResource):
 
     class Meta:
         model = Product
-        fields = ('id', 'name', 'category', 'sku', 'price', 'stock', 'warranty_period', 'is_active')
+        fields = ('id', 'name', 'category', 'sku', 'cost_price', 'unit_price', 'stock', 'warranty_period', 'is_active')
         export_order = fields
         skip_unchanged = True
         report_skipped = True
@@ -281,7 +282,7 @@ try:
     class ProductResourceExport(resources.ModelResource):
         class Meta:
             model = Product
-            fields = ('id', 'name', 'category__name', 'sku', 'unit_price', 'stock', 'warranty_period')
+            fields = ('id', 'name', 'category__name', 'sku', 'cost_price', 'unit_price', 'stock', 'warranty_period')
 
 except ImportError:
     ImportExportModelAdmin = admin.ModelAdmin
@@ -447,9 +448,7 @@ class CategoryAdmin(admin.ModelAdmin):
     description_short.short_description = "Description"
 
 
-from django.urls import path
-from django.contrib.admin.views.decorators import staff_member_required
-from . import barcode_views
+
 
 
 

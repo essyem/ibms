@@ -8,7 +8,7 @@ from django.contrib.auth import views as auth_views
 from django.views.generic import TemplateView
 
 urlpatterns = [
-    path('', TemplateView.as_view(template_name='sites/portal/index.html'), name='landing'),
+    path('', TemplateView.as_view(template_name='portal/index.html'), name='index'),
     # Authentication URLs
     path('accounts/login/', auth_views.LoginView.as_view(template_name='registration/login.html'), name='login'),
     path('accounts/logout/', auth_views.LogoutView.as_view(template_name='registration/logged_out.html'), name='logout'),
@@ -33,7 +33,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     
     # App URLs
-    path('portal/', include('portal.urls')),  # Portal (main app) - root level
+    path('', include('portal.urls')),  # Portal (main app) - root level
     path('rbac/', include('rbac.urls')),  # RBAC (Role-Based Access Control) app
     path('finance/', include('finance.urls')),  # Finance app
     path('procurement/', include('procurement.urls')),  # Procurement app

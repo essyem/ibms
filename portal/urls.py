@@ -13,7 +13,7 @@ app_name = 'portal'
 
 urlpatterns = [
     # Main portal pages
-    #path('', views.index, name='home'),
+    path('', views.index, name='index'),
     path('dashboard/', dashboard_view, name='dashboard'),
     path('reports/', report_view, name='reports'),
     path('api/analytics/', analytics_api, name='analytics_api'),
