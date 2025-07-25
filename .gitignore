@@ -1,6 +1,65 @@
+# Django
 */settings.py
 *.pyc
 __pycache__/
-*/settings.py
-*.pyc
-__pycache__/
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Static files (regenerated)
+staticfiles/
+media/
+
+# Django collected static files (but allow source static files)
+/staticfiles/
+/media/
+
+# Backup and temporary files
+*.bak
+*.backup
+*_backup.*
+*_bak.*
+*_clean.*
+*.dump
+*.gz
+*.tar.gz
+media_backup.tar.gz
+full_backup.dump
+
+# Test files (except proper test directories)
+test_*.py
+test_*.pdf
+test_*.html
+
+# Debug files
+debug_*.py
+*debug*.py
+
+# Logs
+logs/
+*.log
+
+# Environment files
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+
+# Import directory
+import/
+
+# PDF outputs
+*.pdf
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
