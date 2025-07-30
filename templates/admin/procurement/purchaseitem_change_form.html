@@ -1,0 +1,57 @@
+{% extends "admin/change_form.html" %}
+{% load static %}
+
+{% block admin_change_form_document_ready %}
+    {{ block.super }}
+    <script type="text/javascript" src="{% static 'admin/js/procurement-product-search.js' %}"></script>
+    <style>
+        .field-product .select2-container {
+            min-width: 300px;
+        }
+        
+        .field-product .help {
+            color: #666;
+            font-size: 11px;
+            margin-top: 2px;
+        }
+        
+        .purchase-item-help {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 10px;
+            margin-bottom: 15px;
+            font-size: 13px;
+        }
+        
+        .purchase-item-help h4 {
+            margin-top: 0;
+            color: #495057;
+        }
+        
+        .purchase-item-help ul {
+            margin-bottom: 0;
+        }
+        
+        .purchase-item-help li {
+            margin-bottom: 5px;
+        }
+        
+        .field-product input[type="text"] {
+            width: 100%;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <div class="purchase-item-help">
+        <h4>Product Search Tips:</h4>
+        <ul>
+            <li>🔍 <strong>Enhanced Search:</strong> Search for products using name, SKU, barcode, or category name</li>
+            <li>🚫 <strong>Duplicate Check:</strong> System prevents adding duplicate products to the same purchase order</li>
+            <li>💰 <strong>Smart Pricing:</strong> Unit cost automatically defaults to the product's cost price</li>
+            <li>⚡ <strong>Quick Selection:</strong> Use autocomplete for faster product selection</li>
+        </ul>
+    </div>
+    {{ block.super }}
+{% endblock %}

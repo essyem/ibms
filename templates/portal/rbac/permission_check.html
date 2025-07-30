@@ -1,0 +1,6 @@
+{% comment %}
+Template for permission-based content display
+{% endcomment %}
+{% if has_permission %}
+    {{ content }}
+{% endif %}

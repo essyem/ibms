@@ -1,17 +1,90 @@
 <!-- templates/portal/barcode_scanner.html -->
 {% extends 'portal/base.html' %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<style>
+    .text-sm {
+        font-size: 0.875rem;
+    }
+    
+    .scanner-container {
+        position: relative;
+        background: #f8f9fa;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    
+    #barcode-scanner {
+        width: 100%;
+        height: 300px;
+        object-fit: cover;
+        border-radius: 8px;
+    }
+    
+    .product-info-card {
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        transition: transform 0.2s ease;
+    }
+    
+    .product-info-card:hover {
+        transform: translateY(-2px);
+    }
+    
+    .spinner-border-sm {
+        width: 1rem;
+        height: 1rem;
+    }
+    
+    .badge {
+        font-size: 0.75rem;
+    }
+    
+    .border {
+        border-color: #dee2e6 !important;
+    }
+    
+    .card-body .row .border {
+        background-color: #fafafa;
+    }
+    
+    @media (max-width: 768px) {
+        .d-md-flex {
+            flex-direction: column;
+        }
+        
+        .d-md-flex .btn {
+            margin-bottom: 0.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container mt-4">
-    <h2>Barcode Scanner</h2>
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="text-primary"><i class="fas fa-barcode"></i> Barcode Scanner</h2>
+            <p class="text-muted">Scan product barcodes to instantly view detailed product information, pricing, and stock levels.</p>
+        </div>
+    </div>
     
     <div class="row">
         <div class="col-md-6">
             <div class="card">
                 <div class="card-body">
-                    <video id="barcode-scanner" width="100%" style="border: 1px solid #ddd;"></video>
-                    <button id="start-scan" class="btn btn-primary mt-2">Start Scanner</button>
-                    <button id="stop-scan" class="btn btn-danger mt-2" disabled>Stop Scanner</button>
+                    <h5 class="card-title mb-3"><i class="fas fa-camera"></i> Camera Scanner</h5>
+                    <div class="scanner-container mb-3">
+                        <video id="barcode-scanner"></video>
+                    </div>
+                    <div class="d-grid gap-2 d-md-flex">
+                        <button id="start-scan" class="btn btn-primary">
+                            <i class="fas fa-play"></i> Start Scanner
+                        </button>
+                        <button id="stop-scan" class="btn btn-danger" disabled>
+                            <i class="fas fa-stop"></i> Stop Scanner
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -19,14 +92,20 @@
         <div class="col-md-6">
             <div class="card">
                 <div class="card-body">
-                    <h5>Or Enter Barcode Manually</h5>
+                    <h5 class="card-title mb-3"><i class="fas fa-keyboard"></i> Manual Entry</h5>
                     <div class="input-group mb-3">
-                        <input type="text" id="manual-barcode" class="form-control" placeholder="Enter barcode">
-                        <button id="manual-submit" class="btn btn-secondary">Submit</button>
+                        <span class="input-group-text"><i class="fas fa-barcode"></i></span>
+                        <input type="text" id="manual-barcode" class="form-control" placeholder="Enter barcode number">
+                        <button id="manual-submit" class="btn btn-secondary">
+                            <i class="fas fa-search"></i> Search
+                        </button>
                     </div>
                     
                     <div id="product-result" class="mt-3">
-                        <!-- Product info will appear here -->
+                        <div class="text-center text-muted">
+                            <i class="fas fa-scan fa-3x mb-3"></i>
+                            <p>Scan a barcode or enter manually to view product details</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -92,17 +171,36 @@ document.addEventListener('DOMContentLoaded', function() {
         Quagga.stop();
     });
     
-    // Manual barcode submission
+    // Allow Enter key for manual barcode entry
+    manualBarcode.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            const code = manualBarcode.value.trim();
+            if (code) {
+                fetchProduct(code);
+                manualBarcode.value = ''; // Clear input after search
+            }
+        }
+    });
+    
+    // Clear manual input when search button is clicked
     manualSubmit.addEventListener('click', function() {
         const code = manualBarcode.value.trim();
         if (code) {
             fetchProduct(code);
+            manualBarcode.value = ''; // Clear input after search
         }
     });
     
     // Function to fetch product data
     function fetchProduct(barcode) {
-        productResult.innerHTML = '<div class="text-center"><div class="spinner-border" role="status"></div></div>';
+        productResult.innerHTML = `
+            <div class="text-center py-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2 text-muted">Searching for barcode: <strong>${barcode}</strong></p>
+            </div>
+        `;
         
         fetch('/api/barcode-scan/', {
             method: 'POST',
@@ -122,16 +220,134 @@ document.addEventListener('DOMContentLoaded', function() {
                 `;
             } else {
                 const product = data.product;
+                
+                // Format currency values
+                const formatCurrency = (value) => value ? `QAR ${parseFloat(value).toFixed(2)}` : 'N/A';
+                
+                // Determine stock status color
+                const getStockStatusColor = (status) => {
+                    switch(status) {
+                        case 'In Stock': return 'success';
+                        case 'Low Stock': return 'warning';
+                        case 'Out of Stock': return 'danger';
+                        default: return 'secondary';
+                    }
+                };
+                
                 productResult.innerHTML = `
                     <div class="card">
                         <div class="card-body">
-                            <h5>${product.name}</h5>
-                            <p>SKU: ${product.sku}</p>
-                            <p>Price: $${product.price}</p>
-                            ${product.image_url ? `<img src="${product.image_url}" class="img-fluid" style="max-height: 150px;">` : ''}
-                            <button class="btn btn-success mt-2 add-to-cart" data-product-id="${product.id}">
-                                Add to Cart
-                            </button>
+                            <!-- Product Header -->
+                            <div class="row mb-3">
+                                <div class="col-md-8">
+                                    <h5 class="card-title text-primary">${product.name}</h5>
+                                    <h6 class="text-muted">SKU: ${product.sku}</h6>
+                                    ${product.description ? `<p class="text-muted small">${product.description}</p>` : ''}
+                                </div>
+                                <div class="col-md-4 text-end">
+                                    ${product.image_url ? `<img src="${product.image_url}" class="img-fluid rounded" style="max-height: 100px; max-width: 100px;">` : '<div class="bg-light rounded d-flex align-items-center justify-content-center" style="height: 100px; width: 100px;"><i class="fas fa-image text-muted"></i></div>'}
+                                </div>
+                            </div>
+                            
+                            <!-- Barcode Info -->
+                            <div class="row mb-3">
+                                <div class="col-12">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="badge bg-dark flex-grow-1">Barcode: ${product.barcode}</span>
+                                        <button class="btn btn-outline-secondary btn-sm copy-barcode" data-barcode="${product.barcode}" title="Copy Barcode">
+                                            <i class="fas fa-copy"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Pricing Information -->
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <div class="border rounded p-2 h-100">
+                                        <h6 class="text-success mb-2"><i class="fas fa-tag"></i> Pricing</h6>
+                                        <div class="row text-sm">
+                                            <div class="col-6">
+                                                <strong>Cost Price:</strong><br>
+                                                <span class="text-muted">${formatCurrency(product.cost_price)}</span>
+                                            </div>
+                                            <div class="col-6">
+                                                <strong>Selling Price:</strong><br>
+                                                <span class="text-success">${formatCurrency(product.selling_price)}</span>
+                                            </div>
+                                        </div>
+                                        ${product.legacy_price ? `<div class="mt-2"><small class="text-muted">Legacy Price: ${formatCurrency(product.legacy_price)}</small></div>` : ''}
+                                    </div>
+                                </div>
+                                
+                                <!-- Profit Information -->
+                                <div class="col-md-6">
+                                    <div class="border rounded p-2 h-100">
+                                        <h6 class="text-info mb-2"><i class="fas fa-chart-line"></i> Profit</h6>
+                                        <div class="row text-sm">
+                                            <div class="col-6">
+                                                <strong>Margin:</strong><br>
+                                                <span class="text-info">${product.profit_margin || 'N/A'}</span>
+                                            </div>
+                                            <div class="col-6">
+                                                <strong>Amount:</strong><br>
+                                                <span class="text-info">${formatCurrency(product.profit_amount)}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Stock Information -->
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <div class="border rounded p-2 h-100">
+                                        <h6 class="text-warning mb-2"><i class="fas fa-boxes"></i> Stock</h6>
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span>Quantity: <strong>${product.stock || 0}</strong></span>
+                                            <span class="badge bg-${getStockStatusColor(product.stock_status)}">${product.stock_status || 'Unknown'}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Category Information -->
+                                <div class="col-md-6">
+                                    <div class="border rounded p-2 h-100">
+                                        <h6 class="text-secondary mb-2"><i class="fas fa-folder"></i> Category</h6>
+                                        <div>
+                                            <strong>${product.category_name || 'Uncategorized'}</strong>
+                                            ${product.category_description ? `<br><small class="text-muted">${product.category_description}</small>` : ''}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Additional Information -->
+                            ${product.warranty ? `
+                                <div class="row mb-3">
+                                    <div class="col-12">
+                                        <div class="border rounded p-2">
+                                            <h6 class="text-dark mb-2"><i class="fas fa-shield-alt"></i> Warranty</h6>
+                                            <p class="mb-0">${product.warranty}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            ` : ''}
+                            
+                            <!-- Action Buttons -->
+                            <div class="row">
+                                <div class="col-12">
+                                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                        <button class="btn btn-outline-primary btn-sm view-details" data-product-id="${product.id}">
+                                            <i class="fas fa-eye"></i> View Details
+                                        </button>
+                                        <button class="btn btn-success add-to-cart" data-product-id="${product.id}" 
+                                                ${product.stock <= 0 ? 'disabled' : ''}>
+                                            <i class="fas fa-cart-plus"></i> Add to Cart
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 `;
@@ -146,12 +362,63 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Handle adding to cart (you'll need to implement this)
+    // Handle button clicks (add to cart, view details, and copy barcode)
     productResult.addEventListener('click', function(e) {
         if (e.target.classList.contains('add-to-cart')) {
             const productId = e.target.getAttribute('data-product-id');
             // Implement your cart addition logic here
-            alert(`Product ${productId} added to cart!`);
+            e.target.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adding...';
+            e.target.disabled = true;
+            
+            // Simulate API call - replace with actual cart addition logic
+            setTimeout(() => {
+                e.target.innerHTML = '<i class="fas fa-check"></i> Added!';
+                e.target.classList.remove('btn-success');
+                e.target.classList.add('btn-outline-success');
+                
+                // Reset button after 2 seconds
+                setTimeout(() => {
+                    e.target.innerHTML = '<i class="fas fa-cart-plus"></i> Add to Cart';
+                    e.target.classList.remove('btn-outline-success');
+                    e.target.classList.add('btn-success');
+                    e.target.disabled = false;
+                }, 2000);
+            }, 1000);
+        }
+        
+        if (e.target.classList.contains('view-details')) {
+            const productId = e.target.getAttribute('data-product-id');
+            // Navigate to product details page - adjust URL as needed
+            window.open(`/portal/products/${productId}/`, '_blank');
+        }
+        
+        if (e.target.classList.contains('copy-barcode') || e.target.parentElement.classList.contains('copy-barcode')) {
+            const button = e.target.classList.contains('copy-barcode') ? e.target : e.target.parentElement;
+            const barcode = button.getAttribute('data-barcode');
+            
+            navigator.clipboard.writeText(barcode).then(() => {
+                const originalHTML = button.innerHTML;
+                button.innerHTML = '<i class="fas fa-check text-success"></i>';
+                
+                setTimeout(() => {
+                    button.innerHTML = originalHTML;
+                }, 1500);
+            }).catch(() => {
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = barcode;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                
+                const originalHTML = button.innerHTML;
+                button.innerHTML = '<i class="fas fa-check text-success"></i>';
+                
+                setTimeout(() => {
+                    button.innerHTML = originalHTML;
+                }, 1500);
+            });
         }
     });
 });

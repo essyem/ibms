@@ -1,0 +1,81 @@
+/* Purchase Order Admin CSS */
+
+.purchase-order-inline {
+    margin-top: 20px;
+}
+
+.purchase-order-inline .form-row {
+    border-bottom: 1px solid #ddd;
+    padding: 10px 0;
+}
+
+.purchase-order-inline .form-row:last-child {
+    border-bottom: none;
+}
+
+.unit-cost-input, .quantity-input {
+    width: 100px;
+    text-align: right;
+}
+
+.purchase-order-totals {
+    background-color: #f8f8f8;
+    padding: 15px;
+    margin-top: 20px;
+    border-radius: 4px;
+}
+
+.purchase-order-totals .form-row {
+    margin-bottom: 10px;
+}
+
+.purchase-order-totals label {
+    font-weight: bold;
+}
+
+.readonly-total {
+    background-color: #f0f0f0;
+    border: 1px solid #ccc;
+    padding: 5px;
+    border-radius: 3px;
+}
+
+/* Inline table styling */
+.tabular.inline-related tbody tr.dynamic-form:nth-child(odd) {
+    background: #f8f8f8;
+}
+
+.tabular.inline-related tbody tr.dynamic-form:nth-child(even) {
+    background: #ffffff;
+}
+
+.tabular.inline-related .add-row {
+    background: #417690;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 4px;
+    text-decoration: none;
+    display: inline-block;
+    margin-top: 10px;
+}
+
+.tabular.inline-related .add-row:hover {
+    background: #205067;
+    color: white;
+}
+
+/* Product select styling */
+.purchase-item-product select {
+    min-width: 200px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .unit-cost-input, .quantity-input {
+        width: 80px;
+    }
+    
+    .purchase-item-product select {
+        min-width: 150px;
+    }
+}

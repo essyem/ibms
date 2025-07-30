@@ -1,366 +1,96 @@
 <!DOCTYPE html>
 <html lang="en">
-    
-{% load static %}
-    <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
-
-    :root {
-      --gradient: linear-gradient(45deg, #ff3366, #ff6b6b, #4834d4, #686de0);
-      --glass-bg: rgba(255, 255, 255, 0.05);
-      --border: 1px solid rgba(255, 255, 255, 0.1);
-      --shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
-      --section-bg: rgba(15, 15, 15, 0.7);
-      --highlight: rgba(255, 255, 255, 0.1);
-    }
-
-    body {
-      background: #0a0a0a;
-      min-height: 100vh;
-      color: white;
-    }
-
-    /* Navbar Styles */
-    .navbar {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      padding: 1.2rem 5%;
-      backdrop-filter: blur(12px);
-      background: var(--glass-bg);
-      border-bottom: var(--border);
-      z-index: 1000;
-      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-      box-shadow: var(--shadow);
-    }
-
-    .navbar.scrolled {
-      padding: 0.8rem 5%;
-      background: rgba(10, 10, 10, 0.95);
-    }
-
-    .navbar-container {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      max-width: 1400px;
-      margin: 0 auto;
-    }
-
-    .logo {
-      font-size: 1.8rem;
-      font-weight: 700;
-      background: var(--gradient);
-      -webkit-background-clip: text;
-      background-clip: text;
-      -webkit-text-fill-color: transparent;
-      animation: gradient 8s linear infinite;
-      background-size: 300%;
-      text-decoration: none;
-    }
-
-    .nav-links {
-      display: flex;
-      gap: 2.5rem;
-      list-style: none;
-    }
-
-    .nav-links a {
-      color: white;
-      text-decoration: none;
-      font-weight: 500;
-      position: relative;
-      padding: 0.5rem 0;
-      transition: all 0.3s ease;
-      font-size: 1.05rem;
-    }
-
-    .nav-links a::before,
-    .nav-links a::after {
-      content: '';
-      position: absolute;
-      height: 2px;
-      background: var(--gradient);
-      background-size: 300%;
-      transition: width 0.3s ease;
-    }
-
-    .nav-links a::before {
-      top: -4px;
-      left: 0;
-      width: 0;
-    }
-
-    .nav-links a::after {
-      bottom: -4px;
-      right: 0;
-      width: 0;
-    }
-
-    .nav-links a:hover {
-      color: #fff;
-      text-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
-    }
-
-    .nav-links a:hover::before,
-    .nav-links a:hover::after {
-      width: 100%;
-    }
-
-    /* Main Content Container */
-    .main-container {
-      padding: 120px 5% 80px;
-      max-width: 1400px;
-      margin: 0 auto;
-    }
-
-    /* Section Styling */
-    .section {
-      margin: 5rem 0;
-      position: relative;
-    }
-
-    .section-header {
-      text-align: center;
-      margin-bottom: 4rem;
-    }
-
-    .section-header h1 {
-      font-size: 4rem;
-      font-weight: 800;
-      margin-bottom: 1rem;
-      background: var(--gradient);
-      -webkit-background-clip: text;
-      background-clip: text;
-      -webkit-text-fill-color: transparent;
-      animation: gradient 8s linear infinite;
-      background-size: 300%;
-    }
-
-    .section-header p {
-      font-size: 1.2rem;
-      opacity: 0.8;
-      max-width: 700px;
-      margin: 0 auto;
-      line-height: 1.6;
-    }
-
-    /* Card Grid System */
-    .card-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 2rem;
-    }
-
-    .card {
-      background: var(--glass-bg);
-      backdrop-filter: blur(12px);
-      border: var(--border);
-      border-radius: 16px;
-      padding: 2rem;
-      transition: all 0.4s ease;
-      box-shadow: var(--shadow);
-      position: relative;
-      overflow: hidden;
-    }
-
-    .card::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.03));
-      z-index: -1;
-    }
-
-    .card.highlight {
-      background: rgba(72, 52, 212, 0.1);
-      border: 1px solid rgba(72, 52, 212, 0.3);
-    }
-
-    .card.highlight::after {
-      content: '★';
-      position: absolute;
-      top: 15px;
-      right: 15px;
-      color: #ff6b6b;
-      font-size: 1.2rem;
-    }
-
-    .card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 15px 30px rgba(31, 38, 135, 0.5);
-      border-color: rgba(255, 255, 255, 0.2);
-    }
-
-    .card h3 {
-      font-size: 1.5rem;
-      margin-bottom: 1rem;
-      background: var(--gradient);
-      -webkit-background-clip: text;
-      background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-size: 300%;
-      animation: gradient 8s linear infinite;
-    }
-
-    .card p {
-      opacity: 0.9;
-      line-height: 1.7;
-      font-size: 0.95rem;
-    }
-
-    /* Footer */
-    .footer {
-      background: rgba(10, 10, 10, 0.95);
-      padding: 3rem 5%;
-      border-top: var(--border);
-      margin-top: 5rem;
-    }
-
-    .footer-container {
-      max-width: 1400px;
-      margin: 0 auto;
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 2rem;
-    }
-
-    .footer-logo {
-      font-size: 1.8rem;
-      margin-bottom: 1rem;
-    }
-
-    .footer-links h4 {
-      margin-bottom: 1.5rem;
-      font-size: 1.2rem;
-    }
-
-    .footer-links ul {
-      list-style: none;
-    }
-
-    .footer-links li {
-      margin-bottom: 0.8rem;
-    }
-
-    .footer-links a {
-      color: rgba(255, 255, 255, 0.7);
-      text-decoration: none;
-      transition: color 0.3s ease;
-    }
-
-    .footer-links a:hover {
-      color: white;
-    }
-
-    .copyright {
-      text-align: center;
-      margin-top: 3rem;
-      padding-top: 2rem;
-      border-top: 1px solid rgba(255, 255, 255, 0.1);
-      opacity: 0.7;
-    }
-
-    @keyframes gradient {
-      0% {
-        background-position: 0% 50%;
-      }
-      50% {
-        background-position: 100% 50%;
-      }
-      100% {
-        background-position: 0% 50%;
-      }
-    }
-
-    @media (max-width: 768px) {
-      .section-header h1 {
-        font-size: 2.5rem;
-      }
-      
-      .card-grid {
-        grid-template-columns: 1fr;
-      }
-      
-      .nav-links {
-        display: none;
-      }
-    }
-    </style>
-  <head>
+<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Trendz Technologies{% endblock %}</title>
+    <title>{% block title %}Trendz Portal{% endblock %}</title>
+    {% load static %}
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    {% block extra_head %}{% endblock %}
     {% block extra_css %}{% endblock %}
 </head>
-<body>
-    <nav class="navbar">
-        <div class="navbar-container">
-            <a href="{% url 'home' %}" class="logo">TRENDZ</a>
-            <ul class="nav-links">
-                <li><a href="{% url 'home' %}">Home</a></li>
-                
-                
-            </ul>
+<body style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh;">
+    
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-dark" style="background: rgba(0,0,0,0.1); backdrop-filter: blur(10px);">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="{% url 'sites/portal:index' %}">
+                <i class="fas fa-store me-2"></i>Trendz Portal
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'portal:dashboard' %}">
+                            <i class="fas fa-chart-dashboard me-1"></i>Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-file-invoice me-1"></i>Invoices
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{% url 'portal:invoice_create' %}">
+                                <i class="fas fa-plus me-2"></i>Create Invoice
+                            </a></li>
+                            <li><a class="dropdown-item" href="{% url 'portal:invoice_list' %}">
+                                <i class="fas fa-list me-2"></i>All Invoices
+                            </a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-users me-1"></i>Customers
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{% url 'portal:customer_create' %}">
+                                <i class="fas fa-user-plus me-2"></i>Add Customer
+                            </a></li>
+                            <li><a class="dropdown-item" href="{% url 'portal:customer_list' %}">
+                                <i class="fas fa-users me-2"></i>All Customers
+                            </a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'portal:reports' %}">
+                            <i class="fas fa-chart-line me-1"></i>Reports
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'barcode_generator_dashboard' %}">
+                            <i class="fas fa-barcode me-1"></i>Barcode Dashboard
+                        </a>
+                    </li>
+                </ul>
+            </div>
         </div>
     </nav>
 
-    <div class="main-container">
+    <!-- Main Content -->
+    <div class="container-fluid py-4">
         {% if messages %}
-        <div class="messages">
+        <div class="container">
             {% for message in messages %}
-            <div class="alert alert-{{ message.tags }}">
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
                 {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
             {% endfor %}
         </div>
         {% endif %}
-
+        
         {% block content %}
-        <!-- Main content will be inserted here -->
         {% endblock %}
     </div>
 
-    <footer class="footer">
-        <div class="footer-container">
-            <div class="footer-about">
-                <div class="footer-logo">Trendz</div>
-                <p>Providing cutting-edge IT solutions since 2017 with precision, innovation, and compliance.</p>
-            </div>
-            <div class="footer-contact">
-                <h4>Contact Us</h4>
-                <p>Doha, Qatar</p>
-                <p>Email: info@trendzqtr.com</p>
-                <p>Phone: +974 3051 4865</p>
-            </div>
-        </div>
-        <div class="copyright">
-            &copy; {% now "Y" %} Trendz Technologies. All rights reserved.
-        </div>
-    </footer>
-
-    <script>
-        // Navbar scroll effect
-        window.addEventListener('scroll', function() {
-            const navbar = document.querySelector('.navbar');
-            if (window.scrollY > 50) {
-                navbar.classList.add('scrolled');
-            } else {
-                navbar.classList.remove('scrolled');
-            }
-        });
-
-        // Mobile menu toggle would go here
-    </script>
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     {% block extra_js %}{% endblock %}
 </body>
 </html>

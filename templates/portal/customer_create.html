@@ -1,0 +1,174 @@
+{% extends "portal/invoice_base.html" %}
+{% load static %}
+
+{% block title %}{% if object %}Edit{% else %}Add{% endif %} Customer - Trendz Portal{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-lg" style="background: rgba(255,255,255,0.95); border: none; border-radius: 15px;">
+                <div class="card-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 15px 15px 0 0;">
+                    <h2 class="mb-0">
+                        <i class="fas fa-user-plus me-2"></i>
+                        {% if object %}Edit Customer{% else %}Add New Customer{% endif %}
+                    </h2>
+                </div>
+                <div class="card-body p-4">
+                    
+                    <form method="post" id="customer-form">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.full_name.id_for_label }}" class="form-label fw-bold">
+                                    <i class="fas fa-user me-1"></i>Full Name <span class="text-danger">*</span>
+                                </label>
+                                {{ form.full_name }}
+                                {% if form.full_name.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.full_name.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.phone.id_for_label }}" class="form-label fw-bold">
+                                    <i class="fas fa-phone me-1"></i>Phone <span class="text-danger">*</span>
+                                </label>
+                                {{ form.phone }}
+                                {% if form.phone.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.phone.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.company_name.id_for_label }}" class="form-label fw-bold">
+                                    <i class="fas fa-building me-1"></i>Company Name
+                                </label>
+                                {{ form.company_name }}
+                                {% if form.company_name.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.company_name.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.tax_number.id_for_label }}" class="form-label fw-bold">
+                                    <i class="fas fa-receipt me-1"></i>Tax Number
+                                </label>
+                                {{ form.tax_number }}
+                                {% if form.tax_number.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.tax_number.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-8 mb-3">
+                                <label for="{{ form.address.id_for_label }}" class="form-label fw-bold">
+                                    <i class="fas fa-map-marker-alt me-1"></i>Address
+                                </label>
+                                {{ form.address }}
+                                {% if form.address.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.address.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.preferred_contact_method.id_for_label }}" class="form-label fw-bold">
+                                    <i class="fas fa-envelope me-1"></i>Contact Method
+                                </label>
+                                {{ form.preferred_contact_method }}
+                                {% if form.preferred_contact_method.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.preferred_contact_method.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between pt-3 border-top">
+                            <a href="{% url 'portal:customer_list' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-1"></i>Back to Customers
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i>
+                                {% if object %}Update Customer{% else %}Save Customer{% endif %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Handle AJAX form submission for inline customer creation
+    $(document).ready(function() {
+        $('#customer-form').on('submit', function(e) {
+            // If this is an AJAX request from invoice creation
+            if (window.parent && window.parent.location.href.includes('invoice/create')) {
+                e.preventDefault();
+                
+                $.ajax({
+                    url: $(this).attr('action') || '{% url "portal:customer_create" %}',
+                    method: 'POST',
+                    data: $(this).serialize(),
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            // If in a modal/popup, notify parent and close
+                            if (window.parent && window.parent.customerCreated) {
+                                window.parent.customerCreated(response.customer);
+                                window.close();
+                            } else {
+                                // Regular form submission
+                                window.location.href = '{% url "portal:customer_list" %}';
+                            }
+                        }
+                    },
+                    error: function(xhr) {
+                        if (xhr.responseJSON && xhr.responseJSON.errors) {
+                            // Show errors
+                            Object.keys(xhr.responseJSON.errors).forEach(function(field) {
+                                const fieldElement = $('#id_' + field);
+                                const errorDiv = $('<div class="text-danger small mt-1"></div>');
+                                errorDiv.text(xhr.responseJSON.errors[field][0]);
+                                fieldElement.parent().find('.text-danger').remove();
+                                fieldElement.parent().append(errorDiv);
+                            });
+                        }
+                    }
+                });
+            }
+        });
+    });
+</script>
+{% endblock %}

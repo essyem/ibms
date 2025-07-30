@@ -1,0 +1,193 @@
+/* admin/css/product-search.css */
+
+.product-search-container {
+    position: relative;
+    margin-bottom: 10px;
+}
+
+.search-controls {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+    align-items: center;
+}
+
+.product-search-input {
+    flex: 1;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.barcode-scan-btn {
+    padding: 8px 16px;
+    background-color: #007cba;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    white-space: nowrap;
+}
+
+.barcode-scan-btn:hover {
+    background-color: #005a87;
+}
+
+.search-results {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    max-height: 300px;
+    overflow-y: auto;
+    z-index: 1000;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.search-result-item {
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.search-result-item:hover {
+    background-color: #f5f5f5;
+}
+
+.search-result-item:last-child {
+    border-bottom: none;
+}
+
+.search-result-name {
+    font-weight: bold;
+    margin-bottom: 4px;
+}
+
+.search-result-details {
+    font-size: 12px;
+    color: #666;
+}
+
+.search-result-price {
+    color: #007cba;
+    font-weight: bold;
+}
+
+.search-result-stock {
+    color: #28a745;
+}
+
+.search-result-stock.low-stock {
+    color: #dc3545;
+}
+
+.selected-product-info {
+    margin-top: 10px;
+    padding: 10px;
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+}
+
+.product-details {
+    font-size: 14px;
+}
+
+.product-details .product-name {
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.product-details .product-meta {
+    font-size: 12px;
+    color: #666;
+}
+
+/* Barcode scanner modal styles */
+.barcode-scanner-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.barcode-scanner-content {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    max-width: 500px;
+    width: 90%;
+    text-align: center;
+}
+
+.barcode-scanner-video {
+    width: 100%;
+    max-width: 400px;
+    height: 300px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin: 15px 0;
+}
+
+.barcode-scanner-controls {
+    margin-top: 15px;
+}
+
+.barcode-scanner-controls button {
+    margin: 0 10px;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.btn-close-scanner {
+    background-color: #dc3545;
+    color: white;
+}
+
+.btn-close-scanner:hover {
+    background-color: #c82333;
+}
+
+/* Loading states */
+.search-loading {
+    padding: 20px;
+    text-align: center;
+    color: #666;
+}
+
+.search-no-results {
+    padding: 20px;
+    text-align: center;
+    color: #999;
+    font-style: italic;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+    .search-controls {
+        flex-direction: column;
+        gap: 5px;
+    }
+    
+    .product-search-input {
+        width: 100%;
+    }
+    
+    .barcode-scan-btn {
+        width: 100%;
+    }
+}

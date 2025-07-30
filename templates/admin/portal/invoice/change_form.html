@@ -1,0 +1,36 @@
+{% extends "admin/change_form.html" %}
+
+{% block extrahead %}
+{{ block.super }}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const paymentModeField = document.getElementById('id_payment_mode');
+    const splitPaymentFieldset = document.querySelector('.field-cash_amount').closest('fieldset');
+    
+    function toggleSplitPaymentFields() {
+        if (paymentModeField && splitPaymentFieldset) {
+            if (paymentModeField.value === 'split') {
+                splitPaymentFieldset.style.display = 'block';
+                splitPaymentFieldset.classList.remove('collapsed');
+            } else {
+                splitPaymentFieldset.style.display = 'none';
+                splitPaymentFieldset.classList.add('collapsed');
+                // Clear split payment values when not split mode
+                document.getElementById('id_cash_amount').value = '0.00';
+                document.getElementById('id_pos_amount').value = '0.00';
+                document.getElementById('id_other_amount').value = '0.00';
+                document.getElementById('id_other_method').value = '';
+            }
+        }
+    }
+    
+    // Initial toggle
+    toggleSplitPaymentFields();
+    
+    // Add event listener
+    if (paymentModeField) {
+        paymentModeField.addEventListener('change', toggleSplitPaymentFields);
+    }
+});
+</script>
+{% endblock %}
