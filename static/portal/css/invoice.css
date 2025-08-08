@@ -4,6 +4,25 @@
     font-weight: 500;
 }
 
+/* Editable Unit Price Styling */
+.unit-price {
+    border-left: 3px solid #28a745 !important;
+    background-color: #f8fff9 !important;
+    transition: all 0.3s ease;
+}
+
+.unit-price:focus,
+.unit-price.editing-price {
+    border-left: 3px solid #007bff !important;
+    background-color: #f0f8ff !important;
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.3);
+}
+
+.unit-price:hover {
+    background-color: #f0fff0 !important;
+    cursor: text;
+}
+
 #invoices-table th {
     white-space: nowrap;
 }

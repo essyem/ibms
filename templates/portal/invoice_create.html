@@ -116,7 +116,7 @@
                         <tr>
                             <th>Product</th>
                             <th>Quantity</th>
-                            <th>Unit Price</th>
+                            <th>Unit Price <small class="text-muted">(editable)</small></th>
                             <th>Total</th>
                             <th>Action</th>
                         </tr>
@@ -170,7 +170,9 @@
                     <input type="number" class="form-control quantity" name="quantity" value="1" min="1" step="1" required>
                 </td>
                 <td>
-                    <input type="text" class="form-control unit-price" name="unit_price" value="0.00" readonly>
+                    <input type="number" class="form-control unit-price" name="unit_price" value="0.00" step="0.01" min="0" 
+                           title="Click to edit unit price" placeholder="0.00"
+                           style="border-left: 3px solid #28a745; background-color: #f8fff9;">
                 </td>
                 <td>
                     <input type="text" class="form-control total" name="total" value="0.00" readonly>

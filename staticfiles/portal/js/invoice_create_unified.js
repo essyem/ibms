@@ -85,6 +85,15 @@
                 this.calculateRowTotal($(e.target).closest('tr'));
             });
 
+            // Unit Price Focus/Blur for better UX
+            $(document).on('focus', '.unit-price', (e) => {
+                $(e.target).addClass('editing-price').attr('title', 'Editing unit price - Enter to save');
+            });
+
+            $(document).on('blur', '.unit-price', (e) => {
+                $(e.target).removeClass('editing-price').attr('title', 'Click to edit unit price');
+            });
+
             // Barcode Scanning (delegated)
             $(document).on('click', '.barcode-scan-btn', (e) => {
                 e.preventDefault();
