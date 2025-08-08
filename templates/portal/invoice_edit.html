@@ -1,0 +1,322 @@
+{% extends "portal/invoice_base.html" %}
+{% load static %}
+
+{% block title %}Edit Invoice - Trendz Portal{% endblock %}
+
+{% block extra_head %}
+<meta name="csrf-token" content="{{ csrf_token }}">
+<style>
+    .payment-mode-details {
+        display: none;
+    }
+    .payment-mode-active {
+        display: block;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5 pt-3">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-lg" style="background: rgba(255,255,255,0.95); border: none; border-radius: 15px;">
+                <div class="card-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 15px 15px 0 0;">
+                    <h2 class="mb-0">
+                        <i class="fas fa-file-invoice me-2"></i>
+                        Edit Invoice #{{ object.invoice_number }}
+                    </h2>
+                </div>
+                <div class="card-body p-4">
+
+                    {% if form.errors %}
+                    <div class="alert alert-danger">
+                        <strong>Error!</strong> Please correct the errors below.
+                        <ul>
+                            {% for field, errors in form.errors.items %}
+                                {% for error in errors %}
+                                    <li>{{ field|title }}: {{ error }}</li>
+                                {% endfor %}
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %} 
+
+                    {% if messages %}
+                    <div class="alert alert-info">
+                        {% for message in messages %}
+                        <p>{{ message }}</p>
+                        {% endfor %}
+                    </div>
+                    {% endif %} 
+                    
+                    <form method="post" id="invoice-form">
+                        {% csrf_token %}
+                        
+                        <div class="row mb-4">
+                            <!-- Customer Details Column -->
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">Customer Details</div>
+                                    <div class="card-body">
+                                        <div class="form-group">
+                                            <label for="customer-search">Customer Search</label>
+                                            <div class="customer-search-container">
+                                                <div class="input-group">
+                                                    <input type="text" 
+                                                           class="form-control customer-search-input" 
+                                                           id="customer-search"
+                                                           placeholder="Search customers by name, company, or ID..."
+                                                           value="{{ object.customer.company_name|default:object.customer.full_name }}">
+                                                    <input type="hidden" name="customer" id="customer-id" value="{{ object.customer.id }}">
+                                                    <button type="button" class="btn btn-success btn-sm" id="add-customer-btn" title="Add New Customer">
+                                                        <i class="fas fa-user-plus"></i> Add
+                                                    </button>
+                                                </div>
+                                                <div class="customer-search-results" style="display: none;"></div>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="address">Delivery Address</label>
+                                            <textarea class="form-control" name="address" id="address" rows="2" required>{{ object.address }}</textarea>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-6 form-group">
+                                                <label for="phone">Phone</label>
+                                                <input type="text" class="form-control" name="phone" id="phone" value="{{ object.customer.phone }}" required>
+                                            </div>
+                                            <div class="col-md-6 form-group">
+                                                <label for="tax_number">Tax Number</label>
+                                                <input type="text" class="form-control" name="tax_number" id="tax_number" value="{{ object.customer.tax_number|default:'' }}">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>  
+                            
+                            <!-- Invoice Details Column -->
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">Invoice Details</div>
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-6 form-group">
+                                                <label for="date">Date</label>
+                                                <input type="date" class="form-control" name="date" id="date" value="{{ object.date|date:'Y-m-d' }}" required>
+                                            </div>
+                                            <div class="col-md-6 form-group">
+                                                <label for="due_date">Due Date</label>
+                                                <input type="date" class="form-control" name="due_date" id="due_date" value="{{ object.due_date|date:'Y-m-d' }}" required>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="invoice_number">Invoice Number</label>
+                                            <input type="text" class="form-control" name="invoice_number" id="invoice_number" value="{{ object.invoice_number }}" readonly>
+                                        </div>  
+                                        <div class="form-group">
+                                            <label for="status">Status</label>
+                                            <select class="form-control" name="status" id="status" required>
+                                                {% for value, name in form.fields.status.choices %}
+                                                    <option value="{{ value }}" {% if object.status == value %}selected{% endif %}>{{ name }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>  
+                        
+                        <!-- Products Section -->
+                        <div class="card mb-4">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <span>Products</span>
+                                <button type="button" class="btn btn-sm btn-primary" id="add-product">
+                                    <i class="fas fa-plus"></i> Add Product
+                                </button>
+                            </div>
+                            <div class="card-body">
+                                <table class="table" id="products-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Product</th>
+                                            <th>Quantity</th>
+                                            <th>Unit Price</th>
+                                            <th>Total</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="product-rows">
+                                        {% for item in existing_items %}
+                                        <tr class="product-row" data-item-id="{{ item.id }}">
+                                            <td>
+                                                <select class="form-control product-select" name="products" required>
+                                                    <option value="">Select a product...</option>
+                                                    {% for product in products %}
+                                                    <option value="{{ product.id }}" 
+                                                            data-selling-price="{{ product.unit_price }}" 
+                                                            data-unit-price="{{ product.unit_price }}"
+                                                            data-stock="{{ product.stock }}"
+                                                            data-barcode="{{ product.barcode }}"
+                                                            {% if item.product.id == product.id %}selected{% endif %}>
+                                                        {{ product.name }} - QAR {{ product.unit_price }} (Stock: {{ product.stock }})
+                                                    </option>
+                                                    {% endfor %}
+                                                </select>
+                                            </td>
+                                            <td>
+                                                <input type="number" class="form-control quantity" name="quantity" value="{{ item.quantity }}" min="1" step="1" required>
+                                            </td>
+                                            <td>
+                                                <input type="number" class="form-control unit-price" name="unit_price" value="{{ item.unit_price }}" step="0.01" min="0" required>
+                                            </td>
+                                            <td>
+                                                <input type="text" class="form-control total" name="total" value="{{ item.total_price|floatformat:2 }}" readonly>
+                                            </td>
+                                            <td>
+                                                <button type="button" class="btn btn-danger btn-sm remove-product">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <!-- Invoice Summary and Payment Details -->
+                        <div class="row mb-4">
+                            <!-- Invoice Summary Column -->
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">Invoice Summary</div>
+                                    <div class="card-body">
+                                        <div class="form-group">
+                                            <label class="form-label">Subtotal:</label>
+                                            <input type="text" class="form-control" id="subtotal" value="{{ object.subtotal|floatformat:2 }}" readonly>
+                                        </div>
+                                        
+                                        <div class="form-group">
+                                            <label class="form-label">Tax:</label>
+                                            <input type="number" class="form-control" id="tax" name="tax" value="{{ object.tax|default:0 }}" step="0.01" min="0">
+                                        </div>
+                                        
+                                        <div class="row">
+                                            <div class="col-md-6 form-group">
+                                                <label class="form-label">Discount Type:</label>
+                                                <select class="form-select" id="discount-type">
+                                                    <option value="percent" {% if object.discount_type == 'percent' %}selected{% endif %}>Percentage</option>
+                                                    <option value="amount" {% if object.discount_type == 'amount' %}selected{% endif %}>Fixed Amount</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-6 form-group">
+                                                <label class="form-label">Discount Value:</label>
+                                                <input type="number" class="form-control" id="discount-value" value="{{ object.discount_value|default:0 }}" step="0.01" min="0">
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="form-group">
+                                            <label class="form-label">Discount Amount:</label>
+                                            <input type="text" class="form-control" id="discount-amount" value="{{ object.discount_amount|default:0|floatformat:2 }}" readonly>
+                                        </div>
+                                        
+                                        <div class="form-group">
+                                            <label class="form-label">Grand Total:</label>
+                                            <input type="text" class="form-control" id="grand-total" value="{{ object.grand_total|floatformat:2 }}" readonly>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Payment Details Column -->
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">Payment Details</div>
+                                    <div class="card-body">
+                                        <div class="form-group">
+                                            <label class="form-label">Payment Mode</label>
+                                            <select class="form-select" name="payment_mode" id="payment-mode-select" required>
+                                                {% for value, name in form.fields.payment_mode.choices %}
+                                                    <option value="{{ value }}" {% if object.payment_mode == value %}selected{% endif %}>{{ name }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        
+                                        <!-- Split Payment Details -->
+                                        <div id="split-details" class="payment-mode-details {% if object.payment_mode == 'split' %}payment-mode-active{% endif %}">
+                                            <div class="row">
+                                                <div class="col-md-6 form-group">
+                                                    <label class="form-label">Cash Amount</label>
+                                                    <input type="number" class="form-control" name="cash_amount" value="{{ object.cash_amount|default:0 }}" step="0.01" min="0">
+                                                </div>
+                                                <div class="col-md-6 form-group">
+                                                    <label class="form-label">POS Amount</label>
+                                                    <input type="number" class="form-control" name="pos_amount" value="{{ object.pos_amount|default:0 }}" step="0.01" min="0">
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="row">
+                                                <div class="col-md-6 form-group">
+                                                    <label class="form-label">Other Amount</label>
+                                                    <input type="number" class="form-control" name="other_amount" value="{{ object.other_amount|default:0 }}" step="0.01" min="0">
+                                                </div>
+                                                <div class="col-md-6 form-group">
+                                                    <label class="form-label">Other Method</label>
+                                                    <input type="text" class="form-control" name="other_method" value="{{ object.other_method|default:'' }}">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Form Actions -->
+                        <div class="row mt-3">
+                            <div class="col-md-12">
+                                <button type="submit" class="btn btn-success">
+                                    <i class="fas fa-save me-1"></i> Update Invoice
+                                </button>
+                                <a href="{% url 'portal:invoice_detail' object.pk %}" class="btn btn-secondary">
+                                    <i class="fas fa-times me-1"></i> Cancel
+                                </a>
+                                {% if object.status == 'draft' %}
+                                <button type="button" class="btn btn-danger float-end" id="delete-invoice">
+                                    <i class="fas fa-trash me-1"></i> Delete Invoice
+                                </button>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">Confirm Deletion</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete invoice #{{ object.invoice_number }}?</p>
+                <p class="text-danger"><strong>This action cannot be undone.</strong></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form method="post" action="{% url 'portal:invoice_delete' object.pk %}" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Delete Invoice</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'portal/js/invoice_edit.js' %}?v={{ 'now'|date:'YmdHis' }}"></script>
+{% endblock %}
