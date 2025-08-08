@@ -43,19 +43,20 @@
                     <div class="card-header">Customer Details</div>
                     <div class="card-body">
                         <div class="form-group">
-                            <label for="customer">Customer Name</label>
-                            <div class="input-group">
-                                <select class="form-control" name="customer" id="customer">
-                                    <option value="">Select Customer</option>
-                                    {% for customer in customers %}
-                                    <option value="{{ customer.id }}" {% if object and object.customer.id == customer.id %}selected{% endif %}>
-                                        {{ customer.company_name|default:customer.full_name }} ({{ customer.customer_id }})
-                                    </option>
-                                    {% endfor %}
-                                </select>
-                                <button type="button" class="btn btn-success btn-sm" id="add-customer-btn" title="Add New Customer" style="background: #28a745; border: 1px solid #28a745; padding: 6px 12px;">
-                                    <i class="fas fa-user-plus"></i> Add
-                                </button>
+                            <label for="customer-search">Customer Search</label>
+                            <div class="customer-search-container">
+                                <div class="input-group">
+                                    <input type="text" 
+                                           class="form-control customer-search-input" 
+                                           id="customer-search"
+                                           placeholder="Search customers by name, company, or ID..."
+                                           value="{% if object %}{{ object.customer.company_name|default:object.customer.full_name }}{% endif %}">
+                                    <input type="hidden" name="customer" id="customer-id" value="{% if object %}{{ object.customer.id }}{% endif %}">
+                                    <button type="button" class="btn btn-success btn-sm" id="add-customer-btn" title="Add New Customer" style="background: #28a745; border: 1px solid #28a745; padding: 6px 12px;">
+                                        <i class="fas fa-user-plus"></i> Add
+                                    </button>
+                                </div>
+                                <div class="customer-search-results" style="display: none; position: absolute; z-index: 1000; background: white; width: 100%; max-height: 300px; overflow-y: auto; border: 1px solid #ddd; border-radius: 0 0 4px 4px;"></div>
                             </div>
                         </div>
                         <div class="form-group">
@@ -75,6 +76,7 @@
                     </div>
                 </div>
             </div>  
+
             <div class="col-md-6">
                 <div class="card">
                     <div class="card-header">Invoice Details</div>
@@ -89,15 +91,16 @@
                         </div>
                         <div class="form-group">
                             <label for="invoice_number">Invoice Number</label>
-                            <input type="text" class="form-control" name="invoice_number" id="invoice_number" value="{% if object %}{{ object.invoice_number }}{% else %}Auto-generated{% endif %}" {% if object %}readonly{% endif %}>
+                            <input type="text" class="form-control" name="invoice_number" 
+                                id="invoice_number" value="Auto-generated" readonly>
                         </div>  
                         <div class="form-group">
                             <label for="status">Status</label>
-                            <select class="form-control" name="status" id="status">
-                                <option value="draft" {% if object and object.status == 'draft' %}selected{% endif %}>Draft</option>
-                                <option value="sent" {% if object and object.status == 'sent' %}selected{% endif %}>Sent</option>
-                                <option value="paid" {% if object and object.status == 'paid' %}selected{% endif %}>Paid</option>
-                                <option value="cancelled" {% if object and object.status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                            <select class="form-control" name="status" id="status" required>
+                                <option value="draft" {% if form.status.value == 'draft' %}selected{% endif %}>Draft</option>
+                                <option value="sent" {% if form.status.value == 'sent' %}selected{% endif %}>Sent</option>
+                                <option value="paid" {% if form.status.value == 'paid' %}selected{% endif %}>Paid</option>
+                                <option value="cancelled" {% if form.status.value == 'cancelled' %}selected{% endif %}>Cancelled</option>
                             </select>
                         </div>
                     </div>

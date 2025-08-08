@@ -128,14 +128,108 @@
                     $('.search-results').hide();
                 }
             });
+
+            // Customer Search
+            $(document).on('input', '.customer-search-input', (e) => {
+                this.handleCustomerSearch($(e.target));
+            });
+
+            // Customer Selection (delegated)
+            $(document).on('click', '.customer-search-result-item', (e) => {
+                e.preventDefault();
+                this.selectCustomer($(e.target).closest('.customer-search-result-item'));
+            });
+
+            // Hide customer search results when clicking outside
+            $(document).on('click', (e) => {
+                if (!$(e.target).closest('.customer-search-container').length) {
+                    $('.customer-search-results').hide();
+                }
+            });
         }
 
-        addProductRow() {
-            console.log('➕ Adding product row...');
-            
-            if (!this.productTemplate.length) {
-                console.error('❌ Product template not found');
+        handleCustomerSearch($input) {
+            const query = $input.val().trim();
+            const $results = $input.closest('.customer-search-container').find('.customer-search-results');
+
+            if (query.length < 2) {
+                $results.hide();
                 return;
+            }
+
+            $.ajax({
+                url: '/ajax/customer-search/',
+                method: 'GET',
+                data: { q: query },
+                success: (response) => {
+                    this.displayCustomerSearchResults(response.customers, $results);
+                },
+                error: (xhr) => {
+                    console.error('❌ Customer search error:', xhr);
+                    this.showError('Customer search failed');
+                }
+            });
+        }
+
+    displayCustomerSearchResults(customers, $results) {
+        $results.empty();
+
+        if (!customers || customers.length === 0) {
+            $results.html('<div class="no-results">No customers found</div>').show();
+            return;
+        }
+
+        customers.forEach((customer) => {
+            const $item = $('<div class="customer-search-result-item">')
+                .css({
+                    'padding': '8px',
+                    'border-bottom': '1px solid #eee',
+                    'cursor': 'pointer',
+                    'background': '#f8f9fa'
+                })
+                .hover(function() {
+                    $(this).css('background', '#e9ecef');
+                }, function() {
+                    $(this).css('background', '#f8f9fa');
+                })
+                .html(`
+                    <strong>${customer.display_text}</strong><br>
+                    <small class="text-muted">${customer.phone || 'No phone'}</small>
+                `)
+                .data('customer', customer)
+                .on('click', (e) => {
+                    e.preventDefault();
+                    this.selectCustomer($(e.currentTarget));
+                    $results.hide();
+                });
+            $results.append($item);
+        });
+
+        $results.show();
+    }
+
+    selectCustomer($item) {
+        const customer = $item.data('customer');
+        console.log('✅ Customer selected:', customer.display_text);
+
+        // Update hidden customer ID field
+        $('#customer-id').val(customer.id);
+
+        // Update search input
+        $('.customer-search-input').val(customer.display_text);
+
+        // Update customer details
+        $('#phone').val(customer.phone || '');
+        $('#tax_number').val(customer.tax_number || '');
+        $('#address').val(customer.address || '');
+    }
+
+    addProductRow() {
+        console.log('➕ Adding product row...');
+
+        if (!this.productTemplate.length) {
+            console.error('❌ Product template not found');
+            return;
             }
 
             let clone;

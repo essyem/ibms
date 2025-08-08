@@ -9,10 +9,15 @@ class InvoiceForm(forms.ModelForm):
     
     class Meta:
         model = Invoice
-        fields = ['due_date', 'notes', 'tax', 'discount_type', 'discount_value', 'payment_mode', 
-                 'cash_amount', 'pos_amount', 'other_amount', 'other_method']
+        fields = [
+            'customer',
+            'due_date', 'invoice_number', 'status',
+            'payment_mode', 'cash_amount', 'pos_amount',
+            'other_amount', 'other_method'
+        ]
         widgets = {
             'due_date': forms.DateInput(attrs={'type': 'date'}),
+            'invoice_number': forms.TextInput(attrs={'readonly': True}),
             'notes': forms.Textarea(attrs={'rows': 3}),
             'payment_mode': forms.Select(attrs={'class': 'form-control'}),
             'cash_amount': forms.NumberInput(attrs={'step': '0.01', 'min': '0', 'class': 'form-control', 'value': '0.00'}),
@@ -21,13 +26,36 @@ class InvoiceForm(forms.ModelForm):
             'other_method': forms.TextInput(attrs={'placeholder': 'e.g., Bank Transfer, Check', 'class': 'form-control'}),
         }
     
+    def clean_invoice_number(self):
+        invoice_number = self.cleaned_data.get('invoice_number')
+        print(f"🔍 FORM: clean_invoice_number called with: {repr(invoice_number)}")
+        if invoice_number in [None, '', 'Auto-generated']:
+            print("🔍 FORM: Returning None for auto-generation")
+            return None  # Return None instead of 'Auto-generated'
+        if len(invoice_number) != 10 or not invoice_number.isdigit():
+            print(f"🔍 FORM: Invalid invoice number format: {invoice_number}")
+            raise forms.ValidationError("Invoice number must be 10 digits (YYYYMMDDNN)")
+        print(f"🔍 FORM: Valid invoice number: {invoice_number}")
+        return invoice_number
+
+    def clean(self):
+        cleaned_data = super().clean()
+        print(f"🔍 FORM: clean() called with invoice_number: {repr(cleaned_data.get('invoice_number'))}")
+        
+        # The invoice_number field validation already handles 'Auto-generated' 
+        # by returning None, so no additional processing needed here
+        
+        return cleaned_data
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        print(f"Form initial status: {self.initial.get('status')}")
         # Make all fields optional except due_date
         self.fields['due_date'].required = True
         for field in self.fields:
             if field != 'due_date':
                 self.fields[field].required = False
+        
 
 
 class InvoiceItemForm(forms.ModelForm):
