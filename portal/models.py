@@ -131,7 +131,7 @@ class Invoice(SiteModel):
     )
     date = models.DateField(auto_now_add=True, editable=False)
     due_date = models.DateField()
-    status = models.CharField(max_length=20, choices=INVOICE_STATUS, default='draft')
+    status = models.CharField(max_length=20, choices=INVOICE_STATUS)
     notes = models.TextField(blank=True)
     subtotal = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     tax = models.DecimalField(max_digits=12, decimal_places=2, default=0)
@@ -189,10 +189,9 @@ class Invoice(SiteModel):
         help_text="Description of other payment method"
     )
 
-    
-
     def save(self, *args, **kwargs):
-        if not self.invoice_number:
+        if not self.invoice_number or self.invoice_number in ['Auto-generated', '']:
+            print(f"🔍 MODEL SAVE: Generating invoice number (current: {self.invoice_number})")
             # Define date_part at the start
             date_part = timezone.now().strftime('%Y%m%d')  # YYYYMMDD format
         
@@ -214,6 +213,7 @@ class Invoice(SiteModel):
                         raise ValueError("Maximum daily invoice limit (99) reached")
                 
                     self.invoice_number = f"{date_part}{next_num:02d}"
+                    print(f"🔍 MODEL SAVE: Generated invoice number: {self.invoice_number}")
                 
             except Exception as e:
                 # Fallback mechanism - ensure date_part is available
@@ -257,11 +257,15 @@ class Invoice(SiteModel):
         return f"Invoice #{self.invoice_number} - {self.customer}"
 
     def clean(self):
-        if self.invoice_number:
+        print(f"🔍 MODEL: clean() called with invoice_number: {repr(self.invoice_number)}")
+        if self.invoice_number and self.invoice_number not in ['Auto-generated', '']:
             if len(self.invoice_number) not in (10, 11):  # 10 for normal, 11 for fallback (with 'F')
+                print(f"🔍 MODEL: Invalid length - {len(self.invoice_number)}")
                 raise ValidationError("Invoice number must be 10 digits (YYYYMMDDNN)")
             if not self.invoice_number[:8].isdigit():
+                print(f"🔍 MODEL: First 8 chars not digits - {self.invoice_number[:8]}")
                 raise ValidationError("First 8 characters must be digits (YYYYMMDD)")
+        print(f"🔍 MODEL: Validation passed")
 
     class Meta:
         constraints = [
@@ -270,6 +274,13 @@ class Invoice(SiteModel):
                 name='unique_invoice_number'
             )
         ]
+
+    def save(self, *args, **kwargs):
+        print(f"Model save - incoming status: {self.status}")
+        super().save(*args, **kwargs)
+        print(f"Model save - after save status: {self.status}")
+
+    
    
 
 class InvoiceItem(SiteModel):

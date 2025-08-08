@@ -1,0 +1,49 @@
+{% extends "portal/base.html" %}
+{% load static %}
+
+{% block extra_css %}
+<link href="{% static 'vendor/datatables/dataTables.bootstrap4.min.css' %}" rel="stylesheet">
+<style>
+    /* All the CSS from the report template */
+    .bg-gradient-primary { background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%); }
+    .bg-gradient-info { background: linear-gradient(135deg, #17ead9 0%, #6078ea 100%); }
+    .bg-gradient-success { background: linear-gradient(135deg, #43e695 0%, #3bb2b8 100%); }
+    .bg-gradient-warning { background: linear-gradient(135deg, #fad961 0%, #f76b1c 100%); }
+    .bg-gradient-danger { background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%); }
+    
+    .summary-card {
+        border-radius: 10px;
+        overflow: hidden;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        border: none;
+    }
+    
+    .summary-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+    }
+    
+    /* Add all other CSS styles from the report template here */
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'vendor/datatables/jquery.dataTables.min.js' %}"></script>
+<script src="{% static 'vendor/datatables/dataTables.bootstrap4.min.js' %}"></script>
+<script>
+    // Base JavaScript that can be shared across report pages
+    $(document).ready(function() {
+        // Initialize DataTables
+        $('.dataTable').DataTable({
+            "order": [[0, "desc"]],
+            "responsive": true
+        });
+        
+        // Date picker initialization
+        $('.datepicker').datepicker({
+            format: 'yyyy-mm-dd',
+            autoclose: true
+        });
+    });
+</script>
+{% endblock %}

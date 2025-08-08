@@ -39,8 +39,8 @@ from bidi.algorithm import get_display
 from datetime import datetime, timedelta
 from django.core.paginator import Paginator
 
-logger = logging.getLogger(__name__)
 
+logger = logging.getLogger(__name__)
 
 def process_arabic_text(text):
     """Process Arabic text for proper display in PDFs"""
@@ -56,7 +56,6 @@ def process_arabic_text(text):
     except Exception:
         # Return original text if processing fails
         return text
-
 
 class InvoicePDFView(View):
     def get(self, request, pk, *args, **kwargs):
@@ -344,6 +343,9 @@ class InvoiceCreateView(CreateView):
     def form_valid(self, form):
         print("=== FORM_VALID CALLED ===")
         print(f"POST data: {dict(self.request.POST)}")
+        print("=== STATUS DEBUG ===")
+        print(f"Raw POST status: {self.request.POST.get('status')}")
+        print(f"Form cleaned status: {form.cleaned_data.get('status')}")
         print(f"Form is valid: {form.is_valid()}")
         print(f"Form errors: {form.errors}")
         print(f"Is AJAX: {self.request.headers.get('X-Requested-With') == 'XMLHttpRequest'}")
@@ -352,10 +354,359 @@ class InvoiceCreateView(CreateView):
             with transaction.atomic():
                 invoice = form.save(commit=False)
                 invoice.due_date = form.cleaned_data.get('due_date') or timezone.now().date()
-                invoice.status = 'draft'
+                print(f"Status before save: {invoice.status}") 
 
-                if not invoice.invoice_number or invoice.invoice_number == 'Auto-generated':
+                if not invoice.invoice_number or invoice.invoice_number in ['Auto-generated', '']:
                     invoice.invoice_number = self._generate_invoice_number()
+                    print(f"🔍 VIEW: Generated invoice number: {invoice.invoice_number}")
+
+                if len(invoice.invoice_number) != 10 or not invoice.invoice_number.isdigit():
+                    form.add_error(None, "Generated invoice number is invalid")
+                    return self.form_invalid(form)
+                
+                invoice.due_date = form.cleaned_data.get('due_date') or timezone.now().date()
+
+                # Handle payment mode with safe decimal conversion
+                payment_mode = form.cleaned_data.get('payment_mode', 'cash')
+                if payment_mode == 'split':
+                    try:
+                        cash_amount = self.request.POST.get('cash_amount', '0').strip()
+                        invoice.cash_amount = Decimal(cash_amount) if cash_amount else Decimal('0')
+                    except (ValueError, decimal.InvalidOperation):
+                        logger.warning(f"Invalid cash amount '{self.request.POST.get('cash_amount')}', defaulting to 0")
+                        invoice.cash_amount = Decimal('0')
+                        
+                    try:
+                        pos_amount = self.request.POST.get('pos_amount', '0').strip()
+                        invoice.pos_amount = Decimal(pos_amount) if pos_amount else Decimal('0')
+                    except (ValueError, decimal.InvalidOperation):
+                        logger.warning(f"Invalid POS amount '{self.request.POST.get('pos_amount')}', defaulting to 0")
+                        invoice.pos_amount = Decimal('0')
+                        
+                    try:
+                        other_amount = self.request.POST.get('other_amount', '0').strip()
+                        invoice.other_amount = Decimal(other_amount) if other_amount else Decimal('0')
+                    except (ValueError, decimal.InvalidOperation):
+                        logger.warning(f"Invalid other amount '{self.request.POST.get('other_amount')}', defaulting to 0")
+                        invoice.other_amount = Decimal('0')
+                        
+                    invoice.other_method = self.request.POST.get('other_method', '')
+
+                # Handle customer with safe conversion and detailed debugging
+                customer_id = self.request.POST.get('customer', '').strip()
+                print(f"=== CUSTOMER DEBUG ===")
+                print(f"Raw customer value: '{customer_id}'")
+                print(f"Customer type: {type(customer_id)}")
+                print(f"Customer length: {len(customer_id) if customer_id else 'None'}")
+                
+                if customer_id and customer_id != '':
+                    try:
+                        print(f"Attempting to convert '{customer_id}' to int...")
+                        customer_id_int = int(customer_id)
+                        print(f"Successfully converted to: {customer_id_int}")
+                        invoice.customer_id = customer_id_int
+                        logger.info(f"Assigned customer ID: {customer_id_int}")
+                    except (ValueError, TypeError) as e:
+                        print(f"Failed to convert '{customer_id}' to int: {e}")
+                        logger.warning(f"Invalid customer ID: {customer_id}, using walk-in customer")
+                        # Create or get walk-in customer
+                        walk_in_customer, created = Customer.objects.get_or_create(
+                            full_name='Walk-in Customer',
+                            defaults={
+                                'phone': '',
+                                'address': ''
+                            }
+                        )
+                        invoice.customer = walk_in_customer
+                    except Customer.DoesNotExist:
+                        print(f"Customer with ID {customer_id} not found")
+                        logger.warning(f"Customer with ID {customer_id} not found, using walk-in customer")
+                        # Create or get walk-in customer
+                        walk_in_customer, created = Customer.objects.get_or_create(
+                            full_name='Walk-in Customer',
+                            defaults={
+                                'phone': '',
+                                'address': ''
+                            }
+                        )
+                        invoice.customer = walk_in_customer
+                else:
+                    # Create or get walk-in customer for no customer selection
+                    print("No customer selected, using walk-in customer")
+                    logger.info("No customer selected, using walk-in customer")
+                    walk_in_customer, created = Customer.objects.get_or_create(
+                        full_name='Walk-in Customer',
+                        defaults={
+                            'phone': '',
+                            'address': ''
+                        }
+                    )
+                    invoice.customer = walk_in_customer
+
+                invoice.save()
+                print(f"Status after save: {invoice.status}")
+                
+                self._create_invoice_items(invoice)
+                self._update_invoice_totals(invoice)
+
+                return self._handle_response(invoice)
+
+        except Exception as e:
+            logger.error(f"Invoice creation error: {str(e)}")
+            logger.error(f"POST data: {dict(self.request.POST)}")
+            import traceback
+            logger.error(f"Traceback: {traceback.format_exc()}")
+            return self._handle_error(e, form)
+    
+    def _create_invoice(self, form):
+        """Create and save the invoice instance"""
+        invoice = form.save(commit=False)
+        
+        # Set default values
+        invoice.due_date = form.cleaned_data.get('due_date') or timezone.now().date()
+        # Use status from form instead of hardcoding to 'draft'
+        invoice.status = form.cleaned_data.get('status', 'draft')
+        print(f"🔍 Setting status to: {invoice.status}")
+        
+        # Generate invoice number if needed
+        if not invoice.invoice_number or invoice.invoice_number in ['Auto-generated', '']:
+            invoice.invoice_number = self._generate_invoice_number()
+        
+        invoice.save()
+        return invoice
+    
+    def _generate_invoice_number(self):
+        """Generate invoice number in YYYYMMDDNN format"""
+        # Define date_part at the start
+        date_part = timezone.now().strftime('%Y%m%d')  # YYYYMMDD format
+    
+        try:
+            with transaction.atomic():
+                # Get the highest invoice number for today
+                last_invoice = Invoice.objects.filter(
+                    invoice_number__startswith=date_part
+                ).order_by('-invoice_number').first()
+        
+                if last_invoice:
+                    last_num = int(last_invoice.invoice_number[-2:])  # Get last 2 digits
+                    next_num = last_num + 1
+                else:
+                    next_num = 1
+                
+                # Ensure we don't exceed 99 invoices per day
+                if next_num > 99:
+                    raise ValueError("Maximum daily invoice limit (99) reached")
+                
+                new_number = f"{date_part}{next_num:02d}"
+                print(f"✅ Generated new invoice number: {new_number}")
+                return new_number
+        except Exception as e:
+            # Fallback mechanism
+            fallback_num = random.randint(1, 99)
+            fallback_number = f"{date_part}{fallback_num:02d}F"  # F for fallback
+            print(f"🚨 Fallback invoice number generation: {fallback_number}")
+            logger.error(f"Invoice number generation error: {str(e)}")
+            return fallback_number
+
+    def _create_invoice_items(self, invoice):
+        """Create all associated invoice items"""
+        items_data = json.loads(self.request.POST.get('items', '[]'))
+        print(f"=== ITEMS DEBUG ===")
+        print(f"Items JSON: {self.request.POST.get('items', '[]')}")
+        print(f"Parsed items: {items_data}")
+        logger.info(f"Creating invoice items: {items_data}")
+        
+        for item in items_data:
+            print(f"=== PROCESSING ITEM ===")
+            print(f"Item data: {item}")
+            logger.info(f"Processing item: {item}")
+            try:
+                # Safely convert product ID to integer
+                product_id = item.get('product', '').strip()
+                print(f"Raw product ID: '{product_id}'")
+                print(f"Product ID type: {type(product_id)}")
+                print(f"Product ID length: {len(product_id) if product_id else 'None'}")
+                
+                if not product_id or product_id == '':
+                    print("Skipping item with empty product ID")
+                    logger.warning(f"Skipping item with empty product ID: {item}")
+                    continue
+                    
+                try:
+                    print(f"Attempting to convert '{product_id}' to int...")
+                    product_id_int = int(product_id)
+                    print(f"Successfully converted to: {product_id_int}")
+                except (ValueError, TypeError) as e:
+                    print(f"Failed to convert '{product_id}' to int: {e}")
+                    logger.error(f"Invalid product ID '{product_id}' in item: {item}")
+                    continue
+                
+                product = Product.objects.get(pk=product_id)
+                logger.info(f"Found product: {product.name} (ID: {product.id})")
+                
+                # Safely convert quantity and price
+                try:
+                    quantity = int(item.get('quantity', '1'))
+                    if quantity <= 0:
+                        quantity = 1
+                except (ValueError, TypeError):
+                    logger.warning(f"Invalid quantity '{item.get('quantity')}', defaulting to 1")
+                    quantity = 1
+                
+                try:
+                    unit_price = Decimal(str(item.get('selling_price', item.get('unit_price', product.unit_price))))
+                except (ValueError, TypeError, decimal.InvalidOperation):
+                    logger.warning(f"Invalid price '{item.get('unit_price')}', using product price")
+                    unit_price = product.unit_price
+                
+                InvoiceItem.objects.create(
+                    invoice=invoice,
+                    product=product,
+                    quantity=quantity,
+                    unit_price=unit_price,
+                )
+                logger.info(f"Created invoice item for product: {product.name}")
+            except Product.DoesNotExist:
+                logger.error(f"Product not found with ID: {product_id}")
+                continue
+            except Exception as e:
+                logger.error(f"Error creating invoice item: {e}, item data: {item}")
+                raise
+
+    def _update_invoice_totals(self, invoice):
+        """Update calculated invoice totals with safe decimal conversion"""
+        try:
+            subtotal = self.request.POST.get('subtotal', '0').strip()
+            invoice.subtotal = Decimal(subtotal) if subtotal else Decimal('0')
+        except (ValueError, decimal.InvalidOperation):
+            logger.warning(f"Invalid subtotal '{self.request.POST.get('subtotal')}', defaulting to 0")
+            invoice.subtotal = Decimal('0')
+            
+        try:
+            discount_amount = self.request.POST.get('discount_amount', '0').strip()
+            invoice.discount_amount = Decimal(discount_amount) if discount_amount else Decimal('0')
+        except (ValueError, decimal.InvalidOperation):
+            logger.warning(f"Invalid discount amount '{self.request.POST.get('discount_amount')}', defaulting to 0")
+            invoice.discount_amount = Decimal('0')
+            
+        try:
+            grand_total = self.request.POST.get('grand_total', '0').strip()
+            invoice.grand_total = Decimal(grand_total) if grand_total else Decimal('0')
+        except (ValueError, decimal.InvalidOperation):
+            logger.warning(f"Invalid grand total '{self.request.POST.get('grand_total')}', defaulting to 0")
+            invoice.grand_total = Decimal('0')
+            
+        invoice.save()
+        return self._handle_response(invoice)
+
+    def _handle_response(self, invoice):
+        """Return appropriate response based on request type"""
+        if self.request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({
+                'success': True,
+                'redirect_url': reverse('portal:invoice_detail', kwargs={'pk': invoice.pk}),
+                'invoice_number': invoice.invoice_number,
+                'total_amount': str(invoice.grand_total),
+                'invoice_id': invoice.pk
+            })
+        self.object = invoice
+        return HttpResponseRedirect(reverse('portal:invoice_detail', kwargs={'pk': invoice.pk}))
+
+    def _handle_error(self, error, form=None):
+        """Handle errors appropriately based on request type"""
+        if self.request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({
+                'success': False,
+                'message': str(error)
+            }, status=400)
+        if form is None:
+            form = self.get_form()
+        return super().form_invalid(form)
+    
+    def form_invalid(self, form):
+        print("=== FORM_INVALID CALLED ===")
+        print(f"Form errors: {form.errors}")
+        print(f"Form non-field errors: {form.non_field_errors()}")
+        print(f"POST data: {dict(self.request.POST)}")
+        print(f"Is AJAX: {self.request.headers.get('X-Requested-With') == 'XMLHttpRequest'}")
+        
+        if self.request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({
+                'success': False,
+                'errors': form.errors,
+                'message': 'Form validation failed'
+            }, status=400)
+        return super().form_invalid(form)
+        
+    def get_success_url(self):
+        return reverse('portal:invoice_detail', kwargs={'pk': self.object.pk})
+
+
+    model = Invoice
+    form_class = InvoiceForm
+    template_name = 'portal/invoice_create.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        """Ensure CSRF cookie is set for all requests to this view"""
+        return super().dispatch(request, *args, **kwargs)      
+
+    def post(self, request, *args, **kwargs):
+        print("\n" + "="*50)
+        print("🚀 POST METHOD CALLED - INVOICE CREATION")
+        print("="*50)
+        print(f"Request method: {request.method}")
+        print(f"Content type: {request.content_type}")
+        print(f"POST data keys: {list(request.POST.keys())}")
+        print(f"FILES data keys: {list(request.FILES.keys())}")
+        print(f"Is AJAX: {request.headers.get('X-Requested-With') == 'XMLHttpRequest'}")
+        
+        # IMMEDIATE DEBUG - Check customer value before any processing
+        raw_customer = request.POST.get('customer', '')
+        print(f"🔍 IMMEDIATE CUSTOMER CHECK:")
+        print(f"   Raw customer value: '{raw_customer}'")
+        print(f"   Customer type: {type(raw_customer)}")
+        print(f"   Customer repr: {repr(raw_customer)}")
+        print(f"   Is numeric: {raw_customer.isdigit() if raw_customer else 'N/A'}")
+        
+        # Check all POST data for the problematic value
+        print(f"🔍 SCANNING ALL POST DATA:")
+        for key, value in request.POST.items():
+            if '4c1eb6bdc544' in str(value):
+                print(f"   ❌ FOUND PROBLEMATIC VALUE in '{key}': {repr(value)}")
+            else:
+                print(f"   ✅ {key}: {repr(value)}")
+        
+        print("="*50 + "\n")
+        return super().post(request, *args, **kwargs)      
+
+    def get_context_data(self, **kwargs):
+        """Add products and customers to template context"""
+        context = super().get_context_data(**kwargs)
+        context.update({
+            'products': Product.objects.all(),
+            'customers': Customer.objects.all()[:100],  # Limit to 100 most recent
+            'invoice_form': context['form']  # Add alias for backward compatibility
+        })
+        return context
+    
+    def form_valid(self, form):
+        print("=== FORM_VALID CALLED ===")
+        print(f"POST data: {dict(self.request.POST)}")
+        print(f"Form is valid: {form.is_valid()}")
+        print(f"Form errors: {form.errors}")
+        print(f"Is AJAX: {self.request.headers.get('X-Requested-With') == 'XMLHttpRequest'}")
+        logger.info(f"Invoice form_valid called with POST data: {dict(self.request.POST)}")
+        try:
+            with transaction.atomic():
+                invoice = form.save(commit=False)
+                invoice.due_date = form.cleaned_data.get('due_date') or timezone.now().date()
+                # Use status from form instead of hardcoding to 'draft'
+                invoice.status = form.cleaned_data.get('status', 'draft')
+                print(f"🔍 VIEW: Setting status to: {invoice.status}")
+
+                if not invoice.invoice_number or invoice.invoice_number in ['Auto-generated', '']:
+                    invoice.invoice_number = self._generate_invoice_number()
+                    print(f"🔍 VIEW: Generated invoice number: {invoice.invoice_number}")
 
                 # Handle payment mode with safe decimal conversion
                 payment_mode = form.cleaned_data.get('payment_mode', 'cash')
@@ -453,10 +804,12 @@ class InvoiceCreateView(CreateView):
         
         # Set default values
         invoice.due_date = form.cleaned_data.get('due_date') or timezone.now().date()
-        invoice.status = 'draft'
+        # Use status from form instead of hardcoding to 'draft'
+        invoice.status = form.cleaned_data.get('status', 'draft')
+        print(f"🔍 Setting status to: {invoice.status}")
         
         # Generate invoice number if needed
-        if not invoice.invoice_number or invoice.invoice_number == 'Auto-generated':
+        if not invoice.invoice_number or invoice.invoice_number in ['Auto-generated', '']:
             invoice.invoice_number = self._generate_invoice_number()
         
         invoice.save()
@@ -630,31 +983,51 @@ class InvoiceCreateView(CreateView):
 class InvoiceUpdateView(UpdateView):
     model = Invoice
     form_class = InvoiceForm
-    template_name = 'portal/invoice_create.html'
+    template_name = 'portal/invoice_edit.html'
     
     def get_context_data(self, **kwargs):
-        """Add products, customers, and existing items to template context"""
         context = super().get_context_data(**kwargs)
         context.update({
             'products': Product.objects.filter(is_active=True),
-            'customers': Customer.objects.filter(is_active=True),
-            'existing_items': self.object.items.select_related('product')
+            'existing_items': self.object.items.select_related('product'),
+            'Invoice': Invoice  # Make the model class available in template
         })
         return context
     
     def form_valid(self, form):
-        """Handle invoice update with transaction safety"""
         try:
             with transaction.atomic():
-                invoice = form.save()
-                self._process_invoice_items(invoice)
-                invoice.update_totals()
+                invoice = form.save(commit=False)
                 
-                return self._handle_response()
+                # Update payment details if split payment
+                if invoice.payment_mode == 'split':
+                    invoice.cash_amount = form.cleaned_data.get('cash_amount', 0)
+                    invoice.pos_amount = form.cleaned_data.get('pos_amount', 0)
+                    invoice.other_amount = form.cleaned_data.get('other_amount', 0)
+                    invoice.other_method = form.cleaned_data.get('other_method', '')
+                
+                # Save the invoice first
+                invoice.save()
+                
+                # Process invoice items
+                self._process_invoice_items(invoice)
+                
+                # Update totals from form data
+                invoice.subtotal = form.cleaned_data.get('subtotal', 0)
+                invoice.tax = form.cleaned_data.get('tax', 0)
+                invoice.discount_type = form.cleaned_data.get('discount_type', 'amount')
+                invoice.discount_value = form.cleaned_data.get('discount_value', 0)
+                invoice.discount_amount = form.cleaned_data.get('discount_amount', 0)
+                invoice.grand_total = form.cleaned_data.get('grand_total', 0)
+                invoice.save()
+                
+                messages.success(self.request, f"Invoice #{invoice.invoice_number} updated successfully!")
+                return redirect('portal:invoice_detail', pk=invoice.pk)
                 
         except Exception as e:
-            logger.error(f"Invoice update error: {str(e)}")
-            return self._handle_error(e)
+            logger.error(f"Invoice update error: {str(e)}", exc_info=True)
+            messages.error(self.request, f"Error updating invoice: {str(e)}")
+            return self.form_invalid(form)
 
     def _process_invoice_items(self, invoice):
         """Process all invoice item changes (create/update/delete)"""
@@ -664,36 +1037,47 @@ class InvoiceUpdateView(UpdateView):
         
         for item_data in items_data:
             if item_data.get('id'):
+                # Update existing item
                 self._update_existing_item(invoice, item_data)
                 updated_ids.add(int(item_data['id']))
             else:
+                # Create new item
                 self._create_new_item(invoice, item_data)
         
+        # Delete removed items
         self._delete_removed_items(invoice, existing_ids, updated_ids)
 
     def _update_existing_item(self, invoice, item_data):
         """Update an existing invoice item"""
-        product = Product.objects.get(pk=item_data['product'])
-        InvoiceItem.objects.filter(
-            id=item_data['id'],
-            invoice=invoice
-        ).update(
-            product=product,
-            quantity=item_data['quantity'],
-            selling_price=item_data['selling_price'],
-            cost_price=product.cost_price
-        )
+        try:
+            product = Product.objects.get(pk=item_data['product'])
+            InvoiceItem.objects.filter(
+                id=item_data['id'],
+                invoice=invoice
+            ).update(
+                product=product,
+                quantity=item_data['quantity'],
+                unit_price=item_data['unit_price'],
+                total_price=Decimal(item_data['quantity']) * Decimal(item_data['unit_price'])
+            )
+        except (Product.DoesNotExist, KeyError, ValueError) as e:
+            logger.error(f"Error updating invoice item: {str(e)}")
+            raise
 
     def _create_new_item(self, invoice, item_data):
         """Create a new invoice item"""
-        product = Product.objects.get(pk=item_data['product'])
-        InvoiceItem.objects.create(
-            invoice=invoice,
-            product=product,
-            quantity=item_data['quantity'],
-            selling_price=item_data['selling_price'],
-            cost_price=product.cost_price
-        )
+        try:
+            product = Product.objects.get(pk=item_data['product'])
+            InvoiceItem.objects.create(
+                invoice=invoice,
+                product=product,
+                quantity=item_data['quantity'],
+                unit_price=item_data['unit_price'],
+                total_price=Decimal(item_data['quantity']) * Decimal(item_data['unit_price'])
+            )
+        except (Product.DoesNotExist, KeyError, ValueError) as e:
+            logger.error(f"Error creating invoice item: {str(e)}")
+            raise
 
     def _delete_removed_items(self, invoice, existing_ids, updated_ids):
         """Delete items that were removed from the invoice"""
@@ -701,28 +1085,6 @@ class InvoiceUpdateView(UpdateView):
         if items_to_delete:
             invoice.items.filter(id__in=items_to_delete).delete()
 
-    def _handle_response(self):
-        """Return appropriate response based on request type"""
-        if self.request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return JsonResponse({
-                'success': True,
-                'redirect_url': self.get_success_url()
-            })
-        return super().form_valid(self.get_form())
-
-    def _handle_error(self, error, form=None):
-        """Handle errors appropriately based on request type"""
-        if self.request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return JsonResponse({
-                'success': False,
-                'message': str(error)
-            }, status=400)
-        if form is None:
-            form = self.get_form()
-        return super().form_invalid(form)
-      
-    def get_success_url(self):
-        return reverse('portal:invoice_detail', kwargs={'pk': self.object.pk})
 
 class InvoiceDetailView(DetailView):
     model = Invoice
@@ -743,8 +1105,6 @@ class InvoiceDetailView(DetailView):
         })
         return context
 
-
-
 class InvoiceListView(ListView):
     model = Invoice
     template_name = 'portal/invoice_list.html'
@@ -754,23 +1114,39 @@ class InvoiceListView(ListView):
     def get_queryset(self):
         queryset = super().get_queryset()
         
-        # Default to recent invoices (last 7 days)
-        if not self.request.GET.get('date_from') and not self.request.GET.get('date_to'):
+        # Check if any filters are active
+        filters_active = any([
+            self.request.GET.get('date_from'),
+            self.request.GET.get('date_to'),
+            self.request.GET.get('status'),
+            self.request.GET.get('payment_mode')
+        ])
+        
+        # Default to recent invoices (last 7 days) if no filters
+        if not filters_active:
             last_week = timezone.now() - timezone.timedelta(days=7)
             queryset = queryset.filter(date__gte=last_week)
         
-        # Date range filter (exact match for reports)
+        # Date range filtering
         date_from = self.request.GET.get('date_from')
         date_to = self.request.GET.get('date_to')
-        if date_from:
-            queryset = queryset.filter(date=date_from)  # Exact date match
+        
+        if date_from and date_to:
+            queryset = queryset.filter(date__range=[date_from, date_to])
+        elif date_from:
+            queryset = queryset.filter(date__gte=date_from)
         elif date_to:
-            queryset = queryset.filter(date=date_to)    # Exact date match
+            queryset = queryset.filter(date__lte=date_to)
             
         # Status filter
         status = self.request.GET.get('status')
         if status in dict(Invoice.INVOICE_STATUS).keys():
             queryset = queryset.filter(status=status)
+            
+        # Payment mode filter
+        payment_mode = self.request.GET.get('payment_mode')
+        if payment_mode in dict(Invoice.PAYMENT_MODES).keys():
+            queryset = queryset.filter(payment_mode=payment_mode)
             
         return queryset.select_related('customer')
     
@@ -778,15 +1154,27 @@ class InvoiceListView(ListView):
         context = super().get_context_data(**kwargs)
         queryset = self.get_queryset()
         
+        # Calculate summary statistics in single query
+        aggregates = queryset.aggregate(
+            total_amount=Sum('grand_total'),
+            paid_amount=Sum('grand_total', filter=Q(status='paid')),
+            pending_amount=Sum('grand_total', filter=~Q(status__in=['paid', 'cancelled']))
+        )
+        
         context.update({
             'total_invoices': queryset.count(),
             'paid_invoices': queryset.filter(status='paid').count(),
             'pending_invoices': queryset.exclude(status__in=['paid', 'cancelled']).count(),
-            'total_amount': queryset.aggregate(total=Sum('grand_total'))['total'] or 0,
+            'total_amount': aggregates['total_amount'] or 0,
+            'paid_amount': aggregates['paid_amount'] or 0,
+            'pending_amount': aggregates['pending_amount'] or 0,
+            # Current filter values for template
+            'current_status': self.request.GET.get('status', ''),
+            'current_payment_mode': self.request.GET.get('payment_mode', ''),
+            'current_date_from': self.request.GET.get('date_from', ''),
+            'current_date_to': self.request.GET.get('date_to', ''),
         })
         return context
-
-
 
 def get_product_details(request, product_id):
     product = get_object_or_404(Product, pk=product_id)
@@ -798,7 +1186,6 @@ def get_product_details(request, product_id):
         'selling_price': str(product.selling_price),
         'image_url': product.image.url if product.image else None
     })
-
 
 def enquiry(request):
     if request.method == 'POST':
@@ -813,8 +1200,6 @@ def enquiry(request):
     
     return render(request, 'portal/enquiry.html', {'form': form})
 
-
-
 #home view
 def home(request):
     return render(request, 'portal/home.html', {
@@ -827,12 +1212,10 @@ def register(request):
 def terms(request):
     return render(request, 'portal/terms.html')
 
-
 def profile(request):
     return render(request, 'portal/profile.html', {
         'featured_products': Product.objects.filter(is_active=True)[:4]
     })
-
 
 class ProductSearchView(ListView):
     model = Product
@@ -859,8 +1242,6 @@ class ProductSearchView(ListView):
 
 def product_search_fallback(request):
     return render(request, 'portal/products/search_empty.html')
-# views.py - add new imports and view
-
 
 @csrf_exempt  # For simplicity in development, remove in production with proper CSRF handling
 @require_http_methods(["POST"])
@@ -942,8 +1323,31 @@ def barcode_scan(request):
             'barcode': barcode_data
         }, status=500)
 
-# Adding a fallback view for empty searches
-
+# customer search
+def customer_search(request):
+    query = request.GET.get('q', '')
+    
+    if not query:
+        return JsonResponse({'customers': []})
+    
+    customers = Customer.objects.filter(
+        Q(full_name__icontains=query) | 
+        Q(company_name__icontains=query) |
+        Q(customer_id__icontains=query) |
+        Q(phone__icontains=query)
+    ).order_by('company_name', 'full_name')[:10]
+    
+    results = []
+    for customer in customers:
+        results.append({
+            'id': customer.id,
+            'display_text': customer.company_name or customer.full_name,
+            'phone': customer.phone,
+            'tax_number': customer.tax_number,
+            'address': customer.address,
+        })
+    
+    return JsonResponse({'customers': results})
 
 # BarcodeScanner
 def barcode_scanner_view(request):
@@ -990,7 +1394,6 @@ def index(request):
             return render(request, 'portal/home.html', context)
 
 # Dashboard and Report Views
-
 
 @dashboard_access_required
 def dashboard_view(request):
@@ -1184,320 +1587,6 @@ def dashboard_view(request):
     
     return render(request, 'portal/dashboard.html', context)
 
-'''
-@reports_access_required
-def report_view(request):
-    """
-    Comprehensive reports with filtering capabilities
-    """
-    # Get filter parameters
-    customer_id = request.GET.get('customer_id')
-    supplier_id = request.GET.get('supplier_id')
-    status = request.GET.get('status')
-    date_from = request.GET.get('date_from')
-    date_to = request.GET.get('date_to')
-    report_type = request.GET.get('report_type', 'invoice')
-    
-    # Base querysets
-    invoices = Invoice.objects.select_related('customer').order_by('-date')  # Use 'date' not 'invoice_date'
-    purchase_orders = PurchaseOrder.objects.select_related('supplier').order_by('-order_date')
-    
-    # Apply filters
-    filters = {}
-    if customer_id:
-        invoices = invoices.filter(customer_id=customer_id)
-        filters['customer_id'] = customer_id
-        
-    if supplier_id:
-        purchase_orders = purchase_orders.filter(supplier_id=supplier_id)
-        filters['supplier_id'] = supplier_id
-        
-    if status:
-        invoices = invoices.filter(status=status)
-        purchase_orders = purchase_orders.filter(status=status)
-        filters['status'] = status
-        
-    if date_from:
-        try:
-            date_from_obj = datetime.strptime(date_from, '%Y-%m-%d').date()
-            invoices = invoices.filter(date__gte=date_from_obj)  # Use 'date' not 'invoice_date'
-            purchase_orders = purchase_orders.filter(order_date__gte=date_from_obj)
-            filters['date_from'] = date_from
-        except ValueError:
-            pass
-            
-    if date_to:
-        try:
-            date_to_obj = datetime.strptime(date_to, '%Y-%m-%d').date()
-            invoices = invoices.filter(date__lte=date_to_obj)  # Use 'date' not 'invoice_date'
-            purchase_orders = purchase_orders.filter(order_date__lte=date_to_obj)
-            filters['date_to'] = date_to
-        except ValueError:
-            pass
-    
-    # Pagination
-    page = request.GET.get('page', 1)
-    items_per_page = 25
-    
-    if report_type == 'purchase_order':
-        paginator = Paginator(purchase_orders, items_per_page)
-        page_obj = paginator.get_page(page)
-        
-        # Purchase order statistics
-        total_count = purchase_orders.count()
-        total_amount = purchase_orders.aggregate(total=Sum('total_amount'))['total'] or 0
-        avg_amount = purchase_orders.aggregate(avg=Avg('total_amount'))['avg'] or 0
-        
-        # Status breakdown
-        status_breakdown = purchase_orders.values('status').annotate(
-            count=Count('id'),
-            total_amount=Sum('total_amount')
-        )
-        
-        stats = {
-            'total_count': total_count,
-            'total_amount': total_amount,
-            'avg_amount': avg_amount,
-            'status_breakdown': status_breakdown,
-        }
-    else:
-        # Default to invoice report
-        paginator = Paginator(invoices, items_per_page)
-        page_obj = paginator.get_page(page)
-        
-        # Invoice statistics
-        total_count = invoices.count()
-        total_amount = invoices.aggregate(total=Sum('grand_total'))['total'] or 0
-        avg_amount = invoices.aggregate(avg=Avg('grand_total'))['avg'] or 0
-        
-        # Status breakdown
-        status_breakdown = invoices.values('status').annotate(
-            count=Count('id'),
-            total_amount=Sum('grand_total')
-        )
-        
-        stats = {
-            'total_count': total_count,
-            'total_amount': total_amount,
-            'avg_amount': avg_amount,
-            'status_breakdown': status_breakdown,
-        }
-    
-    # Get choices for dropdowns
-    customers = Customer.objects.order_by('full_name')  # No is_active field for Customer
-    suppliers = Supplier.objects.filter(is_active=True).order_by('name')
-    invoice_status_choices = Invoice.INVOICE_STATUS  # Use correct field name
-    purchase_order_status_choices = [  # Define choices since PurchaseOrder doesn't have STATUS_CHOICES
-        ('draft', 'Draft'),
-        ('ordered', 'Ordered'),
-        ('received', 'Received'),
-        ('cancelled', 'Cancelled'),
-    ]
-    
-    # Enhanced Analytics for Reports
-    # Cost Analysis
-    from procurement.models import PurchaseItem
-    
-    # Total cost analysis from purchase items
-    total_cost_value = PurchaseItem.objects.aggregate(
-        total=Sum(F('unit_cost') * F('quantity'))
-    )['total'] or 0
-    
-    # Revenue from invoices (in filtered period if applicable)
-    total_revenue = invoices.filter(status='paid').aggregate(
-        total=Sum('grand_total')  # grand_total is after discounts
-    )['total'] or 0
-
-    # Calculate cost value based on product cost prices (from inventory)
-    total_cost_value = InvoiceItem.objects.filter(
-        invoice__in=invoices.filter(status='paid')
-    ).aggregate(
-        total_cost=Sum(F('quantity') * F('product__cost_price'))
-    )['total_cost'] or 0
-
-    # Gross profit and margin (now with correct discount application)
-    gross_profit = total_revenue - total_cost_value
-    gross_margin = 0
-    if total_revenue > 0:
-        gross_margin = (gross_profit / total_revenue) * 100
-
-    category_analysis = InvoiceItem.objects.filter(
-        invoice__in=invoices.filter(status='paid')
-    ).annotate(
-        discounted_price=Case(
-            When(
-                items__discount_type='percent',
-                then=F('unit_price') * (1 - F('items__discount_value') / 100)
-            ),
-            When(
-                items__discount_type='amount',
-                then=F('unit_price') - (
-                    F('items__discount_value') /
-                    Cast(Count('invoice'), DecimalField(max_digits=12, decimal_places=2))
-                )
-            ),
-            default=F('unit_price'),
-            output_field=DecimalField(max_digits=12, decimal_places=2)
-        )
-    ).values('product__category__name').annotate(
-        count=Count('id'),
-        total_qty=Sum('quantity'),
-        total_cost=Sum(F('quantity') * F('product__cost_price')),
-        total_revenue=Sum(F('quantity') * F('discounted_price')),
-        avg_cost=Avg('product__cost_price'),
-        avg_selling=Avg(F('discounted_price'))
-    ).annotate(
-        margin=Case(
-            When(avg_cost__gt=0, then=(F('avg_selling') - F('avg_cost')) / F('avg_cost') * 100),
-            default=0,
-            output_field=DecimalField(max_digits=10, decimal_places=2)
-        )
-    ).order_by('-total_revenue')[:10]
-    
-    # Top products with correct discount flow
-    top_products = InvoiceItem.objects.filter(
-        invoice__status='paid'
-    ).values(
-        'product__name', 
-        'product__cost_price'
-    ).annotate(
-        total_qty=Sum('quantity'),
-        total_revenue=Sum(F('quantity') * F('unit_price')),
-        total_cost=Sum(F('quantity') * F('product__cost_price'))
-    ).annotate(
-        total_profit=F('total_revenue') - F('total_cost'),
-        margin=Case(
-            When(total_revenue__gt=0, then=(F('total_profit') / F('total_revenue')) * 100),
-            default=0,
-            output_field=DecimalField(max_digits=5, decimal_places=1)
-        )
-    ).order_by('-total_revenue')[:10]
-
-    # Daily Profit Breakdown with correct discount flow
-    daily_profit_breakdown = Invoice.objects.filter(
-        status='paid',
-        date__gte=date_from_obj if date_from else timezone.now().date() - timedelta(days=30),
-        date__lte=date_to_obj if date_to else timezone.now().date()
-    ).annotate(
-        date_trunc=TruncDate('date')
-    ).values('date_trunc').annotate(
-        sales_value=Sum('grand_total'),  # Final amount after discounts
-        cost_value=Sum(
-            F('items__quantity') * F('items__product__cost_price'),
-            output_field=DecimalField(max_digits=12, decimal_places=2)
-        ),
-        invoice_count=Count('id')
-    ).annotate(
-        gross_profit=F('sales_value') - F('cost_value'),
-        margin=Case(
-            When(sales_value__gt=0, then=(F('gross_profit') / F('sales_value')) * 100),
-            default=0,
-            output_field=DecimalField(max_digits=5, decimal_places=1)
-        )
-    ).order_by('-date_trunc')
-
-    # Define current_month_start for monthly profit breakdown
-    today = timezone.now().date()
-    current_month_start = today.replace(day=1)
-
-    #Monthly Profit Breakdown with correct discount flow
-    monthly_profit_breakdown = Invoice.objects.filter(
-        status='paid',
-    ).annotate(
-        month_trunc=TruncMonth('date')
-    ).values('month_trunc').annotate(
-        sales_value=Sum('grand_total'),  # Final amount after discounts
-        cost_value=Sum(
-            F('items__quantity') * F('items__product__cost_price'),
-            output_field=DecimalField(max_digits=12, decimal_places=2)
-        ),
-        invoice_count=Count('id')
-    ).annotate(
-        gross_profit=F('sales_value') - F('cost_value'),
-        margin=Case(
-            When(sales_value__gt=0, then=(F('gross_profit') / F('sales_value')) * 100),
-            default=0,
-            output_field=DecimalField(max_digits=5, decimal_places=1)
-        )
-    ).order_by('-month_trunc')
-
-    # Category analysis with cost breakdown
-    category_analysis = InvoiceItem.objects.filter(
-        invoice__in=invoices.filter(status='paid')
-    ).values('product__category__name').annotate(
-        count=Count('id'),
-        total_qty=Sum('quantity'),
-        total_cost=Sum(F('quantity') * F('product__cost_price')),
-        total_revenue=Sum(F('quantity') * F('unit_price')),
-        avg_cost=Avg('product__cost_price'),
-        avg_selling=Avg(F('unite_price'))
-    ).annotate(
-        margin=Case(
-            When(avg_cost__gt=0, then=(F('avg_selling') - F('avg_cost')) / F('avg_cost') * 100),
-            default=0,
-            output_field=DecimalField(max_digits=10, decimal_places=2)
-        )
-    ).order_by('-total_selling')[:10]
-    
-
-    # Invoice and PO totals for summary cards
-    invoice_totals = {
-        'count': invoices.count(),
-        'total_amount': invoices.aggregate(total=Sum('grand_total'))['total'] or 0
-    }
-    
-    po_totals = {
-        'count': purchase_orders.count(),
-        'total_amount': purchase_orders.aggregate(total=Sum('total'))['total'] or 0
-    }
-
-    # Aggregate total discount amount from filtered invoices
-    discount_amount = invoices.aggregate(total=Sum('discount_amount'))['total'] or 0
-    
-    # Calculate profit metrics
-    total_profit = gross_profit - total_cost_value + discount_amount
-    gross_margin = 0
-    if total_revenue > 0:
-        gross_margin = (gross_profit / total_revenue) * 100
-    # Profit margin for display
-    profit_margin = gross_margin
-    avg_margin = 0
-    
-    if category_analysis:
-        avg_margin = sum(cat['margin'] or 0 for cat in category_analysis) / len(category_analysis)
-    
-    # Add totals for costs
-    total_costs = total_cost_value
-    
-    context = {
-        'page_obj': page_obj,
-        'stats': stats,
-        'filters': filters,
-        'customers': customers,
-        'suppliers': suppliers,
-        'invoice_status_choices': invoice_status_choices,
-        'purchase_order_status_choices': purchase_order_status_choices,
-        'report_type': report_type,
-        'current_filters': request.GET,
-        # Enhanced analytics
-        'invoice_totals': invoice_totals,
-        'po_totals': po_totals,
-        'total_cost_value': total_cost_value,
-        'total_revenue': total_revenue,
-        'gross_profit': gross_profit,
-        'gross_margin': gross_margin,
-        'total_profit': total_profit,
-        'profit_margin': profit_margin,
-        'avg_margin': avg_margin,
-        'total_costs': total_costs,
-        'category_analysis': category_analysis,
-        'top_products': top_products,
-        'invoices': invoices[:50],  # Limit for display
-        'purchase_orders': purchase_orders[:50],  # Limit for display
-    }
-      
-    return render(request, 'portal/report.html', context)
-'''
 @dashboard_access_required
 def analytics_api(request):
     """

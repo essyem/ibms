@@ -59,3 +59,34 @@
     flex: 1;
 }
 
+.customer-search-container {
+    position: relative;
+}
+
+.customer-search-results {
+    position: absolute;
+    z-index: 1000;
+    background: white;
+    width: 100%;
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid #ddd;
+    border-radius: 0 0 4px 4px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.customer-search-result-item {
+    padding: 8px;
+    border-bottom: 1px solid #eee;
+    cursor: pointer;
+}
+
+.customer-search-result-item:hover {
+    background-color: #f5f5f5;
+}
+
+.no-results {
+    padding: 8px;
+    color: #666;
+    font-style: italic;
+}

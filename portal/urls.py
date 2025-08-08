@@ -47,4 +47,5 @@ urlpatterns = [
     # AJAX endpoints for product search and barcode lookup
     path('ajax/product-search/', ajax_views.product_search_public, name='product_search_public'),
     path('ajax/barcode-lookup/', ajax_views.product_barcode_lookup_public, name='barcode_lookup_public'),
+    path('ajax/customer-search/', views.customer_search, name='customer_search'),
 ]
