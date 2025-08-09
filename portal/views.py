@@ -38,6 +38,8 @@ import arabic_reshaper
 from bidi.algorithm import get_display
 from datetime import datetime, timedelta
 from django.core.paginator import Paginator
+import csv
+from django.db.models import ExpressionWrapper, FloatField
 
 
 logger = logging.getLogger(__name__)
@@ -305,6 +307,7 @@ class InvoiceCreateView(CreateView):
         print("\n" + "="*50)
         print("🚀 POST METHOD CALLED - INVOICE CREATION")
         print("="*50)
+        print(f"Status value in POST: {request.POST.get('status')}")
         print(f"Request method: {request.method}")
         print(f"Content type: {request.content_type}")
         print(f"POST data keys: {list(request.POST.keys())}")
@@ -350,6 +353,11 @@ class InvoiceCreateView(CreateView):
         print(f"Form errors: {form.errors}")
         print(f"Is AJAX: {self.request.headers.get('X-Requested-With') == 'XMLHttpRequest'}")
         logger.info(f"Invoice form_valid called with POST data: {dict(self.request.POST)}")
+        
+        # Debug: Check the status value from form
+        status = form.cleaned_data.get('status', 'draft')
+        print(f"🔍 Form status value: {status}")
+        
         try:
             with transaction.atomic():
                 invoice = form.save(commit=False)
@@ -1751,6 +1759,412 @@ def report_view(request):
         ('cancelled', 'Cancelled'),
     ]
     
+    # Calculate cost value based on product cost prices (from inventory)
+    total_cost_value = InvoiceItem.objects.filter(
+        invoice__in=invoices.filter(status='paid')
+    ).aggregate(
+        total_cost=Sum(F('quantity') * F('product__cost_price'))
+    )['total_cost'] or 0
+    
+    # Revenue from invoices (in filtered period if applicable)
+    total_revenue = invoices.filter(status='paid').aggregate(
+        total=Sum('grand_total')
+    )['total'] or 0
+    
+    # Gross profit and margin
+    gross_profit = total_revenue - total_cost_value
+    gross_margin = 0
+    if total_revenue > 0:
+        gross_margin = (gross_profit / total_revenue) * 100
+    # Use total_revenue from invoices (grand_total), not from InvoiceItem/unit_price
+    # total_revenue = invoices.filter(status='paid').aggregate(
+    #     total=Sum('grand_total')
+    # )['total'] or 0
+    total_revenue = invoices.filter(status='paid').aggregate(
+        total=Sum('grand_total')
+    )['total'] or 0    
+    # Gross profit and margin
+    # Daily breakdown (using InvoiceItem)
+    daily_gross_profit = (
+        InvoiceItem.objects.filter(invoice__status='paid')
+        .annotate(date=TruncDate('invoice__date'))
+        .values('date')
+        .annotate(
+            sales_value=Sum(F('quantity') * F('unit_price'), output_field=DecimalField()),
+            cost_value=Sum(F('quantity') * F('product__cost_price'), output_field=DecimalField()),
+        )
+        .annotate(
+            gross_profit=F('sales_value') - F('cost_value'),
+            margin=Case(
+                When(sales_value__gt=0, then=(F('gross_profit') / F('sales_value')) * 100),
+                default=0,
+                output_field=DecimalField(max_digits=5, decimal_places=1)
+            )
+        )
+        .order_by('date')
+    )
+    # Monthly breakdown
+    monthly_gross_profit = (
+        InvoiceItem.objects.filter(invoice__status='paid')
+        .annotate(month=TruncMonth('invoice__date'))
+        .values('month')
+        .annotate(
+            sales_value=Sum(F('quantity') * F('unit_price'), output_field=DecimalField()),
+            cost_value=Sum(F('quantity') * F('product__cost_price'), output_field=DecimalField()),
+        )
+        .annotate(
+            gross_profit=F('sales_value') - F('cost_value'),
+            margin=Case(
+                When(sales_value__gt=0, then=(F('gross_profit') / F('sales_value')) * 100),
+                default=0,
+                output_field=DecimalField(max_digits=5, decimal_places=1)
+            )
+        )
+        .order_by('month')
+    )
+
+    # Add to context:
+    context = {}
+    context['daily_gross_profit'] = daily_gross_profit
+    context['monthly_gross_profit'] = monthly_gross_profit
+    
+    # Category analysis - using 'items' as related_name
+    category_analysis = InvoiceItem.objects.filter(
+        invoice__in=invoices.filter(status='paid')
+    ).values('product__category__name').annotate(
+        count=Count('id'),
+        total_qty=Sum('quantity'),
+        total_cost=Sum(F('quantity') * F('product__cost_price')),
+        total_revenue=Sum(F('quantity') * F('unit_price')),
+        avg_cost=Avg('product__cost_price'),
+        avg_selling=Avg('unit_price')
+    ).annotate(
+        margin=Case(
+            When(avg_cost__gt=0, then=(F('avg_selling') - F('avg_cost')) / F('avg_cost') * 100),
+            default=0,
+            output_field=DecimalField(max_digits=10, decimal_places=2)
+        )
+    ).order_by('-total_revenue')[:10]
+
+    # Top products
+    top_products = InvoiceItem.objects.filter(
+        invoice__status='paid'
+    ).values(
+        'product__name', 
+        'product__cost_price'
+    ).annotate(
+        total_qty=Sum('quantity'),
+        total_revenue=Sum(F('quantity') * F('unit_price')),
+        total_cost=Sum(F('quantity') * F('product__cost_price'))
+    ).annotate(
+        total_profit=F('total_revenue') - F('total_cost'),
+        margin=Case(
+            When(total_revenue__gt=0, then=(F('total_profit') / F('total_revenue')) * 100),
+            default=0,
+            output_field=DecimalField(max_digits=5, decimal_places=1)
+        )
+    ).order_by('-total_revenue')[:10]
+
+    # Invoice and PO totals for summary cards
+    invoice_totals = {
+        'count': invoices.count(),
+        'total_amount': invoices.aggregate(total=Sum('grand_total'))['total'] or 0
+    }
+    
+    po_totals = {
+        'count': purchase_orders.count(),
+        'total_amount': purchase_orders.aggregate(total=Sum('total'))['total'] or 0
+    }
+    
+
+    # Calculate profit metrics
+    total_profit = gross_profit
+    profit_margin = gross_margin
+    avg_margin = 0
+    
+    if category_analysis:
+        avg_margin = sum(cat['margin'] or 0 for cat in category_analysis) / len(category_analysis)
+    
+    # Define daily_profit_breakdown using the same queryset as daily_gross_profit for compatibility
+    daily_profit_breakdown = daily_gross_profit
+
+    # Define monthly_profit_breakdown using similar logic, grouped by month
+    monthly_profit_breakdown = (
+        InvoiceItem.objects.filter(invoice__status='paid')
+        .annotate(month=TruncMonth('invoice__date'))
+        .values('month')
+        .annotate(
+            sales_value=Sum(F('quantity') * F('unit_price'), output_field=DecimalField()),
+            cost_value=Sum(F('quantity') * F('product__cost_price'), output_field=DecimalField()),
+        )
+        .annotate(
+            gross_profit=F('sales_value') - F('cost_value'),
+            margin=Case(
+                When(sales_value__gt=0, then=(F('gross_profit') / F('sales_value')) * 100),
+                default=0,
+                output_field=DecimalField(max_digits=5, decimal_places=1)
+            )
+        )
+        .order_by('month')
+    )
+
+    context = {
+        'page_obj': page_obj,
+        'stats': stats,
+        'filters': filters,
+        'customers': customers,
+        'suppliers': suppliers,
+        'invoice_status_choices': invoice_status_choices,
+        'purchase_order_status_choices': purchase_order_status_choices,
+        'report_type': report_type,
+        'current_filters': request.GET,
+        'invoice_totals': invoice_totals,
+        'po_totals': po_totals,
+        'total_cost_value': total_cost_value,
+        'total_revenue': total_revenue,
+        'gross_profit': gross_profit,
+        'gross_margin': gross_margin,
+        'total_profit': total_profit,
+        'profit_margin': profit_margin,
+        'avg_margin': avg_margin,
+        'total_costs': total_cost_value,
+        'category_analysis': category_analysis,
+        'top_products': top_products,
+        'daily_profit_breakdown': daily_profit_breakdown,
+        'monthly_profit_breakdown': monthly_profit_breakdown,
+        'invoices': invoices[:50],
+        'purchase_orders': purchase_orders[:50],
+    }
+    
+    return render(request, 'portal/report.html', context)
+
+def export_reports(request):
+    export_type = request.GET.get('export', 'invoices')
+    
+    # Get filters from request
+    filters = {
+        'customer_id': request.GET.get('customer_id'),
+        'supplier_id': request.GET.get('supplier_id'),
+        'status': request.GET.get('status'),
+        'date_from': request.GET.get('date_from'),
+        'date_to': request.GET.get('date_to'),
+    }
+    
+    # Create the HttpResponse object with CSV header
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = f'attachment; filename="{export_type}_export_{timezone.now().date()}.csv"'
+    
+    writer = csv.writer(response)
+    
+    if export_type == 'invoices':
+        # Filter invoices based on request parameters
+        invoices = Invoice.objects.all()
+        
+        if filters['customer_id']:
+            invoices = invoices.filter(customer_id=filters['customer_id'])
+        if filters['date_from']:
+            invoices = invoices.filter(date__gte=filters['date_from'])
+        if filters['date_to']:
+            invoices = invoices.filter(date__lte=filters['date_to'])
+        if filters['status']:
+            invoices = invoices.filter(status=filters['status'])
+        
+        # Write CSV header
+        writer.writerow([
+            'Invoice Number', 'Customer', 'Date', 
+            'Subtotal', 'Tax', 'Discount', 'Grand Total', 
+            'Status', 'Payment Status', 'Created At'
+        ])
+        
+        # Write data rows
+        for invoice in invoices:
+            writer.writerow([
+                invoice.invoice_number,
+                invoice.customer.full_name if invoice.customer else '',
+                invoice.date.strftime('%Y-%m-%d'),
+                invoice.subtotal,
+                invoice.tax_amount,
+                invoice.discount_amount,
+                invoice.grand_total,
+                invoice.get_status_display(),
+                invoice.get_payment_status_display(),
+                invoice.created_at.strftime('%Y-%m-%d %H:%M:%S')
+            ])
+    
+    elif export_type == 'purchase_orders':
+        # Filter purchase orders
+        purchase_orders = PurchaseOrder.objects.all()
+        
+        if filters['supplier_id']:
+            purchase_orders = purchase_orders.filter(supplier_id=filters['supplier_id'])
+        if filters['date_from']:
+            purchase_orders = purchase_orders.filter(order_date__gte=filters['date_from'])
+        if filters['date_to']:
+            purchase_orders = purchase_orders.filter(order_date__lte=filters['date_to'])
+        if filters['status']:
+            purchase_orders = purchase_orders.filter(status=filters['status'])
+        
+        # Write CSV header
+        writer.writerow([
+            'PO Reference', 'Supplier', 'Order Date', 
+            'Delivery Date', 'Total Amount', 'Status', 
+            'Created At', 'Created By'
+        ])
+        
+        # Write data rows
+        for po in purchase_orders:
+            writer.writerow([
+                po.reference,
+                po.supplier.name if po.supplier else '',
+                po.order_date.strftime('%Y-%m-%d'),
+                po.delivery_date.strftime('%Y-%m-%d') if po.delivery_date else '',
+                po.total,
+                po.get_status_display(),
+                po.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+                po.created_by.get_full_name() if po.created_by else ''
+            ])
+    
+    elif export_type == 'payments':
+        # Filter payments
+        payments = Payment.objects.all()
+        
+        if filters['date_from']:
+            payments = payments.filter(payment_date__gte=filters['date_from'])
+        if filters['date_to']:
+            payments = payments.filter(payment_date__lte=filters['date_to'])
+        
+        # Write CSV header
+        writer.writerow([
+            'Payment Date', 'PO Reference', 'Supplier', 
+            'Amount', 'Payment Method', 'Reference', 
+            'Notes', 'Created At'
+        ])
+        
+        # Write data rows
+        for payment in payments:
+            writer.writerow([
+                payment.payment_date.strftime('%Y-%m-%d'),
+                payment.purchase_order.reference if payment.purchase_order else '',
+                payment.purchase_order.supplier.name if payment.purchase_order and payment.purchase_order.supplier else '',
+                payment.amount,
+                payment.get_payment_method_display(),
+                payment.reference or '',
+                payment.notes or '',
+                payment.created_at.strftime('%Y-%m-%d %H:%M:%S')
+            ])
+    
+    return response
+
+'''
+@reports_access_required
+def report_view(request):
+    """
+    Comprehensive reports with filtering capabilities
+    """
+    # Get filter parameters
+    customer_id = request.GET.get('customer_id')
+    supplier_id = request.GET.get('supplier_id')
+    status = request.GET.get('status')
+    date_from = request.GET.get('date_from')
+    date_to = request.GET.get('date_to')
+    report_type = request.GET.get('report_type', 'invoice')
+    
+    # Base querysets
+    invoices = Invoice.objects.select_related('customer').order_by('-date')
+    purchase_orders = PurchaseOrder.objects.select_related('supplier').order_by('-order_date')
+    
+    # Apply filters
+    filters = {}
+    if customer_id:
+        invoices = invoices.filter(customer_id=customer_id)
+        filters['customer_id'] = customer_id
+        
+    if supplier_id:
+        purchase_orders = purchase_orders.filter(supplier_id=supplier_id)
+        filters['supplier_id'] = supplier_id
+        
+    if status:
+        invoices = invoices.filter(status=status)
+        purchase_orders = purchase_orders.filter(status=status)
+        filters['status'] = status
+        
+    if date_from:
+        try:
+            date_from_obj = datetime.strptime(date_from, '%Y-%m-%d').date()
+            invoices = invoices.filter(date__gte=date_from_obj)
+            purchase_orders = purchase_orders.filter(order_date__gte=date_from_obj)
+            filters['date_from'] = date_from
+        except ValueError:
+            pass
+            
+    if date_to:
+        try:
+            date_to_obj = datetime.strptime(date_to, '%Y-%m-%d').date()
+            invoices = invoices.filter(date__lte=date_to_obj)
+            purchase_orders = purchase_orders.filter(order_date__lte=date_to_obj)
+            filters['date_to'] = date_to
+        except ValueError:
+            pass
+    
+    # Pagination
+    page = request.GET.get('page', 1)
+    items_per_page = 25
+    
+    if report_type == 'purchase_order':
+        paginator = Paginator(purchase_orders, items_per_page)
+        page_obj = paginator.get_page(page)
+        
+        # Purchase order statistics
+        total_count = purchase_orders.count()
+        total_amount = purchase_orders.aggregate(total=Sum('total_amount'))['total'] or 0
+        avg_amount = purchase_orders.aggregate(avg=Avg('total_amount'))['avg'] or 0
+        
+        # Status breakdown
+        status_breakdown = purchase_orders.values('status').annotate(
+            count=Count('id'),
+            total_amount=Sum('total_amount')
+        )
+        
+        stats = {
+            'total_count': total_count,
+            'total_amount': total_amount,
+            'avg_amount': avg_amount,
+            'status_breakdown': status_breakdown,
+        }
+    else:
+        # Default to invoice report
+        paginator = Paginator(invoices, items_per_page)
+        page_obj = paginator.get_page(page)
+        
+        # Invoice statistics
+        total_count = invoices.count()
+        total_amount = invoices.aggregate(total=Sum('grand_total'))['total'] or 0
+        avg_amount = invoices.aggregate(avg=Avg('grand_total'))['avg'] or 0
+        
+        # Status breakdown
+        status_breakdown = invoices.values('status').annotate(
+            count=Count('id'),
+            total_amount=Sum('grand_total')
+        )
+        
+        stats = {
+            'total_count': total_count,
+            'total_amount': total_amount,
+            'avg_amount': avg_amount,
+            'status_breakdown': status_breakdown,
+        }
+    
+    # Get choices for dropdowns
+    customers = Customer.objects.order_by('full_name')
+    suppliers = Supplier.objects.filter(is_active=True).order_by('name')
+    invoice_status_choices = Invoice.INVOICE_STATUS
+    purchase_order_status_choices = [
+        ('draft', 'Draft'),
+        ('ordered', 'Ordered'),
+        ('received', 'Received'),
+        ('cancelled', 'Cancelled'),
+    ]
+    
     # Enhanced Analytics for Reports
     # Calculate cost value based on product cost prices (from inventory)
     total_cost_value = InvoiceItem.objects.filter(
@@ -1899,6 +2313,7 @@ def report_view(request):
     }
     
     return render(request, 'portal/report.html', context)
+'''
 
 # Customer Management Views
 class CustomerListView(ListView):

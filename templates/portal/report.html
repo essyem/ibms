@@ -1,6 +1,6 @@
 {% extends "portal/invoice_base.html" %}
 {% load static %}
-{% load humanizelib %}
+{% load humanize %}
 
 {% block title %}TrendzPortal Reports{% endblock %}
 
@@ -8,7 +8,7 @@
 <div class="container-fluid mt-4">
     <h1 class="h3 mb-4 text-gradient">📊 Business Reports</h1>
     
-    <!-- Filter Form with Fixed Date Handling -->
+    <!-- Filter Form -->
     <div class="card shadow mb-4 filter-card">
         <div class="card-header py-3 bg-gradient-primary">
             <h6 class="m-0 font-weight-bold text-white">Filter Options</h6>
@@ -144,208 +144,6 @@
         </div>
     </div>
 
-    <!-- Daily/Monthly Gross Profit Breakdown -->
-    <div class="card shadow mb-4">
-        <div class="card-header py-3 bg-gradient-primary text-white">
-            <h6 class="m-0 font-weight-bold">💰 Daily/Monthly Gross Profit Breakdown</h6>
-        </div>
-        <div class="card-body">
-            <ul class="nav nav-tabs mb-4" id="profitTab" role="tablist">
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link active" id="daily-tab" data-bs-toggle="tab" data-bs-target="#daily" type="button" role="tab">
-                        Daily Breakdown
-                    </button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="monthly-tab" data-bs-toggle="tab" data-bs-target="#monthly" type="button" role="tab">
-                        Monthly Breakdown
-                    </button>
-                </li>
-            </ul>
-            
-            <table class="table table-striped table-hover">
-    <thead class="table-dark">
-        <tr>
-            <th>Date</th>
-            <th class="text-end">Sales Value</th>
-            <th class="text-end">Cost Value</th>
-            <th class="text-end">Gross Profit</th>
-            <th class="text-end">Margin</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for day in daily_profit_breakdown %}
-        <tr>
-            <td>{{ day.date_trunc|date:"M d, Y" }}</td>
-            <td class="text-end">QAR {{ day.sales_value|floatformat:2|intcomma }}</td>
-            <td class="text-end">QAR {{ day.cost_value|floatformat:2|intcomma }}</td>
-            <td class="text-end">QAR {{ day.gross_profit|floatformat:2|intcomma }}</td>
-            <td class="text-end">
-                <span class="badge {% if day.margin >= 30 %}bg-success{% elif day.margin >= 15 %}bg-warning{% else %}bg-danger{% endif %}">
-                    {{ day.margin|floatformat:1 }}%
-                </span>
-            </td>
-        </tr>
-        {% empty %}
-        <tr>
-            <td colspan="5" class="text-center text-muted py-4">No daily data available</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-    </table>
-        
-    <!-- Advanced Analytics -->
-    <div class="row mb-4">
-        <div class="col-md-6">
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-gradient-primary text-white">
-                    <h6 class="mb-0">📊 Product Performance Analysis</h6>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead class="table-dark">
-                                <tr>
-                                    <th>Category</th>
-                                    <th>Products</th>
-                                    <th>Cost Value</th>
-                                    <th>Selling Value</th>
-                                    <th>Margin %</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for category in category_analysis %}
-                                <tr>
-                                    <td>{{ category.category__name|default:"Uncategorized" }}</td>
-                                    <td>{{ category.count }}</td>
-                                    <td>QAR {{ category.total_cost|floatformat:0|intcomma }}</td>
-                                    <td>QAR {{ category.total_selling|floatformat:0|intcomma }}</td>
-                                    <td>
-                                        <span class="badge 
-                                            {% if category.margin >= 30 %}bg-success
-                                            {% elif category.margin >= 15 %}bg-warning
-                                            {% else %}bg-danger{% endif %}">
-                                            {{ category.margin|floatformat:1 }}%
-                                        </span>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-6">
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-gradient-primary text-white">
-                    <h6 class="mb-0">🎯 Top Performing Products</h6>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead class="table-dark">
-                                <tr>
-                                    <th>Product</th>
-                                    <th>Units Sold</th>
-                                    <th>Revenue</th>
-                                    <th>Profit</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for product in top_products %}
-                                <tr>
-                                    <td>{{ product.product__name|truncatechars:25 }}</td>
-                                    <td>{{ product.total_qty }}</td>
-                                    <td>QAR {{ product.total_revenue|floatformat:0|intcomma }}</td>
-                                    <td>QAR {{ product.total_profit|floatformat:0|intcomma }}</td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Rest of your template remains the same... -->
-
-    <!-- Advanced Analytics -->
-    <div class="row mb-4">
-        <div class="col-md-6">
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-gradient-primary text-white">
-                    <h6 class="mb-0">📊 Product Performance Analysis</h6>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead class="table-dark">
-                                <tr>
-                                    <th>Category</th>
-                                    <th>Products</th>
-                                    <th>Cost Value</th>
-                                    <th>Selling Value</th>
-                                    <th>Margin %</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for category in category_analysis %}
-                                <tr>
-                                    <td>{{ category.category__name|default:"Uncategorized" }}</td>
-                                    <td>{{ category.count }}</td>
-                                    <td>QAR {{ category.total_cost|floatformat:0|intcomma }}</td>
-                                    <td>QAR {{ category.total_selling|floatformat:0|intcomma }}</td>
-                                    <td>
-                                        <span class="badge 
-                                            {% if category.margin >= 30 %}bg-success
-                                            {% elif category.margin >= 15 %}bg-warning
-                                            {% else %}bg-danger{% endif %}">
-                                            {{ category.margin|floatformat:1 }}%
-                                        </span>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-6">
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-gradient-primary text-white">
-                    <h6 class="mb-0">🎯 Top Performing Products</h6>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead class="table-dark">
-                                <tr>
-                                    <th>Product</th>
-                                    <th>Units Sold</th>
-                                    <th>Revenue</th>
-                                    <th>Profit</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for product in top_products %}
-                                <tr>
-                                    <td>{{ product.product__name|truncatechars:25 }}</td>
-                                    <td>{{ product.total_qty }}</td>
-                                    <td>QAR {{ product.total_revenue|floatformat:0|intcomma }}</td>
-                                    <td>QAR {{ product.total_profit|floatformat:0|intcomma }}</td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Financial Overview -->
     <div class="row mb-4">
         <div class="col-md-12">
@@ -379,6 +177,170 @@
                                 <p class="text-muted">Gross Margin</p>
                             </div>
                         </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profit Breakdown Tabs -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 bg-gradient-primary text-white">
+            <h6 class="m-0 font-weight-bold">💰 Profit Breakdown</h6>
+        </div>
+        <div class="card-body">
+            <ul class="nav nav-tabs mb-4" id="profitTab" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="daily-tab" data-bs-toggle="tab" data-bs-target="#daily" type="button" role="tab">
+                        Daily Breakdown
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="monthly-tab" data-bs-toggle="tab" data-bs-target="#monthly" type="button" role="tab">
+                        Monthly Breakdown
+                    </button>
+                </li>
+            </ul>
+            
+            <div class="tab-content" id="profitTabContent">
+                <div class="tab-pane fade show active" id="daily" role="tabpanel">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Date</th>
+                                    <th class="text-end">Sales Value</th>
+                                    <th class="text-end">Cost Value</th>
+                                    <th class="text-end">Gross Profit</th>
+                                    <th class="text-end">Margin</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for day in daily_profit_breakdown %}
+                                <tr>
+                                    <td>{{ day.date|date:"M d, Y" }}</td>
+                                    <td class="text-end">QAR {{ day.sales_value|floatformat:2|intcomma }}</td>
+                                    <td class="text-end">QAR {{ day.cost_value|floatformat:2|intcomma }}</td>
+                                    <td class="text-end">QAR {{ day.gross_profit|floatformat:2|intcomma }}</td>
+                                    <td class="text-end">
+                                        <span class="badge {% if day.margin >= 30 %}bg-success{% elif day.margin >= 15 %}bg-warning{% else %}bg-danger{% endif %}">
+                                            {{ day.margin|floatformat:1 }}%
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted py-4">No daily data available</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="tab-pane fade" id="monthly" role="tabpanel">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Month</th>
+                                    <th class="text-end">Sales Value</th>
+                                    <th class="text-end">Cost Value</th>
+                                    <th class="text-end">Gross Profit</th>
+                                    <th class="text-end">Margin</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for month in monthly_profit_breakdown %}
+                                <tr>
+                                    <td>{{ month.month|date:"M Y" }}</td>
+                                    <td class="text-end">QAR {{ month.sales_value|floatformat:2|intcomma }}</td>
+                                    <td class="text-end">QAR {{ month.cost_value|floatformat:2|intcomma }}</td>
+                                    <td class="text-end">QAR {{ month.gross_profit|floatformat:2|intcomma }}</td>
+                                    <td class="text-end">
+                                        <span class="badge {% if month.margin >= 30 %}bg-success{% elif month.margin >= 15 %}bg-warning{% else %}bg-danger{% endif %}">
+                                            {{ month.margin|floatformat:1 }}%
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted py-4">No monthly data available</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Product Performance -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-gradient-primary text-white">
+                    <h6 class="mb-0">📊 Product Performance Analysis</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Category</th>
+                                    <th>Products</th>
+                                    <th>Cost Value</th>
+                                    <th>Selling Value</th>
+                                    <th>Margin %</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for category in category_analysis %}
+                                <tr>
+                                    <td>{{ category.category__name|default:"Uncategorized" }}</td>
+                                    <td>{{ category.count }}</td>
+                                    <td>QAR {{ category.total_cost|floatformat:0|intcomma }}</td>
+                                    <td>QAR {{ category.total_selling|floatformat:0|intcomma }}</td>
+                                    <td>
+                                        <span class="badge {% if category.margin >= 30 %}bg-success{% elif category.margin >= 15 %}bg-warning{% else %}bg-danger{% endif %}">
+                                            {{ category.margin|floatformat:1 }}%
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-gradient-primary text-white">
+                    <h6 class="mb-0">🎯 Top Performing Products</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Product</th>
+                                    <th>Units Sold</th>
+                                    <th>Revenue</th>
+                                    <th>Profit</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for product in top_products %}
+                                <tr>
+                                    <td>{{ product.product__name|truncatechars:25 }}</td>
+                                    <td>{{ product.total_qty }}</td>
+                                    <td>QAR {{ product.total_revenue|floatformat:0|intcomma }}</td>
+                                    <td>QAR {{ product.total_profit|floatformat:0|intcomma }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -422,9 +384,13 @@
                                 </span>
                             </td>
                             <td>
-                                <a href="{% url 'admin:portal_invoice_change' invoice.id %}" 
+                                <a href="{% url 'portal:invoice_detail' invoice.id %}" 
                                    class="btn btn-sm btn-outline-primary">
                                     <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{% url 'portal:invoice_pdf' invoice.id %}" 
+                                   class="btn btn-sm btn-outline-danger">
+                                    <i class="fas fa-file-pdf"></i>
                                 </a>
                             </td>
                         </tr>
@@ -493,56 +459,6 @@
         </div>
     </div>
 
-    <!-- Payments Table -->
-    <div class="card shadow mb-4">
-        <div class="card-header py-3 bg-gradient-primary text-white">
-            <h6 class="m-0 font-weight-bold">💰 Payment Report</h6>
-        </div>
-        <div class="card-body">
-            {% if payments %}
-            <div class="table-responsive">
-                <table class="table table-striped table-hover">
-                    <thead class="table-dark">
-                        <tr>
-                            <th>Date</th>
-                            <th>PO Reference</th>
-                            <th>Supplier</th>
-                            <th>Amount</th>
-                            <th>Method</th>
-                            <th>Reference</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for payment in payments %}
-                        <tr>
-                            <td>{{ payment.payment_date|date:"M d, Y" }}</td>
-                            <td>{{ payment.purchase_order.reference }}</td>
-                            <td>{{ payment.purchase_order.supplier.name }}</td>
-                            <td>QAR {{ payment.amount|floatformat:2|intcomma }}</td>
-                            <td>
-                                <span class="badge bg-info">
-                                    {{ payment.get_payment_method_display }}
-                                </span>
-                            </td>
-                            <td>{{ payment.reference|default:"-" }}</td>
-                            <td>
-                                <a href="{% url 'procurement:payment_detail' payment.id %}" 
-                                   class="btn btn-sm btn-outline-primary">
-                                    <i class="fas fa-eye"></i>
-                                </a>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-            {% else %}
-            <p class="text-center text-muted py-4">No payments found matching the selected criteria.</p>
-            {% endif %}
-        </div>
-    </div>
-
     <!-- Export Options -->
     <div class="card shadow">
         <div class="card-header py-3 bg-gradient-primary text-white">
@@ -551,17 +467,20 @@
         <div class="card-body">
             <div class="row">
                 <div class="col-md-4">
-                    <a href="#" class="btn btn-success w-100" onclick="exportToCSV('invoices')">
+                    <a href="{% url 'portal:export_reports' %}?export=invoices&{{ request.GET.urlencode }}" 
+                       class="btn btn-success w-100">
                         <i class="fas fa-file-csv"></i> Export Invoices to CSV
                     </a>
                 </div>
                 <div class="col-md-4">
-                    <a href="#" class="btn btn-success w-100" onclick="exportToCSV('purchase_orders')">
+                    <a href="{% url 'portal:export_reports' %}?export=purchase_orders&{{ request.GET.urlencode }}" 
+                       class="btn btn-success w-100">
                         <i class="fas fa-file-csv"></i> Export Purchase Orders to CSV
                     </a>
                 </div>
                 <div class="col-md-4">
-                    <a href="#" class="btn btn-success w-100" onclick="exportToCSV('payments')">
+                    <a href="{% url 'portal:export_reports' %}?export=payments&{{ request.GET.urlencode }}" 
+                       class="btn btn-success w-100">
                         <i class="fas fa-file-csv"></i> Export Payments to CSV
                     </a>
                 </div>
@@ -705,37 +624,7 @@
             font-size: 0.8rem;
         }
     }
-    /* Additional style for Daily Gross Profit card */
-    .bg-gradient-secondary {
-        background: linear-gradient(135deg, #757f9a 0%, #d7dde8 100%);
-    }
-    .daily-gross-profit-card {
-        border-radius: 10px;
-        overflow: hidden;
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-        border: none;
-    }
-    .daily-gross-profit-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 20px rgba(0,0,0,0.15);
-    }
-    .daily-gross-profit-card .metric {
-        margin: 1rem 0;
-    }
-    .daily-gross-profit-card .number {
-        display: block;
-        font-size: 1.8rem;
-        font-weight: bold;
-        color: inherit;
-    }
-    .daily-gross-profit-card .label {
-        display: block;
-        font-size: 0.9rem;
-        opacity: 0.9;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-    }
-
+    
     /* Tab Navigation */
     .nav-tabs .nav-link {
         color: #6c757d;
@@ -767,26 +656,9 @@
     .tab-pane.show.active {
         opacity: 1;
     }
-    /* Export Button */
-    .export-btn {
-        background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
-        border: none;
-        color: white;
-        padding: 0.5rem 1rem;
-        border-radius: 0.5rem;
-        cursor: pointer;
-        transition: background 0.3s ease;
-    }
-    .export-btn:hover {
-        background: linear-gradient(135deg, #6a11cb 0%, #1e5bbf 100%);
-    }
-    .export-btn i {
-        margin-right: 0.5rem;
-    }   
 </style>
 
 <script>
-// Enhanced Date Filter Handling with proper parameter names
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize date pickers with default ranges if empty
     const today = new Date();
@@ -808,87 +680,15 @@ document.addEventListener('DOMContentLoaded', function() {
         dateTo.value = formatDate(today);
     }
 
-    // Ensure the form submits with the correct date parameters
+    // Date Filter Validation
     document.getElementById('reportFilterForm').addEventListener('submit', function(e) {
-        // Validate date range
-        if (dateFrom.value && dateTo.value) {
-            const start = new Date(dateFrom.value);
-            const end = new Date(dateTo.value);
-            
-            if (start > end) {
-                alert('End date must be after start date');
-                e.preventDefault();
-                return;
-            }
-        }
-        
-        // Ensure dates are properly formatted for backend
-        if (dateFrom.value) {
-            dateFrom.value = formatDate(new Date(dateFrom.value));
-        }
-        if (dateTo.value) {
-            dateTo.value = formatDate(new Date(dateTo.value));
+        if (dateFrom.value && dateTo.value && new Date(dateFrom.value) > new Date(dateTo.value)) {
+            alert('End date must be after start date');
+            e.preventDefault();
         }
     });
-});
-document.addEventListener('DOMContentLoaded', function() {
-    // Initialize date pickers with default ranges if empty
-    const today = new Date();
-    const oneMonthAgo = new Date();
-    oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
-    
-    const formatDate = (date) => {
-        return date.toISOString().split('T')[0];
-    };
-    
-    const startDate = document.getElementById('start_date');
-    const endDate = document.getElementById('end_date');
-    
-    if (!startDate.value) {
-        startDate.value = formatDate(oneMonthAgo);
-    }
-    
-    if (!endDate.value) {
-        endDate.value = formatDate(today);
-    }
 
-// Date Filter Validation
-document.getElementById('reportFilterForm').addEventListener('submit', function(e) {
-    const startDate = document.getElementById('start_date').value;
-    const endDate = document.getElementById('end_date').value;
-    
-    if (startDate && endDate && new Date(startDate) > new Date(endDate)) {
-        alert('End date must be after start date');
-        e.preventDefault();
-    }
-});
-
-
-// Initialize date pickers with default ranges if empty
-document.addEventListener('DOMContentLoaded', function() {
-    const today = new Date();
-    const oneMonthAgo = new Date();
-    oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
-    
-    const formatDate = (date) => {
-        return date.toISOString().split('T')[0];
-    };
-    
-    const startDate = document.getElementById('start_date');
-    const endDate = document.getElementById('end_date');
-    
-    if (!startDate.value) {
-        startDate.value = formatDate(oneMonthAgo);
-    }
-    
-    if (!endDate.value) {
-        endDate.value = formatDate(today);
-    }
-});
-
-// Add this to your existing JavaScript
-document.addEventListener('DOMContentLoaded', function() {
-    // Initialize tabs if not already done
+    // Initialize tabs
     if (typeof bootstrap !== 'undefined' && bootstrap.Tab) {
         var tabEls = document.querySelectorAll('button[data-bs-toggle="tab"]');
         tabEls.forEach(function(tabEl) {
@@ -896,7 +696,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // You might want to preserve the active tab when filters change
+    // Preserve active tab when filters change
     const urlParams = new URLSearchParams(window.location.search);
     const activeTab = urlParams.get('tab');
     if (activeTab) {
@@ -914,16 +714,5 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 });
-// Export to CSV Function
-function exportToCSV(type) {
-    // Get current filter parameters
-    const urlParams = new URLSearchParams(window.location.search);
-    urlParams.append('export', type);
-    urlParams.append('format', 'csv');
-    
-    // Create download link
-    const downloadUrl = `${window.location.pathname}?${urlParams.toString()}`;
-    window.open(downloadUrl, '_blank');
-}
 </script>
 {% endblock %}

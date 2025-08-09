@@ -13,7 +13,8 @@ class InvoiceForm(forms.ModelForm):
             'customer',
             'due_date', 'invoice_number', 'status',
             'payment_mode', 'cash_amount', 'pos_amount',
-            'other_amount', 'other_method'
+            'other_amount', 'other_method', 'notes', 'tax', 
+            'discount_type', 'discount_value'
         ]
         widgets = {
             'due_date': forms.DateInput(attrs={'type': 'date'}),
@@ -55,7 +56,9 @@ class InvoiceForm(forms.ModelForm):
         for field in self.fields:
             if field != 'due_date':
                 self.fields[field].required = False
-        
+            
+            if 'status' in self.fields:
+                self.fields['status'].initial = None
 
 
 class InvoiceItemForm(forms.ModelForm):

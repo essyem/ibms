@@ -4,7 +4,7 @@ from . import views
 from .views import (
     ProductSearchView, product_search_fallback, barcode_scanner_view,
     barcode_scan, InvoiceCreateView, InvoiceUpdateView, InvoiceDetailView, InvoiceListView,
-    get_product_details, dashboard_view, report_view, analytics_api,
+    get_product_details, dashboard_view, report_view, analytics_api, export_reports,
     CustomerListView, CustomerCreateView, CustomerDetailView, CustomerUpdateView
 )
 from . import ajax_views
@@ -16,6 +16,7 @@ urlpatterns = [
     path('', views.index, name='index'),
     path('dashboard/', dashboard_view, name='dashboard'),
     path('reports/', report_view, name='reports'),
+    path('reports/export/', export_reports, name='export_reports'),
     path('api/analytics/', analytics_api, name='analytics_api'),
     path('profile/', views.profile, name='profile'),
     path('enquiry/', views.enquiry, name='enquiry'),
