@@ -1,20 +1,16 @@
 /**
- * Unified Invoice Creation JavaScript
- * Handles all invoice creation functionality including:
- * - Product search and selection
- * - Barcode scanning
- * - Customer creation
- * - Split payment handling
- * - Form validation and submission
+ * Unified Invoice Creation JavaScript v3.1
+ * Updated with:
+ * - Manual unit price editing
+ * - Direct customer creation link
+ * - Fixed status saving
+ * - Enhanced form handling
  */
 
 (function($) {
     'use strict';
 
-    console.log('🚀 Invoice Creation Unified Script v3.0 Loading...');
-
-    // Global variables
-    let invoiceManager = null;
+    console.log('🚀 Invoice Creation Unified Script v3.1 Loading...');
 
     // Main Invoice Manager Class
     class InvoiceManager {
@@ -30,7 +26,6 @@
         init() {
             console.log('🔧 Initializing Invoice Manager...');
             
-            // Wait for DOM to be ready
             $(document).ready(() => {
                 this.findElements();
                 this.bindEvents();
@@ -59,27 +54,28 @@
                 this.addProductRow();
             });
 
-            // Remove Product Button (delegated)
+            // Remove Product Button
             $(document).on('click', '.remove-product', (e) => {
                 e.preventDefault();
                 this.removeProductRow($(e.target).closest('tr'));
             });
 
-            // Product Search (delegated)
+            // Product Search
             $(document).on('input', '.product-search-input', (e) => {
                 this.handleProductSearch($(e.target));
             });
 
-            // Product Selection (delegated)
+            // Product Selection
             $(document).on('change', '.product-select', (e) => {
                 this.handleProductSelection($(e.target));
             });
 
-            // Quantity Changes (delegated)
-            $(document).on('input change', '.quantity', (e) => {
+            // Quantity/Price Changes
+            $(document).on('input change', '.quantity, .unit-price', (e) => {
                 this.calculateRowTotal($(e.target).closest('tr'));
             });
 
+<<<<<<< Updated upstream
             // Unit Price Changes (delegated)
             $(document).on('input change', '.unit-price', (e) => {
                 this.calculateRowTotal($(e.target).closest('tr'));
@@ -105,7 +101,7 @@
                 this.handlePaymentModeChange($(e.target).val());
             });
 
-            // Split Payment Validation (delegated)
+            // Split Payment Validation
             $(document).on('input', '#split-details input[type="number"]', () => {
                 this.validateSplitPayment();
             });
@@ -123,12 +119,6 @@
             this.formElement.on('submit', (e) => {
                 e.preventDefault();
                 this.handleFormSubmission();
-            });
-
-            // Customer Creation
-            $('#add-customer-btn').on('click', (e) => {
-                e.preventDefault();
-                this.openCustomerModal();
             });
 
             // Hide search results when clicking outside
@@ -243,10 +233,8 @@
 
             let clone;
             if (this.productTemplate[0].content) {
-                // Modern browsers with HTML5 template support
                 clone = document.importNode(this.productTemplate[0].content, true);
             } else {
-                // Fallback for older browsers
                 clone = $(this.productTemplate.html())[0];
             }
 
@@ -262,7 +250,6 @@
         }
 
         addInitialProductRow() {
-            // Add first product row automatically if none exist
             if (this.productRows.children().length === 0) {
                 setTimeout(() => {
                     this.addProductRow();
@@ -281,14 +268,12 @@
                 return;
             }
 
-            // Check if it's a barcode (8+ digits)
             if (/^\d{8,}$/.test(query)) {
                 console.log('🔍 Barcode detected:', query);
                 this.lookupProductByBarcode(query, $row);
                 return;
             }
 
-            // Regular product search
             this.searchProducts(query, $row);
         }
 
@@ -324,11 +309,6 @@
                         'cursor': 'pointer',
                         'background': '#f8f9fa'
                     })
-                    .hover(function() {
-                        $(this).css('background', '#e9ecef');
-                    }, function() {
-                        $(this).css('background', '#f8f9fa');
-                    })
                     .html(`${product.display_text}<br><small class="text-muted">${product.stock_text}</small>`)
                     .data('product', product)
                     .on('click', () => {
@@ -347,16 +327,9 @@
             const $select = $row.find('.product-select');
             const $searchInput = $row.find('.product-search-input');
 
-            // Update select dropdown
             $select.val(product.id);
-
-            // Update search input
             $searchInput.val(product.name);
-
-            // Update price
             $row.find('.unit-price').val(product.unit_price);
-
-            // Calculate totals
             this.calculateRowTotal($row);
         }
 
@@ -437,7 +410,6 @@
             $('#discount-amount').val(discountAmount.toFixed(2));
             $('#grand-total').val(grandTotal.toFixed(2));
 
-            // Validate split payment if active
             this.validateSplitPayment();
         }
 
@@ -446,11 +418,9 @@
             
             if (paymentMode === 'split') {
                 $splitDetails.removeClass('d-none');
-                console.log('✅ Split payment enabled');
             } else {
                 $splitDetails.addClass('d-none');
                 $splitDetails.find('input[type="number"]').val('0.00');
-                console.log('✅ Split payment disabled');
             }
         }
 
@@ -478,7 +448,6 @@
         handleFormSubmission() {
             console.log('📝 Submitting invoice form...');
 
-            // Debug: Check if form exists
             if (!this.formElement || this.formElement.length === 0) {
                 console.error('❌ Form element not found');
                 this.showError('Form not found');
@@ -503,139 +472,70 @@
             // Collect form data
             const formData = new FormData(this.formElement[0]);
 
-            // Debug: Check customer value specifically
-            const customerSelect = $('#customer');
-            const customerValue = customerSelect.val();
-            const customerText = customerSelect.find('option:selected').text();
-            console.log('👤 Customer Debug:', {
-                value: customerValue,
-                text: customerText,
-                element: customerSelect[0]
-            });
-            
-            // Ensure customer ID is numeric
-            if (customerValue && customerValue.trim() !== '') {
-                const numericCustomerId = parseInt(customerValue.trim());
-                if (isNaN(numericCustomerId)) {
-                    console.error('❌ Invalid customer ID:', customerValue);
-                    this.showError('Invalid customer selection. Please select a valid customer.');
-                    return false;
-                } else {
-                    formData.set('customer', numericCustomerId.toString());
-                    console.log('✅ Customer ID validated and set:', numericCustomerId);
-                }
-            }
+            // Get and validate status
+            const status = $('#status').val();
+            formData.append('status', status);
+            console.log('📌 Invoice status being submitted:', status);
 
-            // Collect product items with data validation
+            // Collect product items
             const items = [];
             $('#product-rows tr').each(function() {
                 const $row = $(this);
                 const productId = $row.find('.product-select').val();
+                const productName = $row.find('.product-select option:selected').text().split(' - ')[0] || 'Custom Item';
+                const quantity = $row.find('.quantity').val() || '1';
+                const unitPrice = $row.find('.unit-price').val() || '0';
+                const description = $row.find('.product-search-input').val() || productName;
+
                 if (productId && productId.trim() !== '') {
-                    const quantity = $row.find('.quantity').val() || '1';
-                    const unitPrice = $row.find('.unit-price').val() || '0';
-                    
-                    // Validate product ID is numeric
-                    const numericProductId = parseInt(productId.trim());
-                    if (isNaN(numericProductId)) {
-                        console.error('❌ Invalid product ID:', productId);
-                        return; // Skip this item
-                    }
-                    
-                    // Validate that we have numeric values
-                    if (!isNaN(parseFloat(quantity)) && !isNaN(parseFloat(unitPrice))) {
-                        items.push({
-                            product: numericProductId.toString(),
-                            quantity: quantity.trim(),
-                            unit_price: unitPrice.trim(),
-                            selling_price: unitPrice.trim()
-                        });
-                        console.log('✅ Added item:', {
-                            product: numericProductId,
-                            quantity: quantity.trim(),
-                            unit_price: unitPrice.trim()
-                        });
-                    } else {
-                        console.warn('⚠️ Skipping invalid item (non-numeric values):', {
-                            productId,
-                            quantity,
-                            unitPrice
-                        });
-                    }
-                } else {
-                    console.log('ℹ️ Skipping empty product row');
+                    items.push({
+                        product: productId.trim(),
+                        product_name: productName,
+                        quantity: quantity.trim(),
+                        unit_price: unitPrice.trim(),
+                        selling_price: unitPrice.trim()
+                    });
+                } else if (quantity > 0 && unitPrice > 0) {
+                    items.push({
+                        product: null,
+                        product_name: description,
+                        quantity: quantity.trim(),
+                        unit_price: unitPrice.trim(),
+                        selling_price: unitPrice.trim(),
+                        is_custom: true
+                    });
                 }
             });
 
             console.log('📋 Collected items:', items);
             
-            // Validate totals before submission
-            const subtotal = $('#subtotal').val() || '0';
-            const grandTotal = $('#grand-total').val() || '0';
-            const taxAmount = $('#tax').val() || '0';
-            const discountAmount = $('#discount-amount').val() || '0';
-            
-            console.log('💰 Totals:', { subtotal, grandTotal, taxAmount, discountAmount });
-
             // Validate we have at least one item
             if (items.length === 0) {
                 this.showError('Please add at least one product to the invoice');
                 return false;
             }
 
-            // Validate grand total
-            const currentGrandTotal = parseFloat(grandTotal) || 0;
-            if (currentGrandTotal <= 0) {
-                this.showError('Invoice total must be greater than zero');
-                return false;
-            }
-
+            // Add items and totals to form data
             formData.append('items', JSON.stringify(items));
-            formData.append('subtotal', subtotal);
-            formData.append('tax', taxAmount);
+            formData.append('subtotal', $('#subtotal').val() || '0');
+            formData.append('tax', $('#tax').val() || '0');
             formData.append('discount_type', $('#discount-type').val() || 'percentage');
             formData.append('discount_value', $('#discount-value').val() || '0');
-            formData.append('discount_amount', discountAmount);
-            formData.append('grand_total', grandTotal);
+            formData.append('discount_amount', $('#discount-amount').val() || '0');
+            formData.append('grand_total', $('#grand-total').val() || '0');
 
             // Submit form via AJAX
             this.submitForm(formData);
         }
 
         submitForm(formData) {
-            // Get CSRF token from multiple possible sources
-            let csrfToken = $('[name=csrfmiddlewaretoken]').val();
-            
-            // If not found in form, try to get from cookies
-            if (!csrfToken) {
-                csrfToken = this.getCSRFTokenFromCookie();
-            }
-            
-            // If still not found, try from meta tag
-            if (!csrfToken) {
-                csrfToken = $('meta[name=csrf-token]').attr('content');
-            }
-            
-            console.log('🔐 CSRF Token sources checked:');
-            console.log('  From form input:', $('[name=csrfmiddlewaretoken]').val() ? 'Found' : 'Not found');
-            console.log('  From cookie:', this.getCSRFTokenFromCookie() ? 'Found' : 'Not found');
-            console.log('  Final token:', csrfToken ? 'Available' : 'MISSING');
-            
+            const csrfToken = this.getCSRFToken();
             if (csrfToken) {
                 formData.append('csrfmiddlewaretoken', csrfToken);
-            } else {
-                console.error('❌ No CSRF token found! This will cause a 403 error.');
-            }
-
-            // Log all form data for debugging
-            console.log('📋 Form Data Contents:');
-            for (let [key, value] of formData.entries()) {
-                console.log(`  ${key}:`, value);
             }
 
             const url = this.formElement.attr('action') || window.location.pathname;
-            console.log('🌐 Submitting to URL:', url);
-
+            
             $.ajax({
                 url: url,
                 method: 'POST',
@@ -645,37 +545,24 @@
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest'
                 },
-                beforeSend: function(xhr, settings) {
-                    console.log('🚀 About to send AJAX request');
-                    console.log('   URL:', settings.url);
-                    console.log('   Method:', settings.type);
-                },
                 success: (response) => {
                     console.log('✅ Invoice submitted successfully:', response);
                     this.handleSubmissionSuccess(response);
                 },
-                error: (xhr, textStatus, errorThrown) => {
-                    console.error('❌ Invoice submission error:');
-                    console.error('   Status:', xhr.status);
-                    console.error('   Status Text:', xhr.statusText);
-                    console.error('   Response Text:', xhr.responseText);
-                    console.error('   Text Status:', textStatus);
-                    console.error('   Error Thrown:', errorThrown);
+                error: (xhr) => {
+                    console.error('❌ Invoice submission error:', xhr);
                     this.handleSubmissionError(xhr);
                 }
             });
         }
 
-        // Replace the current getCSRFTokenFromCookie() with this more robust version
-        getCSRFTokenFromCookie() {
-            // Try multiple methods to get CSRF token
-            let token = $('[name=csrfmiddlewaretoken]').val(); // Form input
-            if (!token) token = $('meta[name=csrf-token]').attr('content'); // Meta tag
-            if (!token) { // Cookie fallback
+        getCSRFToken() {
+            let token = $('[name=csrfmiddlewaretoken]').val();
+            if (!token) token = $('meta[name=csrf-token]').attr('content');
+            if (!token) {
                 const cookieValue = document.cookie.match('(^|;)\\s*csrftoken\\s*=\\s*([^;]+)');
                 token = cookieValue ? cookieValue.pop() : '';
             }
-            console.log('CSRF Token:', token ? 'Found' : 'MISSING - This will cause 403 errors');
             return token;
         }
 
@@ -683,18 +570,12 @@
             if (response.success) {
                 this.showSuccessModal(response);
             } else {
-                this.showError('Invoice submission failed');
+                this.showError(response.message || 'Invoice submission failed');
             }
         }
 
         handleSubmissionError(xhr) {
             let message = 'Invoice submission failed';
-            console.error('❌ Full error details:', {
-                status: xhr.status,
-                statusText: xhr.statusText,
-                responseText: xhr.responseText,
-                responseJSON: xhr.responseJSON
-            });
             
             if (xhr.responseJSON) {
                 if (xhr.responseJSON.error) {
@@ -705,18 +586,14 @@
                     message = Object.values(xhr.responseJSON.errors).flat().join(', ');
                 }
             } else if (xhr.responseText) {
-                // Try to extract meaningful error from HTML response
                 const errorMatch = xhr.responseText.match(/<title>(.*?)<\/title>/);
-                if (errorMatch) {
-                    message = errorMatch[1];
-                }
+                if (errorMatch) message = errorMatch[1];
             }
             
             this.showError(message);
         }
 
         showSuccessModal(response) {
-            // Implementation for success modal with action buttons
             const invoiceId = response.invoice_id;
             const modalHtml = `
                 <div class="modal fade" id="successModal" tabindex="-1">
@@ -744,20 +621,12 @@
             $('#successModal').modal('show');
         }
 
-        openCustomerModal() {
-            console.log('👤 Opening customer creation modal...');
-            // Implementation for customer modal
-            // This would create and show the customer creation modal
-        }
-
         showSuccess(message) {
             console.log('✅', message);
-            // You can implement a toast notification here
         }
 
         showError(message) {
-            console.error('🚨 Showing error to user:', message);
-            // Show detailed error in console and alert
+            console.error('🚨 Error:', message);
             alert('ERROR: ' + message + '\n\nCheck browser console for more details.');
         }
     }
@@ -765,10 +634,7 @@
     // Initialize when document is ready
     $(document).ready(function() {
         console.log('📄 DOM ready, initializing Invoice Manager...');
-        invoiceManager = new InvoiceManager();
+        window.invoiceManager = new InvoiceManager();
     });
-
-    // Export for global access if needed
-    window.InvoiceManager = InvoiceManager;
 
 })(jQuery);
