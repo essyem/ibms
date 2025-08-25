@@ -86,6 +86,21 @@ html[data-theme="light"],
         "Noto Color Emoji";
 }
 
+/* Fix: ensure navbar dropdowns render above main content (stacking context issues) */
+.navbar, .navbar-fixed-top, nav.navbar {
+    z-index: 2000; /* above most content */
+}
+
+.navbar .dropdown-menu {
+    z-index: 3000 !important;
+}
+
+/* If backdrop-filter/transform is used on navbar or ancestors, ensure dropdowns still overlay */
+.dropdown, .dropdown-menu {
+    position: relative;
+}
+
+
 html, body {
     height: 100%;
 }
