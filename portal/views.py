@@ -1332,12 +1332,18 @@ def barcode_scan(request):
         }, status=500)
 
 # customer search
+from django.views.decorators.csrf import csrf_exempt
+
+@csrf_exempt
 def customer_search(request):
+    print(f"🔍 customer_search called with query: {request.GET.get('q', '')}")
     query = request.GET.get('q', '')
     
     if not query:
+        print("❌ No query provided")
         return JsonResponse({'customers': []})
     
+    print(f"📡 Searching for customers with query: {query}")
     customers = Customer.objects.filter(
         Q(full_name__icontains=query) | 
         Q(company_name__icontains=query) |
@@ -1345,6 +1351,7 @@ def customer_search(request):
         Q(phone__icontains=query)
     ).order_by('company_name', 'full_name')[:10]
     
+    print(f"✅ Found {customers.count()} customers")
     results = []
     for customer in customers:
         results.append({
@@ -1355,6 +1362,7 @@ def customer_search(request):
             'address': customer.address,
         })
     
+    print(f"📤 Returning results: {results}")
     return JsonResponse({'customers': results})
 
 # BarcodeScanner

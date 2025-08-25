@@ -48,6 +48,19 @@
         }
 
         bindEvents() {
+            console.log('🔗 Binding events...');
+            
+            // Check if customer search elements exist
+            const customerSearchInput = $('.customer-search-input');
+            const customerSearchContainer = $('.customer-search-container');
+            const customerSearchResults = $('.customer-search-results');
+            
+            console.log('🔍 Customer search elements:', {
+                input: customerSearchInput.length,
+                container: customerSearchContainer.length,
+                results: customerSearchResults.length
+            });
+            
             // Add Product Button
             $('#add-product').on('click', (e) => {
                 e.preventDefault();
@@ -75,7 +88,6 @@
                 this.calculateRowTotal($(e.target).closest('tr'));
             });
 
-<<<<<<< Updated upstream
             // Unit Price Changes (delegated)
             $(document).on('input change', '.unit-price', (e) => {
                 this.calculateRowTotal($(e.target).closest('tr'));
@@ -130,6 +142,7 @@
 
             // Customer Search
             $(document).on('input', '.customer-search-input', (e) => {
+                console.log('🔍 Customer search input event triggered:', e.target.value);
                 this.handleCustomerSearch($(e.target));
             });
 
@@ -150,34 +163,53 @@
         handleCustomerSearch($input) {
             const query = $input.val().trim();
             const $results = $input.closest('.customer-search-container').find('.customer-search-results');
+            
+            console.log('🔍 handleCustomerSearch called:', {
+                query: query,
+                inputElement: $input.length,
+                resultsElement: $results.length
+            });
 
             if (query.length < 2) {
+                console.log('❌ Query too short, hiding results');
                 $results.hide();
                 return;
             }
 
+            console.log('📡 Making AJAX request to /ajax/customer-search/');
             $.ajax({
                 url: '/ajax/customer-search/',
                 method: 'GET',
                 data: { q: query },
                 success: (response) => {
+                    console.log('✅ AJAX success:', response);
                     this.displayCustomerSearchResults(response.customers, $results);
                 },
                 error: (xhr) => {
                     console.error('❌ Customer search error:', xhr);
+                    console.error('Status:', xhr.status, 'Text:', xhr.statusText);
+                    console.error('Response:', xhr.responseText);
                     this.showError('Customer search failed');
                 }
             });
         }
 
     displayCustomerSearchResults(customers, $results) {
+        console.log('📋 displayCustomerSearchResults called:', {
+            customers: customers,
+            customersCount: customers ? customers.length : 0,
+            resultsElement: $results.length
+        });
+        
         $results.empty();
 
         if (!customers || customers.length === 0) {
+            console.log('❌ No customers found, showing message');
             $results.html('<div class="no-results">No customers found</div>').show();
             return;
         }
 
+        console.log('✅ Displaying', customers.length, 'customers');
         customers.forEach((customer) => {
             const $item = $('<div class="customer-search-result-item">')
                 .css({
