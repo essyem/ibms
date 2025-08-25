@@ -5,6 +5,34 @@
 
 {% block extra_head %}
 <meta name="csrf-token" content="{{ csrf_token }}">
+<style>
+.customer-search-container {
+    position: relative;
+}
+.customer-search-results {
+    position: absolute !important;
+    z-index: 1050 !important;
+    background: white !important;
+    width: 100% !important;
+    max-height: 300px !important;
+    overflow-y: auto !important;
+    border: 1px solid #ddd !important;
+    border-radius: 0 0 4px 4px !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+}
+.customer-search-result-item {
+    padding: 8px !important;
+    border-bottom: 1px solid #eee !important;
+    cursor: pointer !important;
+    background: #f8f9fa !important;
+}
+.customer-search-result-item:hover {
+    background: #e9ecef !important;
+}
+.customer-search-result-item:last-child {
+    border-bottom: none !important;
+}
+</style>
 {% endblock %}
 
 {% block content %}
@@ -43,21 +71,21 @@
                     <div class="card-header">Customer Details</div>
                     <div class="card-body">
                         <div class="form-group">
-<<<<<<< Updated upstream
                             <label for="customer-search">Customer Search</label>
-                            <div class="customer-search-container">
+                            <div class="customer-search-container position-relative">
                                 <div class="input-group">
                                     <input type="text" 
                                            class="form-control customer-search-input" 
                                            id="customer-search"
-                                           placeholder="Search customers by name, company, or ID..."
-                                           value="{% if object %}{{ object.customer.company_name|default:object.customer.full_name }}{% endif %}">
+                                           placeholder="Type to search customers..."
+                                           value="{% if object %}{{ object.customer.company_name|default:object.customer.full_name }}{% endif %}"
+                                           autocomplete="off">
                                     <input type="hidden" name="customer" id="customer-id" value="{% if object %}{{ object.customer.id }}{% endif %}">
-                                    <button type="button" class="btn btn-success btn-sm" id="add-customer-btn" title="Add New Customer" style="background: #28a745; border: 1px solid #28a745; padding: 6px 12px;">
+                                    <button type="button" class="btn btn-success btn-sm" id="add-customer-btn" title="Add New Customer">
                                         <i class="fas fa-user-plus"></i> Add
                                     </button>
                                 </div>
-                                <div class="customer-search-results" style="display: none; position: absolute; z-index: 1000; background: white; width: 100%; max-height: 300px; overflow-y: auto; border: 1px solid #ddd; border-radius: 0 0 4px 4px;"></div>
+                                <div class="customer-search-results" style="display: none;"></div>
                             </div>
                         </div>
                         <div class="form-group">
@@ -294,4 +322,95 @@
 {% endblock %}
 {% block extra_js %}
 <script src="{% static 'portal/js/invoice_create_unified.js' %}?v={{ 'now'|date:'YmdHis' }}"></script>
+<script>
+// Additional customer search initialization
+$(document).ready(function() {
+    console.log('🔍 Customer search initialization starting...');
+    
+    // Test if elements exist
+    const $customerInput = $('.customer-search-input');
+    const $customerContainer = $('.customer-search-container');
+    const $customerResults = $('.customer-search-results');
+    
+    console.log('Customer search elements found:', {
+        input: $customerInput.length,
+        container: $customerContainer.length,
+        results: $customerResults.length
+    });
+    
+    // Direct binding for customer search
+    $('.customer-search-input').on('input', function() {
+        const query = $(this).val().trim();
+        console.log('🔍 Direct customer search triggered:', query);
+        
+        if (query.length < 2) {
+            $('.customer-search-results').hide();
+            return;
+        }
+        
+        $.ajax({
+            url: '/ajax/customer-search/',
+            method: 'GET',
+            data: { q: query },
+            success: function(response) {
+                console.log('✅ Customer search success:', response);
+                displayResults(response.customers);
+            },
+            error: function(xhr) {
+                console.error('❌ Customer search error:', xhr);
+                alert('Customer search failed. Please try again.');
+            }
+        });
+    });
+    
+    // Direct click handler for customer selection
+    $(document).on('click', '.customer-search-result-item', function() {
+        const customerData = $(this).data('customer');
+        console.log('✅ Customer selected:', customerData);
+        
+        if (customerData) {
+            $('#customer-id').val(customerData.id);
+            $('.customer-search-input').val(customerData.display_text);
+            $('#phone').val(customerData.phone || '');
+            $('#tax_number').val(customerData.tax_number || '');
+            $('.customer-search-results').hide();
+        }
+    });
+    
+    function displayResults(customers) {
+        const $results = $('.customer-search-results');
+        $results.empty();
+        
+        if (!customers || customers.length === 0) {
+            $results.html('<div class="p-2 text-muted">No customers found</div>').show();
+            return;
+        }
+        
+        customers.forEach(function(customer) {
+            const $item = $('<div class="customer-search-result-item p-2 border-bottom cursor-pointer">')
+                .html('<strong>' + customer.display_text + '</strong><br><small class="text-muted">' + (customer.phone || 'No phone') + '</small>')
+                .data('customer', customer)
+                .css({
+                    'cursor': 'pointer',
+                    'background': '#f8f9fa'
+                })
+                .hover(function() {
+                    $(this).css('background', '#e9ecef');
+                }, function() {
+                    $(this).css('background', '#f8f9fa');
+                });
+            $results.append($item);
+        });
+        
+        $results.show();
+    }
+    
+    // Hide results when clicking outside
+    $(document).on('click', function(e) {
+        if (!$(e.target).closest('.customer-search-container').length) {
+            $('.customer-search-results').hide();
+        }
+    });
+});
+</script>
 {% endblock %}

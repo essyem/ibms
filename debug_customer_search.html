@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Customer Search Debug</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        .customer-search-container {
+            position: relative;
+            width: 300px;
+            margin: 20px;
+        }
+        .customer-search-results {
+            position: absolute;
+            z-index: 1000;
+            background: white;
+            width: 100%;
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 0 0 4px 4px;
+            display: none;
+        }
+        .customer-search-result-item {
+            padding: 8px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            background: #f8f9fa;
+        }
+        .customer-search-result-item:hover {
+            background: #e9ecef;
+        }
+    </style>
+</head>
+<body>
+    <h1>Customer Search Debug</h1>
+    
+    <div class="customer-search-container">
+        <input type="text" 
+               class="customer-search-input" 
+               id="customer-search"
+               placeholder="Search customers by name, company, or ID..."
+               style="width: 100%; padding: 8px;">
+        <input type="hidden" name="customer" id="customer-id">
+        <div class="customer-search-results"></div>
+    </div>
+    
+    <div id="debug-info">
+        <h3>Debug Info:</h3>
+        <div id="log"></div>
+    </div>
+    
+    <script>
+    $(document).ready(function() {
+        console.log('Debug page loaded');
+        $('#log').append('<p>Debug page loaded</p>');
+        
+        // Customer Search
+        $(document).on('input', '.customer-search-input', function() {
+            console.log('Input detected');
+            $('#log').append('<p>Input detected: ' + $(this).val() + '</p>');
+            handleCustomerSearch($(this));
+        });
+        
+        // Customer Selection
+        $(document).on('click', '.customer-search-result-item', function(e) {
+            e.preventDefault();
+            console.log('Customer clicked');
+            selectCustomer($(this));
+        });
+        
+        function handleCustomerSearch($input) {
+            const query = $input.val().trim();
+            const $results = $input.closest('.customer-search-container').find('.customer-search-results');
+            
+            console.log('Search query:', query);
+            $('#log').append('<p>Search query: ' + query + '</p>');
+            
+            if (query.length < 2) {
+                $results.hide();
+                return;
+            }
+            
+            console.log('Making AJAX request...');
+            $('#log').append('<p>Making AJAX request...</p>');
+            
+            $.ajax({
+                url: '/ajax/customer-search/',
+                method: 'GET',
+                data: { q: query },
+                success: function(response) {
+                    console.log('AJAX success:', response);
+                    $('#log').append('<p>AJAX success: ' + JSON.stringify(response) + '</p>');
+                    displayCustomerSearchResults(response.customers, $results);
+                },
+                error: function(xhr) {
+                    console.error('AJAX error:', xhr);
+                    $('#log').append('<p>AJAX error: ' + xhr.status + ' ' + xhr.statusText + '</p>');
+                }
+            });
+        }
+        
+        function displayCustomerSearchResults(customers, $results) {
+            console.log('Displaying results:', customers);
+            $('#log').append('<p>Displaying ' + customers.length + ' results</p>');
+            
+            $results.empty();
+            
+            if (!customers || customers.length === 0) {
+                $results.html('<div class="customer-search-result-item">No customers found</div>').show();
+                return;
+            }
+            
+            customers.forEach(function(customer) {
+                const $item = $('<div class="customer-search-result-item">')
+                    .html('<strong>' + customer.display_text + '</strong><br><small>' + (customer.phone || 'No phone') + '</small>')
+                    .data('customer', customer);
+                $results.append($item);
+            });
+            
+            $results.show();
+        }
+        
+        function selectCustomer($item) {
+            const customer = $item.data('customer');
+            console.log('Customer selected:', customer);
+            $('#log').append('<p>Customer selected: ' + customer.display_text + '</p>');
+            
+            $('#customer-id').val(customer.id);
+            $('.customer-search-input').val(customer.display_text);
+            $('.customer-search-results').hide();
+        }
+    });
+    </script>
+</body>
+</html>
