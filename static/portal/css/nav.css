@@ -1,0 +1,5 @@
+.main-nav{background:#fff;border-bottom:1px solid #e5e7eb;padding:.5rem}
+.main-nav .nav-toggle{display:none;background:#1f2937;color:#fff;border:0;padding:.35rem .6rem;border-radius:4px}
+.main-nav .nav-list{list-style:none;margin:0;padding:0;display:flex;gap:1rem}
+.main-nav .nav-list li a{color:#111;text-decoration:none}
+@media(max-width:768px){.main-nav .nav-toggle{display:inline-block}.main-nav .nav-list{display:none;flex-direction:column;width:100%}.main-nav .nav-list.open{display:flex}}

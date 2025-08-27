@@ -14,66 +14,10 @@
 </head>
 <body style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh;">
     
-    <!-- Navigation Bar -->
-    {% block navbar %}
-    <nav class="navbar navbar-expand-lg navbar-dark" style="background: rgba(0,0,0,0.1); backdrop-filter: blur(10px);">
-        <div class="container">
-            <a class="navbar-brand fw-bold" href="{% url 'portal:index' %}">
-                <i class="fas fa-store me-2"></i>Trendz Portal
-            </a>
-            
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'portal:dashboard' %}">
-                            <i class="fas fa-chart-dashboard me-1"></i>Dashboard
-                        </a>
-                    </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                            <i class="fas fa-file-invoice me-1"></i>Invoices
-                        </a>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="{% url 'portal:invoice_create' %}">
-                                <i class="fas fa-plus me-2"></i>Create Invoice
-                            </a></li>
-                            <li><a class="dropdown-item" href="{% url 'portal:invoice_list' %}">
-                                <i class="fas fa-list me-2"></i>All Invoices
-                            </a></li>
-                        </ul>
-                    </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                            <i class="fas fa-users me-1"></i>Customers
-                        </a>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="{% url 'portal:customer_create' %}">
-                                <i class="fas fa-user-plus me-2"></i>Add Customer
-                            </a></li>
-                            <li><a class="dropdown-item" href="{% url 'portal:customer_list' %}">
-                                <i class="fas fa-users me-2"></i>All Customers
-                            </a></li>
-                        </ul>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'portal:reports' %}">
-                            <i class="fas fa-chart-line me-1"></i>Reports
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'barcode_generator_dashboard' %}">
-                            <i class="fas fa-barcode me-1"></i>Barcode Dashboard
-                        </a>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </nav>
-    {% endblock %}
+        <!-- Navigation Bar -->
+        {% block navbar %}
+            {% include 'includes/_navigation.html' %}
+        {% endblock %}
 
     <!-- Main Content -->
     <div class="container-fluid py-4">
