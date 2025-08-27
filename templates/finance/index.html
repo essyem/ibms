@@ -1,0 +1,128 @@
+{% extends 'sites/portal/base.html' %}
+{% load static %}
+
+{% block title %}Finance - Trendz Technologies{% endblock %}
+
+{% block content %}
+<div class="section">
+    <div class="section-header">
+        <h1>💰 Finance Management</h1>
+        <p>Comprehensive financial management and reporting for your business operations.</p>
+    </div>
+
+    <div class="card-grid">
+        <div class="card highlight">
+            <h3>💳 Transactions</h3>
+            <p>Record, track, and manage all financial transactions. Monitor cash flow, payments, and receipts with detailed transaction history.</p>
+            <div style="margin-top: 1.5rem;">
+                <a href="#" style="color: var(--text-primary); text-decoration: none; font-weight: 600;">View Transactions →</a>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>📊 Financial Reports</h3>
+            <p>Generate comprehensive financial reports including profit & loss, balance sheets, cash flow statements, and custom analytics.</p>
+            <div style="margin-top: 1.5rem;">
+                <a href="#" style="color: var(--text-primary); text-decoration: none; font-weight: 600;">Generate Reports →</a>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>🏦 Accounts</h3>
+            <p>Manage chart of accounts, account balances, and financial account structures. Organize finances with proper accounting principles.</p>
+            <div style="margin-top: 1.5rem;">
+                <a href="#" style="color: var(--text-primary); text-decoration: none; font-weight: 600;">Manage Accounts →</a>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>📈 Analytics</h3>
+            <p>Advanced financial analytics and insights. Track key performance indicators, trends, and financial health metrics.</p>
+            <div style="margin-top: 1.5rem;">
+                <a href="#" style="color: var(--text-primary); text-decoration: none; font-weight: 600;">View Analytics →</a>
+            </div>
+        </div>
+    </div>
+
+    {% if user.is_authenticated %}
+    <div style="margin-top: 3rem;">
+        <div class="card">
+            <h3>⚡ Quick Financial Actions</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 1.5rem;">
+                <a href="#" style="display: block; padding: 1rem; background: var(--highlight); border-radius: 8px; text-decoration: none; color: var(--text-primary); text-align: center; transition: transform 0.3s ease;">
+                    <strong>+ New Transaction</strong>
+                </a>
+                <a href="#" style="display: block; padding: 1rem; background: var(--highlight); border-radius: 8px; text-decoration: none; color: var(--text-primary); text-align: center; transition: transform 0.3s ease;">
+                    <strong>📋 Monthly Report</strong>
+                </a>
+                <a href="#" style="display: block; padding: 1rem; background: var(--highlight); border-radius: 8px; text-decoration: none; color: var(--text-primary); text-align: center; transition: transform 0.3s ease;">
+                    <strong>💰 Cash Flow</strong>
+                </a>
+                <a href="{% url 'portal:dashboard' %}" style="display: block; padding: 1rem; background: var(--highlight); border-radius: 8px; text-decoration: none; color: var(--text-primary); text-align: center; transition: transform 0.3s ease;">
+                    <strong>🏠 Dashboard</strong>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div style="margin-top: 2rem;">
+        <div class="card-grid">
+            <div class="card">
+                <h3>📋 Current Month Summary</h3>
+                <div style="margin-top: 1rem;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                        <span>Total Income:</span>
+                        <strong style="color: #28a745;">$0.00</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                        <span>Total Expenses:</span>
+                        <strong style="color: #dc3545;">$0.00</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; padding-top: 0.5rem; border-top: var(--border);">
+                        <span><strong>Net Profit:</strong></span>
+                        <strong>$0.00</strong>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>🎯 Key Metrics</h3>
+                <div style="margin-top: 1rem;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                        <span>Active Accounts:</span>
+                        <strong>0</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                        <span>Pending Transactions:</span>
+                        <strong>0</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                        <span>This Month Transactions:</span>
+                        <strong>0</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div style="margin-top: 3rem; text-align: center;">
+        <div class="card">
+            <h3>🔐 Authentication Required</h3>
+            <p>Please log in to access financial management features and sensitive financial data.</p>
+            <div style="margin-top: 2rem;">
+                <a href="{% url 'login' %}" 
+                   style="display: inline-block; padding: 12px 24px; background: var(--gradient); color: white; text-decoration: none; border-radius: 8px; font-weight: 600;">
+                    Secure Login
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+    .card a:hover {
+        transform: translateY(-2px);
+    }
+</style>
+{% endblock %}
