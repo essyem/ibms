@@ -53,8 +53,10 @@ class FinanceIndexView(TemplateView):
             'recent_transactions': recent_transactions,
             'today_income': today_income,
             'today_expense': today_expense,
+            'today_net': today_income - today_expense,
             'month_income': month_income,
             'month_expense': month_expense,
+            'month_net': month_income - month_expense,
         })
         return context
 

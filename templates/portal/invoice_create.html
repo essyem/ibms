@@ -71,7 +71,6 @@
                     <div class="card-header">Customer Details</div>
                     <div class="card-body">
                         <div class="form-group">
-<<<<<<< Updated upstream
                             <label for="customer-search">Customer Search</label>
                             <div class="customer-search-container position-relative">
                                 <div class="input-group">
@@ -82,9 +81,9 @@
                                            value="{% if object %}{{ object.customer.company_name|default:object.customer.full_name }}{% endif %}"
                                            autocomplete="off">
                                     <input type="hidden" name="customer" id="customer-id" value="{% if object %}{{ object.customer.id }}{% endif %}">
-                                    <button type="button" class="btn btn-success btn-sm" id="add-customer-btn" title="Add New Customer">
+                                    <a href="{% url 'portal:customer_create' %}" class="btn btn-success btn-sm" id="add-customer-btn" title="Add New Customer" target="_blank">
                                         <i class="fas fa-user-plus"></i> Add
-                                    </button>
+                                    </a>
                                 </div>
                                 <div class="customer-search-results" style="display: none;"></div>
                             </div>

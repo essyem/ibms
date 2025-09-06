@@ -27,8 +27,8 @@
                                     <hr>
                                     <div class="d-flex justify-content-between font-weight-bold">
                                         <span>Net:</span>
-                                        <span class="{% if today_income|default:0 > today_expense|default:0 %}text-success{% else %}text-danger{% endif %}">
-                                            QAR {{ today_income|default:0|subtract:today_expense|default:0|intcomma }}
+                                        <span class="{% if today_net >= 0 %}text-success{% else %}text-danger{% endif %}">
+                                            QAR {{ today_net|intcomma }}
                                         </span>
                                     </div>
                                 </div>
@@ -53,8 +53,8 @@
                                     <hr>
                                     <div class="d-flex justify-content-between font-weight-bold">
                                         <span>Net:</span>
-                                        <span class="{% if month_income|default:0 > month_expense|default:0 %}text-success{% else %}text-danger{% endif %}">
-                                            QAR {{ month_income|default:0|subtract:month_expense|default:0|intcomma }}
+                                        <span class="{% if month_net >= 0 %}text-success{% else %}text-danger{% endif %}">
+                                            QAR {{ month_net|intcomma }}
                                         </span>
                                     </div>
                                 </div>
