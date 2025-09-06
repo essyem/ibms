@@ -17,6 +17,17 @@ def category_api(request):
     return JsonResponse(list(categories), safe=False)
 
 
+class FinanceIndexView(TemplateView):
+    template_name = 'finance/index.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Add finance dashboard data here
+        context['total_transactions'] = FinanceTransaction.objects.count()
+        context['recent_transactions'] = FinanceTransaction.objects.order_by('-created_at')[:5]
+        return context
+
+
 class TransactionCreateView(CreateView):
     model = FinanceTransaction
     form_class = TransactionForm
