@@ -18,13 +18,44 @@ def category_api(request):
 
 
 class FinanceIndexView(TemplateView):
-    template_name = 'finance/index.html'
+    template_name = 'finance/dashboard.html'
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # Add finance dashboard data here
-        context['total_transactions'] = FinanceTransaction.objects.count()
-        context['recent_transactions'] = FinanceTransaction.objects.order_by('-created_at')[:5]
+        
+        # Get current date info
+        today = timezone.now().date()
+        current_month_start = today.replace(day=1)
+        
+        # Calculate today's summary
+        today_transactions = FinanceTransaction.objects.filter(date=today)
+        today_income = today_transactions.filter(
+            type__in=['sale', 'sale_receipt']
+        ).aggregate(total=Sum('amount'))['total'] or 0
+        today_expense = today_transactions.filter(
+            type__in=['purchase', 'expense']
+        ).aggregate(total=Sum('amount'))['total'] or 0
+        
+        # Calculate month's summary
+        month_transactions = FinanceTransaction.objects.filter(date__gte=current_month_start)
+        month_income = month_transactions.filter(
+            type__in=['sale', 'sale_receipt']
+        ).aggregate(total=Sum('amount'))['total'] or 0
+        month_expense = month_transactions.filter(
+            type__in=['purchase', 'expense']
+        ).aggregate(total=Sum('amount'))['total'] or 0
+        
+        # Recent transactions
+        recent_transactions = FinanceTransaction.objects.select_related('category').order_by('-created_at')[:10]
+        
+        context.update({
+            'total_transactions': FinanceTransaction.objects.count(),
+            'recent_transactions': recent_transactions,
+            'today_income': today_income,
+            'today_expense': today_expense,
+            'month_income': month_income,
+            'month_expense': month_expense,
+        })
         return context
 
 
@@ -36,6 +67,7 @@ class TransactionCreateView(CreateView):
     
     def form_valid(self, form):
         form.instance.created_by = self.request.user
+        messages.success(self.request, 'Transaction created successfully!')
         return super().form_valid(form)
 
 class TransactionUpdateView(UpdateView):
@@ -43,6 +75,10 @@ class TransactionUpdateView(UpdateView):
     form_class = TransactionForm
     template_name = 'finance/transaction_form.html'
     success_url = reverse_lazy('finance:transaction_list')
+    
+    def form_valid(self, form):
+        messages.success(self.request, 'Transaction updated successfully!')
+        return super().form_valid(form)
 
 class TransactionListView(ListView):
     model = FinanceTransaction
@@ -57,30 +93,33 @@ class TransactionListView(ListView):
         return queryset.order_by('-date')
 
 
-class TransactionCreateView(CreateView):
+class TransactionDetailView(DetailView):
     model = FinanceTransaction
-    form_class = TransactionForm
-    template_name = 'finance/transaction_form.html'
-    
-    def form_valid(self, form):
-        form.instance.created_by = self.request.user
-        return super().form_valid(form)
+    template_name = 'finance/transaction_detail.html'
+    context_object_name = 'transaction'
 
 class FinanceReportView(TemplateView):
     template_name = 'finance/reports.html'
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        
         # Add report data to context
+        transactions = FinanceTransaction.objects.all()
+        context.update({
+            'total_transactions': transactions.count(),
+            'total_income': transactions.filter(
+                type__in=['sale', 'sale_receipt']
+            ).aggregate(total=Sum('amount'))['total'] or 0,
+            'total_expenses': transactions.filter(
+                type__in=['purchase', 'expense']
+            ).aggregate(total=Sum('amount'))['total'] or 0,
+            'transactions_by_type': transactions.values('type').annotate(
+                count=Count('id'),
+                total=Sum('amount')
+            ),
+        })
         return context
-    
-    def save(self, commit=True):
-        if not self.instance.reference:
-            # Generate reference like TXN-2023-001
-            last_txn = FinanceTransaction.objects.order_by('-id').first()
-            new_id = (last_txn.id + 1) if last_txn else 1
-            self.instance.reference = f"TXN-{timezone.now().year}-{new_id:03d}"
-        return super().save(commit)
 
 
 # Purchase Payment Views
