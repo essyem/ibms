@@ -64,6 +64,11 @@
         <li><a href="{% url 'finance:index' %}" class="dropdown-item"><i class="fas fa-tachometer-alt me-2"></i>Finance Dashboard</a></li>
         <li><a href="{% url 'finance:transaction_list' %}" class="dropdown-item"><i class="fas fa-exchange-alt me-2"></i>Transactions</a></li>
         <li><a href="{% url 'finance:transaction_create' %}" class="dropdown-item"><i class="fas fa-plus me-2"></i>Add Transaction</a></li>
+        <li><hr class="dropdown-divider"></li>
+        <li><a href="{% url 'finance:daily_revenue_dashboard' %}" class="dropdown-item"><i class="fas fa-chart-line me-2"></i>Daily Revenue</a></li>
+        <li><a href="{% url 'finance:daily_revenue_create' %}" class="dropdown-item"><i class="fas fa-plus-circle me-2"></i>Add Daily Revenue</a></li>
+        <li><a href="{% url 'finance:daily_revenue_list' %}" class="dropdown-item"><i class="fas fa-list me-2"></i>Revenue History</a></li>
+        <li><hr class="dropdown-divider"></li>
         <li><a href="{% url 'finance:finance_reports' %}" class="dropdown-item"><i class="fas fa-chart-bar me-2"></i>Financial Reports</a></li>
       </ul>
     </li>

@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Revenue Report - {{ revenue.date }}</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 1cm;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.4;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #007cba;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .company-name {
+            font-size: 24px;
+            font-weight: bold;
+            color: #007cba;
+            margin-bottom: 5px;
+        }
+        
+        .report-title {
+            font-size: 18px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        
+        .report-date {
+            font-size: 14px;
+            color: #888;
+        }
+        
+        .info-section {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        
+        .info-box {
+            flex: 1;
+            margin: 0 10px;
+        }
+        
+        .info-box h3 {
+            background: #f8f9fa;
+            margin: 0;
+            padding: 8px;
+            border-left: 4px solid #007cba;
+            font-size: 14px;
+        }
+        
+        .revenue-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        
+        .revenue-table th,
+        .revenue-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .revenue-table th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        
+        .revenue-table td {
+            font-size: 13px;
+        }
+        
+        .amount {
+            text-align: right;
+            font-weight: bold;
+        }
+        
+        .positive {
+            color: #28a745;
+        }
+        
+        .negative {
+            color: #dc3545;
+        }
+        
+        .total-row {
+            background-color: #f8f9fa;
+            font-weight: bold;
+            border-top: 2px solid #007cba;
+        }
+        
+        .summary-section {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        
+        .summary-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .summary-item:last-child {
+            border-bottom: none;
+            font-weight: bold;
+            font-size: 16px;
+            padding-top: 10px;
+            border-top: 2px solid #007cba;
+        }
+        
+        .notes-section {
+            margin-top: 20px;
+            padding: 15px;
+            background: #fff9c4;
+            border-left: 4px solid #ffc107;
+        }
+        
+        .notes-section h4 {
+            margin-top: 0;
+            color: #856404;
+        }
+        
+        .footer {
+            margin-top: 30px;
+            padding-top: 15px;
+            border-top: 1px solid #ddd;
+            font-size: 11px;
+            color: #666;
+            text-align: center;
+        }
+        
+        .print-info {
+            font-size: 10px;
+            color: #999;
+            margin-top: 10px;
+        }
+        
+        .calculation-formula {
+            background: #e9ecef;
+            padding: 10px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="company-name">Trendz Trading & Services</div>
+        <div class="report-title">Daily Revenue Report</div>
+        <div class="report-date">{{ revenue.date|date:"F d, Y" }}</div>
+    </div>
+    
+    <div class="info-section">
+        <div class="info-box">
+            <h3>Report Information</h3>
+            <p><strong>Date:</strong> {{ revenue.date|date:"l, F d, Y" }}</p>
+            <p><strong>Entered by:</strong> {{ revenue.entered_by.get_full_name|default:revenue.entered_by.username }}</p>
+            <p><strong>Entry Date:</strong> {{ revenue.created_at|date:"M d, Y H:i" }}</p>
+            {% if revenue.updated_at != revenue.created_at %}
+            <p><strong>Last Updated:</strong> {{ revenue.updated_at|date:"M d, Y H:i" }}</p>
+            {% endif %}
+        </div>
+        
+        <div class="info-box">
+            <h3>Print Information</h3>
+            <p><strong>Generated:</strong> {{ generated_at|date:"M d, Y H:i" }}</p>
+            <p><strong>Generated by:</strong> {{ generated_by.get_full_name|default:generated_by.username }}</p>
+            <p><strong>Print Count:</strong> {{ revenue.printed_count }}</p>
+            {% if revenue.last_printed_at %}
+            <p><strong>Last Printed:</strong> {{ revenue.last_printed_at|date:"M d, Y H:i" }}</p>
+            {% endif %}
+        </div>
+    </div>
+    
+    <table class="revenue-table">
+        <thead>
+            <tr>
+                <th>Revenue Source</th>
+                <th>Description</th>
+                <th class="amount">Amount (QAR)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Cash Sales</strong></td>
+                <td>Direct cash payments from customers</td>
+                <td class="amount positive">{{ revenue.daily_cash_sales|floatformat:2 }}</td>
+            </tr>
+            <tr>
+                <td><strong>POS Sales</strong></td>
+                <td>Credit card and electronic payments</td>
+                <td class="amount positive">{{ revenue.daily_pos_sales|floatformat:2 }}</td>
+            </tr>
+            <tr>
+                <td><strong>Service Revenue</strong></td>
+                <td>Revenue from services provided</td>
+                <td class="amount positive">{{ revenue.daily_service_revenue|floatformat:2 }}</td>
+            </tr>
+            <tr>
+                <td><strong>Purchases/Expenses</strong></td>
+                <td>Total expenditure for the day</td>
+                <td class="amount negative">{{ revenue.daily_purchase|floatformat:2 }}</td>
+            </tr>
+            <tr class="total-row">
+                <td colspan="2"><strong>Net Daily Revenue</strong></td>
+                <td class="amount {% if revenue.daily_revenue >= 0 %}positive{% else %}negative{% endif %}">
+                    {{ revenue.daily_revenue|floatformat:2 }}
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    
+    <div class="summary-section">
+        <h3 style="margin-top: 0; color: #007cba;">Revenue Calculation Summary</h3>
+        
+        <div class="summary-grid">
+            <div>
+                <div class="summary-item">
+                    <span>Cash Sales:</span>
+                    <span class="positive">QAR {{ revenue.daily_cash_sales|floatformat:2 }}</span>
+                </div>
+                <div class="summary-item">
+                    <span>POS Sales:</span>
+                    <span class="positive">QAR {{ revenue.daily_pos_sales|floatformat:2 }}</span>
+                </div>
+                <div class="summary-item">
+                    <span>Service Revenue:</span>
+                    <span class="positive">QAR {{ revenue.daily_service_revenue|floatformat:2 }}</span>
+                </div>
+                <div class="summary-item">
+                    <span>Total Sales:</span>
+                    <span class="positive">QAR {{ revenue.total_sales|floatformat:2 }}</span>
+                </div>
+            </div>
+            
+            <div>
+                <div class="summary-item">
+                    <span>Total Purchases:</span>
+                    <span class="negative">QAR {{ revenue.daily_purchase|floatformat:2 }}</span>
+                </div>
+                <div class="summary-item">
+                    <span>Profit Margin:</span>
+                    <span>{{ revenue.net_profit_margin|floatformat:1 }}%</span>
+                </div>
+                <div class="summary-item">
+                    <span><strong>Net Revenue:</strong></span>
+                    <span class="{% if revenue.daily_revenue >= 0 %}positive{% else %}negative{% endif %}">
+                        <strong>QAR {{ revenue.daily_revenue|floatformat:2 }}</strong>
+                    </span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="calculation-formula">
+            <strong>Calculation Formula:</strong><br>
+            Net Revenue = Cash Sales + POS Sales + Service Revenue - Purchases<br>
+            Net Revenue = {{ revenue.daily_cash_sales|floatformat:2 }} + {{ revenue.daily_pos_sales|floatformat:2 }} + {{ revenue.daily_service_revenue|floatformat:2 }} - {{ revenue.daily_purchase|floatformat:2 }} = <strong>{{ revenue.daily_revenue|floatformat:2 }}</strong>
+        </div>
+    </div>
+    
+    {% if revenue.notes %}
+    <div class="notes-section">
+        <h4>Daily Notes</h4>
+        <p>{{ revenue.notes|linebreaks }}</p>
+    </div>
+    {% endif %}
+    
+    <div class="footer">
+        <p><strong>Trendz Trading & Services</strong> - Daily Revenue Management System</p>
+        <div class="print-info">
+            Generated on {{ generated_at|date:"F d, Y \a\t H:i" }} by {{ generated_by.get_full_name|default:generated_by.username }}
+            | Document ID: DR-{{ revenue.date|date:"Ymd" }}-{{ revenue.pk }}
+        </div>
+    </div>
+</body>
+</html>

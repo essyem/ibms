@@ -2,7 +2,10 @@
 from django.contrib import admin
 from django.utils.html import format_html
 from django.db.models import Sum
-from .models import Category, FinanceTransaction, FinancialSummary, InventoryTransaction
+from django.utils import timezone
+from django.urls import reverse
+from django.http import HttpResponse
+from .models import Category, FinanceTransaction, FinancialSummary, InventoryTransaction, DailyRevenue
 
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
@@ -306,3 +309,150 @@ class InventoryTransactionAdmin(admin.ModelAdmin):
         if not obj.pk:
             obj.created_by = request.user
         super().save_model(request, obj, form, change)
+
+
+@admin.register(DailyRevenue)
+class DailyRevenueAdmin(admin.ModelAdmin):
+    list_display = (
+        'date_display',
+        'sales_breakdown',
+        'purchase_display',
+        'revenue_display',
+        'margin_display',
+        'print_status',
+        'actions_display'
+    )
+    list_filter = ('date', 'entered_by')
+    search_fields = ('notes',)
+    date_hierarchy = 'date'
+    ordering = ['-date']
+    exclude = ('site', 'daily_revenue')
+    readonly_fields = ('daily_revenue', 'created_at', 'updated_at', 'printed_count', 'last_printed_at', 'last_printed_by')
+    
+    fieldsets = (
+        ('Date', {
+            'fields': ('date',)
+        }),
+        ('Revenue Sources', {
+            'fields': ('daily_cash_sales', 'daily_pos_sales', 'daily_service_revenue'),
+            'description': 'Enter the revenue amounts for different payment methods'
+        }),
+        ('Expenses', {
+            'fields': ('daily_purchase',),
+            'description': 'Enter total purchase/expense amount for the day'
+        }),
+        ('Calculated Results', {
+            'fields': ('daily_revenue',),
+            'classes': ('collapse',),
+            'description': 'Auto-calculated: Cash + POS + Service - Purchase'
+        }),
+        ('Notes & Tracking', {
+            'fields': ('notes', 'entered_by'),
+        }),
+        ('Print History', {
+            'fields': ('printed_count', 'last_printed_at', 'last_printed_by'),
+            'classes': ('collapse',),
+        }),
+        ('System', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    actions = ['generate_pdf_reports', 'mark_as_printed']
+    
+    def date_display(self, obj):
+        """Display date with calendar icon"""
+        return format_html('📅 {}', obj.date.strftime('%Y-%m-%d'))
+    date_display.short_description = 'Date'
+    date_display.admin_order_field = 'date'
+    
+    def sales_breakdown(self, obj):
+        """Display sales breakdown"""
+        return format_html(
+            '<div style="text-align: left; font-size: 11px;">'
+            '<span style="color: green;">💵 Cash: QAR {}</span><br>'
+            '<span style="color: blue;">💳 POS: QAR {}</span><br>'
+            '<span style="color: purple;">🔧 Service: QAR {}</span><br>'
+            '<strong>Total: QAR {}</strong>'
+            '</div>',
+            f"{obj.daily_cash_sales:,.2f}",
+            f"{obj.daily_pos_sales:,.2f}",
+            f"{obj.daily_service_revenue:,.2f}",
+            f"{obj.total_sales():,.2f}"
+        )
+    sales_breakdown.short_description = '💰 Sales Breakdown'
+    
+    def purchase_display(self, obj):
+        """Display purchase amount"""
+        return format_html(
+            '<span style="color: red; font-weight: bold;">🛒 QAR {}</span>',
+            f"{obj.daily_purchase:,.2f}"
+        )
+    purchase_display.short_description = '🛒 Purchases'
+    purchase_display.admin_order_field = 'daily_purchase'
+    
+    def revenue_display(self, obj):
+        """Display calculated revenue"""
+        color = 'green' if obj.daily_revenue >= 0 else 'red'
+        return format_html(
+            '<span style="color: {}; font-weight: bold; font-size: 14px;">QAR {}</span>',
+            color,
+            f"{obj.daily_revenue:,.2f}"
+        )
+    revenue_display.short_description = '📈 Net Revenue'
+    revenue_display.admin_order_field = 'daily_revenue'
+    
+    def margin_display(self, obj):
+        """Display profit margin"""
+        margin = obj.net_profit_margin()
+        color = 'green' if margin >= 0 else 'red'
+        return format_html(
+            '<span style="color: {}; font-weight: bold;">{}%</span>',
+            color,
+            f"{margin:.1f}"
+        )
+    margin_display.short_description = '📊 Margin'
+    
+    def print_status(self, obj):
+        """Display print status"""
+        if obj.printed_count > 0:
+            return format_html(
+                '<span style="color: green;">✅ {} times</span><br>'
+                '<small>Last: {}</small>',
+                obj.printed_count,
+                obj.last_printed_at.strftime('%m/%d %H:%M') if obj.last_printed_at else 'N/A'
+            )
+        return format_html('<span style="color: gray;">📄 Not printed</span>')
+    print_status.short_description = '🖨️ Print Status'
+    
+    def actions_display(self, obj):
+        """Display action buttons"""
+        return format_html(
+            '<a href="/finance/daily-revenue/{}/pdf/" target="_blank" '
+            'style="background: #007cba; color: white; padding: 4px 8px; text-decoration: none; border-radius: 3px; font-size: 11px;">📄 PDF</a><br>'
+            '<a href="/finance/daily-revenue/{}/print/" target="_blank" '
+            'style="background: #28a745; color: white; padding: 4px 8px; text-decoration: none; border-radius: 3px; font-size: 11px; margin-top: 2px; display: inline-block;">🖨️ Print</a>',
+            obj.pk, obj.pk
+        )
+    actions_display.short_description = '⚡ Actions'
+    
+    def save_model(self, request, obj, form, change):
+        if not change:  # New object
+            obj.entered_by = request.user
+        super().save_model(request, obj, form, change)
+    
+    def generate_pdf_reports(self, request, queryset):
+        """Generate PDF reports for selected records"""
+        # This will be implemented in views
+        selected = queryset.values_list('pk', flat=True)
+        url = reverse('finance:daily_revenue_bulk_pdf')
+        return HttpResponse(f'<script>window.open("{url}?ids={",".join(map(str, selected))}", "_blank");</script>')
+    generate_pdf_reports.short_description = "📄 Generate PDF reports for selected items"
+    
+    def mark_as_printed(self, request, queryset):
+        """Mark selected items as printed"""
+        for obj in queryset:
+            obj.mark_printed(request.user)
+        self.message_user(request, f"Marked {queryset.count()} items as printed.")
+    mark_as_printed.short_description = "🖨️ Mark selected items as printed"
