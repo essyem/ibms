@@ -1,5 +1,9 @@
 {% load static %}
 <nav class="main-nav">
+  <div class="nav-brand">
+    <i class="fas fa-briefcase me-2"></i>
+    <span class="brand-text">Trendz Portal</span>
+  </div>
   <button id="nav-toggle" class="nav-toggle" aria-expanded="false" aria-controls="main-nav-list">☰</button>
   <ul id="main-nav-list" class="nav-list">
     <li><a href="{% url 'portal:dashboard' %}">Dashboard</a></li>

@@ -1,79 +1,73 @@
-{% extends "portal/invoice_base.html" %}
-
-{% block title %}Welcome to Trendz Portal{% endblock %}
-
-{% block extra_css %}
-<style>
-    .landing-hero {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: #fff;
-        padding: 120px 0;
-        text-align: center;
-    }
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to Trendz Portal</title>
+    {% load static %}
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     
-    .feature-card {
-        background: rgba(255,255,255,0.1);
-        backdrop-filter: blur(10px);
-        border-radius: 15px;
-        padding: 30px;
-        height: 100%;
-        transition: transform 0.3s ease;
-        border: 1px solid rgba(255,255,255,0.2);
-    }
-    
-    .feature-card:hover {
-        transform: translateY(-10px);
-        background: rgba(255,255,255,0.15);
-    }
-    
-    .feature-icon {
-        font-size: 3rem;
-        margin-bottom: 20px;
-        color: #fff;
-    }
-    
-    .auth-section {
-        background: rgba(0,0,0,0.1);
-        padding: 60px 0;
-        border-radius: 15px;
-    }
-    
-    .cta-btn {
-        padding: 12px 30px;
-        border-radius: 50px;
-        font-weight: bold;
-        transition: all 0.3s ease;
-    }
-
-    /* Force strong, readable white text on hero and CTA */
-    .landing-hero .display-3, .landing-hero .lead, .landing-hero .btn {
-        color: #fff !important;
-        text-shadow: 0 1px 2px rgba(0,0,0,0.25);
-    }
-
-    /* Ensure navbar is light / white text when over hero */
-    nav.navbar {
-        background: rgba(0,0,0,0.08) !important;
-    }
-    nav.navbar .navbar-brand, nav.navbar .nav-link, nav.navbar .dropdown-toggle {
-        color: #fff !important;
-        opacity: 0.95;
-    }
-    /* Dropdown menu needs darker background when shown */
-    nav.navbar .dropdown-menu {
-        background: rgba(255,255,255,0.95);
-        color: #222;
-    }
-    
-    @media (max-width: 768px) {
+    <style>
         .landing-hero {
-            padding: 80px 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            padding: 120px 0;
+            text-align: center;
+            min-height: 100vh;
         }
-    }
-</style>
-{% endblock %}
+        
+        .feature-card {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 30px;
+            height: 100%;
+            transition: transform 0.3s ease;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-10px);
+            background: rgba(255,255,255,0.15);
+        }
+        
+        .feature-icon {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            color: #fff;
+        }
+        
+        .auth-section {
+            background: rgba(0,0,0,0.1);
+            padding: 60px 0;
+            border-radius: 15px;
+        }
+        
+        .cta-btn {
+            padding: 12px 30px;
+            border-radius: 50px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
 
-{% block content %}
+        /* Force strong, readable white text on hero and CTA */
+        .landing-hero .display-3, .landing-hero .lead, .landing-hero .btn {
+            color: #fff !important;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.25);
+        }
+        
+        @media (max-width: 768px) {
+            .landing-hero {
+                padding: 80px 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Include the production navigation -->
+    {% include 'includes/_navigation.html' %}
+
 <!-- Hero Section -->
 <section class="landing-hero">
     <div class="container">
@@ -239,4 +233,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>
-{% endblock %}
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
