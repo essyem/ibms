@@ -88,6 +88,7 @@
                 this.calculateRowTotal($(e.target).closest('tr'));
             });
 
+<<<<<<< Updated upstream
             // Unit Price Changes (delegated)
             $(document).on('input change', '.unit-price', (e) => {
                 this.calculateRowTotal($(e.target).closest('tr'));
