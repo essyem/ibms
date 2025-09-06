@@ -1,101 +1,20 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    {% extends "portal/invoice_base.html" %}
-    {% load static %}
-    {% load i18n %}
-    {% load humanize %}
+{% extends "portal/invoice_base.html" %}
+{% load static %}
+{% load i18n %}
+{% load humanize %}
 
-    {% block title %}Trendz Portal{% endblock %}
+{% block title %}Trendz Portal{% endblock %}
 
-    {% block navbar %}
-        <nav class="navbar navbar-expand-lg navbar-light bg-light">
-            <div class="container-fluid">
-                <a class="navbar-brand" href="{% url 'portal:home' %}">Trendz</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"><span class="navbar-toggler-icon"></span></button>
-                <div class="collapse navbar-collapse" id="navbarNav">
-                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                        <li class="nav-item"><a class="nav-link" href="{% url 'portal:home' %}">{% trans 'Home' %}</a></li>
-                        <li class="nav-item"><a class="nav-link" href="{% url 'portal:reports' %}">{% trans 'Reports' %}</a></li>
-                        <li class="nav-item"><a class="nav-link" href="{% url 'portal:invoice_list' %}">{% trans 'Invoices' %}</a></li>
-                    </ul>
-                    <ul class="navbar-nav">
-                        {% if user.is_authenticated %}
-                            <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle" href="#" id="userMenu" role="button" data-bs-toggle="dropdown">{{ user.username }}</a>
-                                <ul class="dropdown-menu dropdown-menu-end">
-                                    <li><a class="dropdown-item" href="{% url 'admin:index' %}">Admin</a></li>
-                                    <li><a class="dropdown-item" href="{% url 'portal:profile' %}">Profile</a></li>
-                                </ul>
-                            </li>
-                        {% else %}
-                            <li class="nav-item"><a class="nav-link" href="{% url 'admin:login' %}">{% trans 'Login' %}</a></li>
-                        {% endif %}
-                    </ul>
-                </div>
-            </div>
-        </nav>
-    {% endblock %}
-
-    {% block content %}
-        <div class="container mt-4">
-            {% if messages %}{% for message in messages %}<div class="alert alert-{{ message.tags }}">{{ message }}</div>{% endfor %}{% endif %}
-            {% block base_content %}{% endblock %}
-        </div>
-    {% endblock %}
-
-    {% block extra_js %}{% endblock %}
-                            <i class="fas fa-chart-line me-1"></i>Reports
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'finance:finance_reports' %}">
-                            <i class="fas fa-wallet me-1"></i>Finance
-                        </a>
-                    </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                            <i class="fas fa-boxes me-1"></i>Procurement
-                        </a>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="{% url 'procurement:supplier_list' %}">
-                                <i class="fas fa-industry me-2"></i>Suppliers
-                            </a></li>
-                            <li><a class="dropdown-item" href="{% url 'procurement:purchase_order_list' %}">
-                                <i class="fas fa-shopping-cart me-2"></i>Purchase Orders
-                            </a></li>
-                        </ul>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'barcode_generator_dashboard' %}">
-                            <i class="fas fa-barcode me-1"></i>Barcode Dashboard
-                        </a>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </nav>
-
-    <!-- Main Content -->
-    <div class="container-fluid py-4">
+{% block content %}
+    <div class="container mt-4">
         {% if messages %}
-        <div class="container">
             {% for message in messages %}
-            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                {{ message }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
             {% endfor %}
-        </div>
         {% endif %}
-        
-        {% block content %}
-        {% endblock %}
+        {% block base_content %}{% endblock %}
     </div>
-
-    <!-- Scripts -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    {% block extra_js %}{% endblock %}
-</body>
-</html>
+{% endblock %}
