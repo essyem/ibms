@@ -1,0 +1,18 @@
+<!-- portal/templates/portal/products/search.html -->
+{% extends "portal/base.html" %}
+
+{% block content %}
+  <h2>Search Results for "{{ query }}"</h2>
+  
+  {% if products %}
+    <div class="product-grid">
+      {% for product in products %}
+        {% include "portal/products/_product_card.html" %}
+      {% endfor %}
+    </div>
+    
+    {% include "_pagination.html" %}
+  {% else %}
+    <p>No products found matching your search.</p>
+  {% endif %}
+{% endblock %}

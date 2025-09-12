@@ -5,7 +5,9 @@ from .views import (
     ProductSearchView, product_search_fallback, barcode_scanner_view,
     barcode_scan, InvoiceCreateView, InvoiceUpdateView, InvoiceDetailView, InvoiceListView,
     get_product_details, dashboard_view, report_view, analytics_api, export_reports,
-    CustomerListView, CustomerCreateView, CustomerDetailView, CustomerUpdateView
+    CustomerListView, CustomerCreateView, CustomerDetailView, CustomerUpdateView,
+    ProductListView, ProductDetailView, ProductCreateView, ProductUpdateView,
+    product_delete, product_toggle_active, product_dashboard
 )
 from . import ajax_views
 
@@ -25,7 +27,13 @@ urlpatterns = [
     # Product search and management
     path('products/search/', ProductSearchView.as_view(), name='product-search'),
     path('search/', ProductSearchView.as_view(), name='product-search'),
-    path('products/', product_search_fallback, name='product-list'),
+    path('products/', ProductListView.as_view(), name='product_list'),
+    path('products/dashboard/', product_dashboard, name='product_dashboard'),
+    path('products/create/', ProductCreateView.as_view(), name='product_create'),
+    path('products/<int:pk>/', ProductDetailView.as_view(), name='product_detail'),
+    path('products/<int:pk>/edit/', ProductUpdateView.as_view(), name='product_update'),
+    path('products/<int:pk>/delete/', product_delete, name='product_delete'),
+    path('products/<int:pk>/toggle-active/', product_toggle_active, name='product_toggle_active'),
     path('api/products/<int:product_id>/', get_product_details, name='product_details'),
     
     # Invoice management

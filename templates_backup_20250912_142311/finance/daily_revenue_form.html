@@ -1,0 +1,250 @@
+{% extends "portal/base.html" %}
+{% load widget_tweaks %}
+
+{% block title %}{% if object %}Edit{% else %}Add{% endif %} Daily Revenue - Finance{% endblock %}
+
+{% block base_content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>
+                    <i class="fas fa-{% if object %}edit{% else %}plus{% endif %} me-2"></i>
+                    {% if object %}Edit{% else %}Add New{% endif %} Daily Revenue
+                </h2>
+                <a href="{% url 'finance:daily_revenue_dashboard' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+                </a>
+            </div>
+            
+            <form method="post" id="revenue-form">
+                {% csrf_token %}
+                
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-calendar me-2"></i>Date & Revenue Details</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.date.id_for_label }}" class="form-label">Date</label>
+                                {{ form.date|add_class:"form-control" }}
+                                {% if form.date.errors %}
+                                    <div class="text-danger small">{{ form.date.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Calculated Revenue</label>
+                                <input type="text" class="form-control bg-light fw-bold" id="calculated-revenue" readonly value="QAR 0.00">
+                                <small class="text-muted">Auto-calculated: Cash + POS + Service - Purchase</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card mb-4">
+                            <div class="card-header bg-success text-white">
+                                <h5 class="mb-0"><i class="fas fa-money-bill-wave me-2"></i>Revenue Sources</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label for="{{ form.daily_cash_sales.id_for_label }}" class="form-label">
+                                        <i class="fas fa-money-bill me-1 text-success"></i>Daily Cash Sales
+                                    </label>
+                                    {{ form.daily_cash_sales|add_class:"form-control revenue-input" }}
+                                    {% if form.daily_cash_sales.errors %}
+                                        <div class="text-danger small">{{ form.daily_cash_sales.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="{{ form.daily_pos_sales.id_for_label }}" class="form-label">
+                                        <i class="fas fa-credit-card me-1 text-primary"></i>Daily POS Sales
+                                    </label>
+                                    {{ form.daily_pos_sales|add_class:"form-control revenue-input" }}
+                                    {% if form.daily_pos_sales.errors %}
+                                        <div class="text-danger small">{{ form.daily_pos_sales.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="{{ form.daily_service_revenue.id_for_label }}" class="form-label">
+                                        <i class="fas fa-tools me-1 text-info"></i>Daily Service Revenue
+                                    </label>
+                                    {{ form.daily_service_revenue|add_class:"form-control revenue-input" }}
+                                    {% if form.daily_service_revenue.errors %}
+                                        <div class="text-danger small">{{ form.daily_service_revenue.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between">
+                                            <span><strong>Total Sales:</strong></span>
+                                            <span id="total-sales" class="fw-bold text-success">QAR 0.00</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="card mb-4">
+                            <div class="card-header bg-danger text-white">
+                                <h5 class="mb-0"><i class="fas fa-shopping-cart me-2"></i>Expenses</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label for="{{ form.daily_purchase.id_for_label }}" class="form-label">
+                                        <i class="fas fa-shopping-cart me-1 text-danger"></i>Daily Purchase
+                                    </label>
+                                    {{ form.daily_purchase|add_class:"form-control revenue-input" }}
+                                    {% if form.daily_purchase.errors %}
+                                        <div class="text-danger small">{{ form.daily_purchase.errors.0 }}</div>
+                                    {% endif %}
+                                    <small class="text-muted">Total expenses/purchases for the day</small>
+                                </div>
+                                
+                                <div class="card bg-light mt-4">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span>Total Sales:</span>
+                                            <span id="summary-sales" class="text-success">QAR 0.00</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span>Total Purchases:</span>
+                                            <span id="summary-purchases" class="text-danger">QAR 0.00</span>
+                                        </div>
+                                        <hr>
+                                        <div class="d-flex justify-content-between">
+                                            <span><strong>Net Revenue:</strong></span>
+                                            <span id="summary-revenue" class="fw-bold">QAR 0.00</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-sticky-note me-2"></i>Additional Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="{{ form.notes.id_for_label }}" class="form-label">Notes</label>
+                            {{ form.notes|add_class:"form-control" }}
+                            {% if form.notes.errors %}
+                                <div class="text-danger small">{{ form.notes.errors.0 }}</div>
+                            {% endif %}
+                            <small class="text-muted">Any additional notes or comments for this day</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-save me-1"></i>
+                                {% if object %}Update{% else %}Create{% endif %} Daily Revenue
+                            </button>
+                            <a href="{% url 'finance:daily_revenue_dashboard' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times me-1"></i>Cancel
+                            </a>
+                            {% if object %}
+                            <a href="{% url 'finance:daily_revenue_detail' object.pk %}" class="btn btn-outline-info">
+                                <i class="fas fa-eye me-1"></i>View Details
+                            </a>
+                            <a href="{% url 'finance:daily_revenue_pdf' object.pk %}" class="btn btn-outline-primary" target="_blank">
+                                <i class="fas fa-file-pdf me-1"></i>Generate PDF
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const revenueInputs = document.querySelectorAll('.revenue-input');
+    const calculatedField = document.getElementById('calculated-revenue');
+    const totalSalesField = document.getElementById('total-sales');
+    const summarySalesField = document.getElementById('summary-sales');
+    const summaryPurchasesField = document.getElementById('summary-purchases');
+    const summaryRevenueField = document.getElementById('summary-revenue');
+    
+    function formatCurrency(amount) {
+        return `QAR ${amount.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+    }
+    
+    function calculateRevenue() {
+        // Get values
+        const cashSales = parseFloat(document.getElementById('{{ form.daily_cash_sales.id_for_label }}').value) || 0;
+        const posSales = parseFloat(document.getElementById('{{ form.daily_pos_sales.id_for_label }}').value) || 0;
+        const serviceRevenue = parseFloat(document.getElementById('{{ form.daily_service_revenue.id_for_label }}').value) || 0;
+        const purchases = parseFloat(document.getElementById('{{ form.daily_purchase.id_for_label }}').value) || 0;
+        
+        // Calculate totals
+        const totalSales = cashSales + posSales + serviceRevenue;
+        const netRevenue = totalSales - purchases;
+        
+        // Update displays
+        totalSalesField.textContent = formatCurrency(totalSales);
+        calculatedField.value = formatCurrency(netRevenue);
+        summarySalesField.textContent = formatCurrency(totalSales);
+        summaryPurchasesField.textContent = formatCurrency(purchases);
+        summaryRevenueField.textContent = formatCurrency(netRevenue);
+        
+        // Color coding for calculated revenue
+        if (netRevenue >= 0) {
+            calculatedField.className = 'form-control bg-light fw-bold text-success';
+            summaryRevenueField.className = 'fw-bold text-success';
+        } else {
+            calculatedField.className = 'form-control bg-light fw-bold text-danger';
+            summaryRevenueField.className = 'fw-bold text-danger';
+        }
+    }
+    
+    // Add event listeners to all revenue inputs
+    revenueInputs.forEach(input => {
+        input.addEventListener('input', calculateRevenue);
+        input.addEventListener('blur', calculateRevenue);
+    });
+    
+    // Initial calculation
+    calculateRevenue();
+    
+    // Form validation
+    document.getElementById('revenue-form').addEventListener('submit', function(e) {
+        const dateField = document.getElementById('{{ form.date.id_for_label }}');
+        if (!dateField.value) {
+            e.preventDefault();
+            alert('Please select a date.');
+            dateField.focus();
+            return;
+        }
+        
+        // Optional: Confirm if all values are zero
+        const cashSales = parseFloat(document.getElementById('{{ form.daily_cash_sales.id_for_label }}').value) || 0;
+        const posSales = parseFloat(document.getElementById('{{ form.daily_pos_sales.id_for_label }}').value) || 0;
+        const serviceRevenue = parseFloat(document.getElementById('{{ form.daily_service_revenue.id_for_label }}').value) || 0;
+        const purchases = parseFloat(document.getElementById('{{ form.daily_purchase.id_for_label }}').value) || 0;
+        
+        if (cashSales === 0 && posSales === 0 && serviceRevenue === 0 && purchases === 0) {
+            if (!confirm('All revenue fields are zero. Are you sure you want to save this entry?')) {
+                e.preventDefault();
+                return;
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

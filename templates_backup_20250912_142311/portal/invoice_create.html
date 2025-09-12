@@ -1,0 +1,416 @@
+{% extends "portal/invoice_base.html" %}
+{% load static %}
+
+{% block title %}Create Invoice - Trendz Portal{% endblock %}
+
+{% block extra_head %}
+<meta name="csrf-token" content="{{ csrf_token }}">
+<style>
+.customer-search-container {
+    position: relative;
+}
+.customer-search-results {
+    position: absolute !important;
+    z-index: 1050 !important;
+    background: white !important;
+    width: 100% !important;
+    max-height: 300px !important;
+    overflow-y: auto !important;
+    border: 1px solid #ddd !important;
+    border-radius: 0 0 4px 4px !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+}
+.customer-search-result-item {
+    padding: 8px !important;
+    border-bottom: 1px solid #eee !important;
+    cursor: pointer !important;
+    background: #f8f9fa !important;
+}
+.customer-search-result-item:hover {
+    background: #e9ecef !important;
+}
+.customer-search-result-item:last-child {
+    border-bottom: none !important;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5 pt-3">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-lg" style="background: rgba(255,255,255,0.95); border: none; border-radius: 15px;">
+                <div class="card-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 15px 15px 0 0;">
+                    <h2 class="mb-0">
+                        <i class="fas fa-file-invoice me-2"></i>
+                        {% if object %}Edit{% else %}Create{% endif %} Invoice
+                    </h2>
+                </div>
+                <div class="card-body p-4">
+
+    {% if form.errors %}
+    <div class="alert alert-danger">
+        <strong>Error!</strong> Please correct the errors below.
+    </div>
+    {% endif %} 
+
+    {% if messages %}
+    <div class="alert alert-info">
+        {% for message in messages %}
+        <p>{{ message }}</p>
+        {% endfor %}
+    </div>
+    {% endif %} 
+    
+    <form method="post" id="invoice-form">
+        {% csrf_token %}
+        
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">Customer Details</div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label for="customer-search">Customer Search</label>
+                            <div class="customer-search-container position-relative">
+                                <div class="input-group">
+                                    <input type="text" 
+                                           class="form-control customer-search-input" 
+                                           id="customer-search"
+                                           placeholder="Type to search customers..."
+                                           value="{% if object %}{{ object.customer.company_name|default:object.customer.full_name }}{% endif %}"
+                                           autocomplete="off">
+                                    <input type="hidden" name="customer" id="customer-id" value="{% if object %}{{ object.customer.id }}{% endif %}">
+                                    <a href="{% url 'portal:customer_create' %}" class="btn btn-success btn-sm" id="add-customer-btn" title="Add New Customer" target="_blank">
+                                        <i class="fas fa-user-plus"></i> Add
+                                    </a>
+                                </div>
+                                <div class="customer-search-results" style="display: none;"></div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="address">Delivery Address</label>
+                            <textarea class="form-control" name="address" id="address" rows="1" required>
+                                {% if object %}{{ object.address }}{% endif %}
+                            </textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="phone">Phone</label>
+                            <input type="text" class="form-control" name="phone" id="phone" value="{% if object %}{{ object.customer.phone }}{% endif %}" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="tax_number">Tax Number</label>
+                            <input type="text" class="form-control" name="tax_number" id="tax_number" value="{% if object %}{{ object.customer.tax_number }}{% endif %}">
+                        </div>
+                    </div>
+                </div>
+            </div>  
+
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">Invoice Details</div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label for="date">Date</label>
+                            <input type="date" class="form-control" name="date" id="date" value="{% if object %}{{ object.date|date:'Y-m-d' }}{% else %}{{ today|date:'Y-m-d' }}{% endif %}" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="due_date">Due Date</label>
+                            <input type="date" class="form-control" name="due_date" id="due_date" value="{% if object %}{{ object.due_date|date:'Y-m-d' }}{% else %}{{ today|date:'Y-m-d' }}{% endif %}" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="invoice_number">Invoice Number</label>
+                            <input type="text" class="form-control" name="invoice_number" 
+                                id="invoice_number" value="Auto-generated" readonly>
+                        </div>  
+                        <div class="form-group">
+                            <label for="status">Status</label>
+                            <select class="form-control" name="status" id="status" required>
+                                <option value="draft" {% if form.status.value == 'draft' %}selected{% endif %}>Draft</option>
+                                <option value="sent" {% if form.status.value == 'sent' %}selected{% endif %}>Sent</option>
+                                <option value="paid" {% if form.status.value == 'paid' %}selected{% endif %}>Paid</option>
+                                <option value="cancelled" {% if form.status.value == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>  
+        <!-- Products Section -->
+        <div class="card mb-4">
+            <div class="card-header">Products</div>
+            <div class="card-body">
+                <table class="table" id="products-table">
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th>Quantity</th>
+                            <th>Unit Price <small class="text-muted">(editable)</small></th>
+                            <th>Total</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="product-rows">
+                        <!-- Product rows will be added here -->
+                    </tbody>
+                </table>
+                
+                <button type="button" class="btn btn-primary" id="add-product" style="background: #007bff; border: 1px solid #007bff; padding: 8px 16px;">
+                    <i class="fas fa-plus"></i> Add Product
+                </button>
+            </div>
+        </div>
+        
+        
+        <!-- Product Row Template -->
+        <template id="product-row-template">
+            <tr class="product-row">
+                <td>
+                    <div class="product-search-container">
+                        <div class="search-controls">
+                            <input type="text" 
+                                   class="form-control product-search-input" 
+                                   placeholder="Search products by name, barcode, or category..."
+                                   style="margin-bottom: 5px;">
+                            <button type="button" 
+                                    class="btn btn-sm btn-primary barcode-scan-btn">
+                                📷 Scan Barcode
+                            </button>
+                        </div>
+                        <div class="search-results" style="display: none;"></div>
+                        <select class="form-control product-select" name="products">
+                            <option value="">Select a product...</option>
+                            {% for product in products %}
+                            <option value="{{ product.id }}" 
+                                    data-selling-price="{{ product.unit_price }}" 
+                                    data-unit-price="{{ product.unit_price }}"
+                                    data-stock="{{ product.stock }}"
+                                    data-barcode="{{ product.barcode }}">
+                                {{ product.name }} - QAR {{ product.unit_price }} (Stock: {{ product.stock }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <div class="selected-product-info" style="display: none;">
+                            <div class="product-details"></div>
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    <input type="number" class="form-control quantity" name="quantity" value="1" min="1" step="1" required>
+                </td>
+                <td>
+                    <input type="number" class="form-control unit-price" name="unit_price" value="0.00" step="0.01" min="0" 
+                           title="Click to edit unit price" placeholder="0.00"
+                           style="border-left: 3px solid #28a745; background-color: #f8fff9;">
+                </td>
+                <td>
+                    <input type="text" class="form-control total" name="total" value="0.00" readonly>
+                </td>
+                <td>
+                    <button type="button" class="btn btn-danger remove-product">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            </tr>
+        </template>
+        <!-- Invoice Summary and Payment Details (Side by Side) -->
+        <div class="row mb-4">
+            <!-- Invoice Summary Column -->
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">Invoice Summary</div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 form-group mb-3">
+                        <label class="form-label">Invoice Number:</label>
+                        <input type="text" class="form-control bg-light" value="{{ invoice_number|default:'Auto-generated' }}" readonly>
+                    </div>
+                    <div class="col-md-6 form-group mb-3">
+                        <label class="form-label">Subtotal:</label>
+                        <input type="text" class="form-control" id="subtotal" value="0.00" readonly>
+                    </div>
+                </div>
+                
+                <div class="form-group mb-3">
+                    <label class="form-label">Tax:</label>
+                    <input type="number" class="form-control" id="tax" value="0.00" step="0.01" min="0">
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6 form-group mb-3">
+                        <label class="form-label">Discount Type:</label>
+                        <select class="form-select" id="discount-type">
+                            <option value="percent">Percentage</option>
+                            <option value="amount">Fixed Amount</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6 form-group mb-3">
+                        <label class="form-label">Discount Value:</label>
+                        <input type="number" class="form-control" id="discount-value" value="0.00" step="0.01" min="0">
+                    </div>
+                </div>
+                
+                <div class="form-group mb-3">
+                    <label class="form-label">Discount Amount:</label>
+                    <input type="text" class="form-control" id="discount-amount" value="0.00" readonly>
+                </div>
+                
+                <div class="form-group mb-3">
+                    <label class="form-label">Grand Total:</label>
+                    <input type="text" class="form-control" id="grand-total" value="0.00" readonly>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Payment Details Column -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">Payment Details</div>
+            <div class="card-body">
+                <div class="form-group mb-3">
+                    <label class="form-label">Payment Mode</label>
+                    <select class="form-select" name="payment_mode" required id="payment-mode-select">
+                        <option value="">Select Payment Method</option>
+                        {% for value, name in form.fields.payment_mode.choices %}
+                            <option value="{{ value }}" {% if form.payment_mode.value == value %}selected{% endif %}>
+                                {{ name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div id="split-details" class="{% if form.data.payment_mode != 'split' %}d-none{% endif %}">
+                    <div class="row">
+                        <div class="col-md-6 form-group mb-3">
+                            <label class="form-label">Cash Amount</label>
+                            {{ form.cash_amount }}
+                        </div>
+                        <div class="col-md-6 form-group mb-3">
+                            <label class="form-label">POS Amount</label>
+                            {{ form.pos_amount }}
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 form-group mb-3">
+                            <label class="form-label">Other Amount</label>
+                            {{ form.other_amount }}
+                        </div>
+                        <div class="col-md-6 form-group mb-3">
+                            <label class="form-label">Other Method</label>
+                            {{ form.other_method }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Form Messages -->
+        <div id="form-messages" class="alert d-none mt-3"></div>
+        
+        <!-- Form Actions -->
+        <div class="row mt-3">
+            <div class="col-md-12">
+                <button type="submit" class="btn btn-success">Save Invoice</button>
+                <a href="{% url 'portal:invoice_list' %}" class="btn btn-secondary">Cancel</a>
+            </div>
+        </div>
+    </form>
+</div>
+
+{% endblock %}
+{% block extra_js %}
+<script src="{% static 'portal/js/invoice_create_unified.js' %}?v={{ 'now'|date:'YmdHis' }}"></script>
+<script>
+// Additional customer search initialization
+$(document).ready(function() {
+    console.log('🔍 Customer search initialization starting...');
+    
+    // Test if elements exist
+    const $customerInput = $('.customer-search-input');
+    const $customerContainer = $('.customer-search-container');
+    const $customerResults = $('.customer-search-results');
+    
+    console.log('Customer search elements found:', {
+        input: $customerInput.length,
+        container: $customerContainer.length,
+        results: $customerResults.length
+    });
+    
+    // Direct binding for customer search
+    $('.customer-search-input').on('input', function() {
+        const query = $(this).val().trim();
+        console.log('🔍 Direct customer search triggered:', query);
+        
+        if (query.length < 2) {
+            $('.customer-search-results').hide();
+            return;
+        }
+        
+        $.ajax({
+            url: '/ajax/customer-search/',
+            method: 'GET',
+            data: { q: query },
+            success: function(response) {
+                console.log('✅ Customer search success:', response);
+                displayResults(response.customers);
+            },
+            error: function(xhr) {
+                console.error('❌ Customer search error:', xhr);
+                alert('Customer search failed. Please try again.');
+            }
+        });
+    });
+    
+    // Direct click handler for customer selection
+    $(document).on('click', '.customer-search-result-item', function() {
+        const customerData = $(this).data('customer');
+        console.log('✅ Customer selected:', customerData);
+        
+        if (customerData) {
+            $('#customer-id').val(customerData.id);
+            $('.customer-search-input').val(customerData.display_text);
+            $('#phone').val(customerData.phone || '');
+            $('#tax_number').val(customerData.tax_number || '');
+            $('.customer-search-results').hide();
+        }
+    });
+    
+    function displayResults(customers) {
+        const $results = $('.customer-search-results');
+        $results.empty();
+        
+        if (!customers || customers.length === 0) {
+            $results.html('<div class="p-2 text-muted">No customers found</div>').show();
+            return;
+        }
+        
+        customers.forEach(function(customer) {
+            const $item = $('<div class="customer-search-result-item p-2 border-bottom cursor-pointer">')
+                .html('<strong>' + customer.display_text + '</strong><br><small class="text-muted">' + (customer.phone || 'No phone') + '</small>')
+                .data('customer', customer)
+                .css({
+                    'cursor': 'pointer',
+                    'background': '#f8f9fa'
+                })
+                .hover(function() {
+                    $(this).css('background', '#e9ecef');
+                }, function() {
+                    $(this).css('background', '#f8f9fa');
+                });
+            $results.append($item);
+        });
+        
+        $results.show();
+    }
+    
+    // Hide results when clicking outside
+    $(document).on('click', function(e) {
+        if (!$(e.target).closest('.customer-search-container').length) {
+            $('.customer-search-results').hide();
+        }
+    });
+});
+</script>
+{% endblock %}

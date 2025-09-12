@@ -1,0 +1,52 @@
+{% extends "admin/base.html" %}
+{% load static %}
+
+{% block title %}{{ title }} | TRENDZ Trading Administration{% endblock %}
+
+{% block branding %}
+<h1 id="site-name">
+    <a href="{% url 'admin:index' %}">
+        <span style="color: #336699;">TRENDZ</span> Trading Admin
+    </a>
+</h1>
+{% endblock %}
+
+{% block nav-global %}
+    <div style="background: #336699; padding: 5px 20px; color: white; font-size: 12px;">
+        Current Site: TRENDZ Trading & Services (Single Site Mode)
+        {% if user.is_authenticated %}
+            | Welcome, {{ user.username }}
+        {% endif %}
+    </div>
+{% endblock %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+    #header {
+        background: linear-gradient(135deg, #336699, #50b3a2);
+    }
+    
+    #site-name a {
+        color: white;
+        text-decoration: none;
+    }
+    
+    .breadcrumbs {
+        background: #f0f8ff;
+    }
+    
+    .module h2, .module caption, .inline-group h2 {
+        background: #336699;
+    }
+    
+    .button, input[type=submit], input[type=button], .submit-row input, a.button {
+        background: #336699;
+        border-color: #336699;
+    }
+    
+    .button:hover, input[type=submit]:hover, input[type=button]:hover, .submit-row input:hover, a.button:hover {
+        background: {% if request.current_site.id == 1 %}#50b3a2{% else %}#A0522D{% endif %};
+    }
+</style>
+{% endblock %}

@@ -1,34 +1,30 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Welcome to Trendz Portal</title>
-    {% load static %}
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Welcome to Trendz Portal{% endblock %}
+
+{% block extra_css %}
+<style>
+    .landing-hero {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: #fff;
+        padding: 120px 0;
+        text-align: center;
+        min-height: 100vh;
+    }
     
-    <style>
-        .landing-hero {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: #fff;
-            padding: 120px 0;
-            text-align: center;
-            min-height: 100vh;
-        }
-        
-        .feature-card {
-            background: rgba(255,255,255,0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            padding: 30px;
-            height: 100%;
-            transition: transform 0.3s ease;
-            border: 1px solid rgba(255,255,255,0.2);
-        }
-        
-        .feature-card:hover {
-            transform: translateY(-10px);
+    .feature-card {
+        background: rgba(255,255,255,0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 30px;
+        height: 100%;
+        transition: transform 0.3s ease;
+        border: 1px solid rgba(255,255,255,0.2);
+    }
+    
+    .feature-card:hover {
+        transform: translateY(-10px);
             background: rgba(255,255,255,0.15);
         }
         
@@ -57,23 +53,19 @@
             text-shadow: 0 1px 2px rgba(0,0,0,0.25);
         }
         
-        @media (max-width: 768px) {
-            .landing-hero {
-                padding: 80px 0;
-            }
+    @media (max-width: 768px) {
+        .landing-hero {
+            padding: 80px 0;
         }
-    </style>
-</head>
-<body>
-    <!-- Include the production navigation -->
-    {% include 'includes/_navigation.html' %}
+    }
+</style>
+{% endblock %}
 
+{% block content %}
 <!-- Hero Section -->
 <section class="landing-hero">
     <div class="container">
-        <h1 class="display-3 mb-4">Welcome to Trendz Portal</h1>
-        
-        {% if user.is_authenticated %}
+        <h1 class="display-3 mb-4">Welcome to Trendz Portal</h1>        {% if user.is_authenticated %}
             <!-- Content for logged-in users -->
             <p class="lead mb-4">Welcome back, {{ user.username }}!</p>
             <div class="d-flex gap-3 justify-content-center flex-wrap">
@@ -231,7 +223,8 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>
+{% endblock %}
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+{% block extra_js %}
+<!-- Additional page-specific JavaScript can go here -->
+{% endblock %}

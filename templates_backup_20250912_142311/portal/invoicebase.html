@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Trendz Sales{% endblock %}</title>
+    <!-- For better number formatting  -->
+</head>
+
+
+<body>
+    <nav class="navbar">
+        <div class="navbar-container">
+            <a href="{% url 'portal:invoice_list' %}" class="logo">Invoice list</a>
+            <ul class="nav-links">
+                <li><a href="{% url 'portal:invoice_create' %}">Invoice</a></li>
+				
+				<li><a href="{% url 'portal:invoice_create' %}">Invoices</a></li>
+				
+            </ul>
+        </div>
+    </nav>
+
+    <div class="main-container">
+        {% if messages %}
+        <div class="messages">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% block content %}
+        <!-- Main content will be inserted here -->
+        {% endblock %}
+    
+    
+    </div>
+
+    <footer class="bg-dark text-white py-4">
+    
+    </footer>
+
+    <script>
+        // Navbar scroll effect
+        window.addEventListener('scroll', function() {
+            const navbar = document.querySelector('.navbar');
+            if (window.scrollY > 50) {
+                navbar.classList.add('scrolled');
+            } else {
+                navbar.classList.remove('scrolled');
+            }
+        });
+
+        // Mobile menu toggle would go here
+    </script>
+</body>
+
+</html>

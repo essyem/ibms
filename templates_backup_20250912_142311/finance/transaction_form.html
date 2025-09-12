@@ -1,0 +1,208 @@
+{% extends "portal/base.html" %}
+{% load widget_tweaks %}
+
+{% block title %}{% if object %}Edit{% else %}Add{% endif %} Transaction - Finance{% endblock %}
+
+{% block base_content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>
+                    <i class="fas fa-{% if object %}edit{% else %}plus{% endif %} me-2"></i>
+                    {% if object %}Edit{% else %}Add New{% endif %} Transaction
+                </h2>
+                <a href="{% url 'finance:transaction_list' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-1"></i>Back to List
+                </a>
+            </div>
+            
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Transaction Details</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label for="{{ form.type.id_for_label }}" class="form-label">{{ form.type.label }}</label>
+                                    {{ form.type|add_class:"form-select" }}
+                                    {% if form.type.errors %}
+                                        <div class="text-danger small">{{ form.type.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="{{ form.category.id_for_label }}" class="form-label">{{ form.category.label }}</label>
+                                    {{ form.category|add_class:"form-select" }}
+                                    {% if form.category.errors %}
+                                        <div class="text-danger small">{{ form.category.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="{{ form.amount.id_for_label }}" class="form-label">{{ form.amount.label }}</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">QAR</span>
+                                        {{ form.amount|add_class:"form-control" }}
+                                    </div>
+                                    {% if form.amount.errors %}
+                                        <div class="text-danger small">{{ form.amount.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="{{ form.date.id_for_label }}" class="form-label">{{ form.date.label }}</label>
+                                    {{ form.date|add_class:"form-control" }}
+                                    {% if form.date.errors %}
+                                        <div class="text-danger small">{{ form.date.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="fas fa-cog me-2"></i>Additional Information</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label for="{{ form.payment_method.id_for_label }}" class="form-label">{{ form.payment_method.label }}</label>
+                                    {{ form.payment_method|add_class:"form-select" }}
+                                    {% if form.payment_method.errors %}
+                                        <div class="text-danger small">{{ form.payment_method.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="{{ form.reference.id_for_label }}" class="form-label">{{ form.reference.label }}</label>
+                                    {{ form.reference|add_class:"form-control" }}
+                                    {% if form.reference.errors %}
+                                        <div class="text-danger small">{{ form.reference.errors.0 }}</div>
+                                    {% endif %}
+                                    <div class="form-text">Leave blank to auto-generate</div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="{{ form.description.id_for_label }}" class="form-label">{{ form.description.label }}</label>
+                                    {{ form.description|add_class:"form-control" }}
+                                    {% if form.description.errors %}
+                                        <div class="text-danger small">{{ form.description.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                {% if form.document %}
+                                <div class="mb-3">
+                                    <label for="{{ form.document.id_for_label }}" class="form-label">{{ form.document.label }}</label>
+                                    {{ form.document|add_class:"form-control" }}
+                                    {% if form.document.errors %}
+                                        <div class="text-danger small">{{ form.document.errors.0 }}</div>
+                                    {% endif %}
+                                    {% if object.document %}
+                                        <div class="mt-2">
+                                            <a href="{{ object.document.url }}" target="_blank" class="btn btn-sm btn-outline-info">
+                                                <i class="fas fa-file me-1"></i>View current document
+                                            </a>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="d-flex gap-2">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save me-1"></i>
+                                        {% if object %}Update{% else %}Create{% endif %} Transaction
+                                    </button>
+                                    <a href="{% url 'finance:transaction_list' %}" class="btn btn-outline-secondary">
+                                        <i class="fas fa-times me-1"></i>Cancel
+                                    </a>
+                                    {% if object %}
+                                    <a href="{% url 'finance:transaction_detail' object.pk %}" class="btn btn-outline-info">
+                                        <i class="fas fa-eye me-1"></i>View Details
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// JavaScript to filter categories based on transaction type
+function filterCategories(transactionType) {
+    const categorySelect = document.querySelector('#id_category');
+    const url = `{% url 'finance:category_api' %}?type=${transactionType}`;
+    
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            // Save current selection
+            const currentValue = categorySelect.value;
+            
+            // Clear options
+            categorySelect.innerHTML = '<option value="">---------</option>';
+            
+            // Add new options
+            data.forEach(category => {
+                const option = document.createElement('option');
+                option.value = category.id;
+                option.textContent = category.name;
+                categorySelect.appendChild(option);
+            });
+            
+            // Restore selection if still valid
+            if (currentValue) {
+                categorySelect.value = currentValue;
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching categories:', error);
+        });
+}
+
+// Initialize categories and add event listener
+document.addEventListener('DOMContentLoaded', function() {
+    const typeSelect = document.querySelector('#id_type');
+    
+    // Load categories for initial type selection
+    if (typeSelect.value) {
+        filterCategories(typeSelect.value);
+    }
+    
+    // Add change event listener
+    typeSelect.addEventListener('change', function() {
+        if (this.value) {
+            filterCategories(this.value);
+        } else {
+            document.querySelector('#id_category').innerHTML = '<option value="">---------</option>';
+        }
+    });
+    
+    // Set today's date as default if creating new transaction
+    {% if not object %}
+    const dateField = document.querySelector('#id_date');
+    if (dateField && !dateField.value) {
+        const today = new Date().toISOString().split('T')[0];
+        dateField.value = today;
+    }
+    {% endif %}
+});
+</script>
+{% endblock %}

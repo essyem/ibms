@@ -1,0 +1,249 @@
+{% extends "portal/invoice_base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card shadow-lg">
+        <div class="card-header bg-gradient-primary text-white">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2><i class="fas fa-file-invoice me-2"></i>Invoices</h2>
+                <a href="{% url 'portal:invoice_create' %}" class="btn btn-light">
+                    <i class="fas fa-plus me-1"></i> New Invoice
+                </a>
+            </div>
+        </div>
+        
+        <div class="card-body">
+            <!-- Filters -->
+            <form method="get" class="mb-4">
+                <div class="row g-3">
+                    <!-- Status Filter -->
+                    <div class="col-md-3">
+                        <label class="form-label">Status</label>
+                        <select name="status" class="form-select">
+                            <option value="">All Statuses</option>
+                            {% for value, name in Invoice.INVOICE_STATUS %}
+                            <option value="{{ value }}" {% if current_status == value %}selected{% endif %}>
+                                {{ name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <!-- Payment Mode Filter -->
+                    <div class="col-md-3">
+                        <label class="form-label">Payment Mode</label>
+                        <select name="payment_mode" class="form-select">
+                            <option value="">All Modes</option>
+                            {% for value, name in Invoice.PAYMENT_MODES %}
+                            <option value="{{ value }}" {% if current_payment_mode == value %}selected{% endif %}>
+                                {{ name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <!-- Date Filters -->
+                    <div class="col-md-3">
+                        <label class="form-label">From Date</label>
+                        <input type="date" name="date_from" class="form-control" 
+                               value="{{ current_date_from }}">
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <label class="form-label">To Date</label>
+                        <input type="date" name="date_to" class="form-control" 
+                               value="{{ current_date_to }}">
+                    </div>
+                    
+                    <!-- Filter Buttons -->
+                    <div class="col-md-12 mt-3">
+                        <button type="submit" class="btn btn-primary me-2">
+                            <i class="fas fa-filter me-1"></i> Apply Filters
+                        </button>
+                        <a href="{% url 'portal:invoice_list' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-sync-alt me-1"></i> Reset
+                        </a>
+                    </div>
+                </div>
+            </form>
+            
+            <!-- Summary Cards -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card bg-primary text-white">
+                        <div class="card-body text-center py-3">
+                            <h3 class="mb-1">{{ total_invoices }}</h3>
+                            <small class="opacity-75">TOTAL INVOICES</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-success text-white">
+                        <div class="card-body text-center py-3">
+                            <h3 class="mb-1">{{ paid_invoices }}</h3>
+                            <small class="opacity-75">PAID (QAR {{ paid_amount|floatformat:2 }})</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-warning text-white">
+                        <div class="card-body text-center py-3">
+                            <h3 class="mb-1">{{ pending_invoices }}</h3>
+                            <small class="opacity-75">PENDING (QAR {{ pending_amount|floatformat:2 }})</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-info text-white">
+                        <div class="card-body text-center">
+                            <h4>QAR {{ total_amount|floatformat:2 }}</h4>
+                            <small>Total Amount</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Invoice Table -->
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Invoice #</th>
+                            <th>Customer</th>
+                            <th>Date</th>
+                            <th>Status</th>
+                            <th class="text-end">Amount</th>
+                            <th>Payment</th>
+                            <th class="text-center">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for invoice in page_obj %}
+                        <tr>
+                            <td>{{ invoice.invoice_number }}</td>
+                            <td>{{ invoice.customer.company_name|default:invoice.customer.full_name|truncatechars:20 }}</td>
+                            <td>{{ invoice.date|date:"d M Y" }}</td>
+                            <td>
+                                {% if invoice.status == 'paid' %}
+                                    <span class="badge bg-success">Paid</span>
+                                {% elif invoice.status == 'sent' %}
+                                    <span class="badge bg-primary">Sent</span>
+                                {% elif invoice.status == 'cancelled' %}
+                                    <span class="badge bg-danger">Cancelled</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Draft</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end">QAR {{ invoice.grand_total|floatformat:2 }}</td>
+                            <td>
+                                {% if invoice.payment_mode == 'cash' %}
+                                    <span class="badge bg-success">Cash</span>
+                                {% elif invoice.payment_mode == 'pos' %}
+                                    <span class="badge bg-info">POS</span>
+                                {% elif invoice.payment_mode == 'split' %}
+                                    <span class="badge bg-warning text-dark">Split</span>
+                                {% elif invoice.payment_mode == 'credit' %}
+                                    <span class="badge bg-primary">Credit</span>
+                                {% else %}
+                                    <span class="badge bg-light text-dark">-</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <a href="{% url 'portal:invoice_detail' invoice.pk %}" class="btn btn-outline-primary" title="View">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{% url 'portal:invoice_pdf' invoice.pk %}" class="btn btn-outline-success" title="PDF">
+                                        <i class="fas fa-file-pdf"></i>
+                                    </a>
+                                    {% if invoice.status == 'draft' %}
+                                    <a href="{% url 'portal:invoice_update' invoice.pk %}" class="btn btn-outline-warning" title="Edit">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center py-4">
+                                <i class="fas fa-file-invoice fa-3x text-muted mb-3"></i>
+                                <h4>No invoices found</h4>
+                                <p class="text-muted">
+                                    {% if request.GET %}
+                                        No invoices match your filters
+                                    {% else %}
+                                        No invoices created in the last 7 days
+                                    {% endif %}
+                                </p>
+                                <a href="{% url 'portal:invoice_create' %}" class="btn btn-primary">
+                                    <i class="fas fa-plus me-1"></i> Create Invoice
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            {% if page_obj.paginator.num_pages > 1 %}
+            <nav aria-label="Invoice pagination">
+                <ul class="pagination justify-content-center mt-4">
+                    {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1{% if current_status %}&status={{ current_status }}{% endif %}{% if current_payment_mode %}&payment_mode={{ current_payment_mode }}{% endif %}{% if current_date_from %}&date_from={{ current_date_from }}{% endif %}{% if current_date_to %}&date_to={{ current_date_to }}{% endif %}">
+                            <i class="fas fa-angle-double-left"></i>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if current_status %}&status={{ current_status }}{% endif %}{% if current_payment_mode %}&payment_mode={{ current_payment_mode }}{% endif %}{% if current_date_from %}&date_from={{ current_date_from }}{% endif %}{% if current_date_to %}&date_to={{ current_date_to }}{% endif %}">
+                            <i class="fas fa-angle-left"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                    
+                    <li class="page-item disabled">
+                        <span class="page-link">
+                            Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                        </span>
+                    </li>
+                    
+                    {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if current_status %}&status={{ current_status }}{% endif %}{% if current_payment_mode %}&payment_mode={{ current_payment_mode }}{% endif %}{% if current_date_from %}&date_from={{ current_date_from }}{% endif %}{% if current_date_to %}&date_to={{ current_date_to }}{% endif %}">
+                            <i class="fas fa-angle-right"></i>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if current_status %}&status={{ current_status }}{% endif %}{% if current_payment_mode %}&payment_mode={{ current_payment_mode }}{% endif %}{% if current_date_from %}&date_from={{ current_date_from }}{% endif %}{% if current_date_to %}&date_to={{ current_date_to }}{% endif %}">
+                            <i class="fas fa-angle-double-right"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Auto-submit filters when changed
+    $('select[name="status"], select[name="payment_mode"]').change(function() {
+        $(this).closest('form').submit();
+    });
+    
+    // Loading indicator
+    $('form').submit(function() {
+        $(this).find('button[type="submit"]').html('<i class="fas fa-spinner fa-spin me-1"></i> Filtering');
+    });
+    
+    // Tooltips
+    $('[title]').tooltip();
+});
+</script>
+{% endblock %}

@@ -1,8 +1,8 @@
 {% extends 'portal/procurement_base.html' %}
 
-{% block title %}Payment Details - {{ object.purchase_order.reference }} - Procurement{% endblock %}
+{% block title %}Payment Details - {{ object.purchase_order.reference }} - Procurement{% endblock procurement_content %}
 
-{% block content %}
+{% block procurement_content %}
 <div class="container mt-4">
     <div class="row justify-content-center">
         <div class="col-lg-8">
@@ -146,4 +146,4 @@
         </div>
     </div>
 </div>
-{% endblock %}
+{% endblock procurement_content %}

@@ -1,0 +1,90 @@
+{% extends "portal/base.html" %}
+{% load static %}
+
+{% if messages %}
+<div class="trendz-alert trendz-alert-success">
+    {% for message in messages %}
+    <i class="fas fa-check-circle"></i> {{ message }}
+    {% endfor %}
+</div>
+{% endif %}
+{% block content %}
+<section class="trendz-enquiry-section">
+  <div class="trendz-container">
+    <div class="trendz-enquiry-header">
+       <h1><i class="fas fa-question-circle"></i> Product Enquiry</h1>
+      <p>Complete this form and our team will contact you within 24 hours</p>
+    </div>
+    <div class="trendz-enquiry-card">
+      <form method="post" class="trendz-form">
+        {% csrf_token %}
+    
+    <!-- Success/Error messages -->
+    {% if messages %}
+    <div class="trendz-alert trendz-alert-success">
+        {% for message in messages %}
+        <i class="fas fa-check-circle"></i> {{ message }}
+        {% endfor %}
+    </div>
+    {% endif %}
+    
+    {{ form.non_field_errors }}
+
+    <div class="trendz-form-grid">
+      <!-- Left Column - Personal Details -->
+      <div class="trendz-form-group">
+        <h3><i class="fas fa-user"></i> Your Details</h3>
+        
+        {% for field in form %}
+          {% if field.name in 'name,company,email,phone' %}
+          <div class="trendz-input-group">
+            <label for="{{ field.id_for_label }}">
+              {{ field.label }}
+              {% if field.field.required %}<span class="required">*</span>{% endif %}
+            </label>
+            {{ field }}
+            {{ field.errors }}
+          </div>
+          {% endif %}
+        {% endfor %}
+      </div>
+      
+      <!-- Right Column - Enquiry Details -->
+      <div class="trendz-form-group">
+        <h3><i class="fas fa-cube"></i> Enquiry Details</h3>
+        
+        {% for field in form %}
+          {% if field.name in 'product_interest,subject,message' %}
+          <div class="trendz-input-group">
+            <label for="{{ field.id_for_label }}">
+              {{ field.label }}
+              {% if field.field.required %}<span class="required">*</span>{% endif %}
+            </label>
+            {{ field }}
+            {{ field.errors }}
+          </div>
+          {% endif %}
+        {% endfor %}
+        
+        <div class="trendz-input-group">
+          <label class="trendz-checkbox">
+            {{ form.terms_agreed }}
+            I agree to Trendz's <a href="terms.html" target="_blank">Terms & Conditions</a>
+          </label>
+          {{ form.terms_agreed.errors }}
+        </div>
+      </div>
+    </div>
+
+    <div class="trendz-form-actions">
+      <button type="submit" class="trendz-btn trendz-btn-primary">
+        <i class="fas fa-paper-plane"></i> Submit Enquiry
+      </button>
+      <button type="reset" class="trendz-btn trendz-btn-secondary">
+        <i class="fas fa-undo"></i> Clear Form
+      </button>
+    </div>
+  </form>
+</div>
+</section>
+{% endblock %}

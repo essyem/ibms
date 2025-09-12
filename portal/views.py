@@ -4,7 +4,7 @@ from django.views.generic import (CreateView, UpdateView,
 ListView, DetailView, View)
 from portal.models import Invoice, InvoiceItem, Product, Customer
 from procurement.models import Supplier, PurchaseOrder
-from django.db.models import Sum, Q, Avg, Count, F, Case, When, DecimalField
+from django.db.models import Sum, Q, Avg, Count, F, Case, When, DecimalField, Min
 from django.db.models.functions import Cast
 from django.contrib.auth.decorators import login_required
 from django.db.models.functions import TruncDate, TruncMonth
@@ -15,6 +15,7 @@ from django.contrib import messages
 import decimal
 from decimal import Decimal
 from django.http import JsonResponse, HttpResponse, Http404, HttpResponseRedirect
+from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 from django.views.decorators.http import require_http_methods
 from .decorators import superuser_required, dashboard_access_required, reports_access_required
@@ -2407,3 +2408,238 @@ class CustomerUpdateView(UpdateView):
     def form_valid(self, form):
         messages.success(self.request, f'Customer "{form.instance.full_name}" updated successfully!')
         return super().form_valid(form)
+
+
+# =============================================================================
+# PRODUCT MANAGEMENT VIEWS
+# =============================================================================
+
+class ProductListView(ListView):
+    """Frontend product list view with filtering and search"""
+    model = Product
+    template_name = 'portal/products/product_list.html'
+    context_object_name = 'products'
+    paginate_by = 20
+    
+    def get_queryset(self):
+        queryset = Product.objects.select_related('category').order_by('-id')
+        
+        # Search functionality
+        search_query = self.request.GET.get('q', '')
+        if search_query:
+            queryset = queryset.filter(
+                Q(name__icontains=search_query) |
+                Q(sku__icontains=search_query) |
+                Q(barcode__icontains=search_query) |
+                Q(description__icontains=search_query)
+            )
+        
+        # Category filter
+        category_id = self.request.GET.get('category', '')
+        if category_id:
+            queryset = queryset.filter(category_id=category_id)
+        
+        # Stock status filter
+        stock_status = self.request.GET.get('stock_status', '')
+        if stock_status == 'in_stock':
+            queryset = queryset.filter(stock__gt=10)
+        elif stock_status == 'low_stock':
+            queryset = queryset.filter(stock__lte=10, stock__gt=0)
+        elif stock_status == 'out_of_stock':
+            queryset = queryset.filter(stock=0)
+        
+        # Active status filter
+        is_active = self.request.GET.get('is_active', '')
+        if is_active:
+            queryset = queryset.filter(is_active=is_active == 'true')
+        
+        return queryset
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        from portal.models import Category
+        
+        context.update({
+            'categories': Category.objects.all(),
+            'current_category': self.request.GET.get('category', ''),
+            'current_search': self.request.GET.get('q', ''),
+            'current_stock_status': self.request.GET.get('stock_status', ''),
+            'current_is_active': self.request.GET.get('is_active', ''),
+            'total_products': Product.objects.count(),
+            'active_products': Product.objects.filter(is_active=True).count(),
+            'low_stock_products': Product.objects.filter(stock__lte=10, stock__gt=0).count(),
+            'out_of_stock_products': Product.objects.filter(stock=0).count(),
+        })
+        return context
+
+
+class ProductDetailView(DetailView):
+    """Frontend product detail view"""
+    model = Product
+    template_name = 'portal/products/product_detail.html'
+    context_object_name = 'product'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        product = self.get_object()
+        
+        # Get related products from same category
+        related_products = Product.objects.filter(
+            category=product.category,
+            is_active=True
+        ).exclude(id=product.id)[:6]
+        
+        context.update({
+            'related_products': related_products,
+            'profit_margin': product.profit_margin(),
+            'profit_amount': product.profit_amount(),
+        })
+        return context
+
+
+class ProductCreateView(CreateView):
+    """Frontend product creation view"""
+    model = Product
+    template_name = 'portal/products/product_form.html'
+    fields = [
+        'category', 'name', 'sku', 'description', 'cost_price', 
+        'unit_price', 'stock', 'image', 'warranty_period', 
+        'barcode', 'is_active'
+    ]
+    
+    def get_success_url(self):
+        return reverse('portal:product_detail', kwargs={'pk': self.object.pk})
+    
+    def form_valid(self, form):
+        messages.success(self.request, f'Product "{form.instance.name}" created successfully!')
+        return super().form_valid(form)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        from portal.models import Category
+        context['categories'] = Category.objects.all()
+        context['form_action'] = 'Create'
+        return context
+
+
+class ProductUpdateView(UpdateView):
+    """Frontend product update view"""
+    model = Product
+    template_name = 'portal/products/product_form.html'
+    fields = [
+        'category', 'name', 'sku', 'description', 'cost_price', 
+        'unit_price', 'stock', 'image', 'warranty_period', 
+        'barcode', 'is_active'
+    ]
+    
+    def get_success_url(self):
+        return reverse('portal:product_detail', kwargs={'pk': self.object.pk})
+    
+    def form_valid(self, form):
+        messages.success(self.request, f'Product "{form.instance.name}" updated successfully!')
+        return super().form_valid(form)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        from portal.models import Category
+        context['categories'] = Category.objects.all()
+        context['form_action'] = 'Update'
+        return context
+
+
+@require_http_methods(["POST"])
+def product_delete(request, pk):
+    """Delete product via AJAX"""
+    try:
+        product = get_object_or_404(Product, pk=pk)
+        product_name = product.name
+        product.delete()
+        
+        if request.headers.get('Content-Type') == 'application/json':
+            return JsonResponse({
+                'success': True,
+                'message': f'Product "{product_name}" deleted successfully!'
+            })
+        else:
+            messages.success(request, f'Product "{product_name}" deleted successfully!')
+            return redirect('portal:product_list')
+            
+    except Exception as e:
+        if request.headers.get('Content-Type') == 'application/json':
+            return JsonResponse({
+                'success': False,
+                'message': f'Error deleting product: {str(e)}'
+            })
+        else:
+            messages.error(request, f'Error deleting product: {str(e)}')
+            return redirect('portal:product_list')
+
+
+@require_http_methods(["POST"])
+def product_toggle_active(request, pk):
+    """Toggle product active status via AJAX"""
+    try:
+        product = get_object_or_404(Product, pk=pk)
+        product.is_active = not product.is_active
+        product.save()
+        
+        return JsonResponse({
+            'success': True,
+            'is_active': product.is_active,
+            'message': f'Product "{product.name}" {"activated" if product.is_active else "deactivated"} successfully!'
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'Error updating product: {str(e)}'
+        })
+
+
+def product_dashboard(request):
+    """Product management dashboard"""
+    from django.db.models import Sum, Avg, Count
+    from portal.models import Category
+    
+    # Get statistics
+    total_products = Product.objects.count()
+    active_products = Product.objects.filter(is_active=True).count()
+    low_stock_products = Product.objects.filter(stock__lte=10, stock__gt=0).count()
+    out_of_stock_products = Product.objects.filter(stock=0).count()
+    total_stock_value = Product.objects.aggregate(
+        total_value=Sum(F('cost_price') * F('stock'))
+    )['total_value'] or 0
+    
+    # Recent products
+    recent_products = Product.objects.order_by('-id')[:5]
+    
+    # Low stock products
+    low_stock_list = Product.objects.filter(stock__lte=10).order_by('stock')[:10]
+    
+    # Category breakdown
+    category_stats = Category.objects.annotate(
+        product_count=Count('product'),
+        total_stock=Sum('product__stock')
+    ).order_by('-product_count')[:5]
+    
+    # Price analysis
+    price_stats = Product.objects.aggregate(
+        avg_cost=Avg('cost_price'),
+        avg_unit=Avg('unit_price'),
+        min_price=Min('unit_price'),
+        max_price=Max('unit_price')
+    )
+    
+    context = {
+        'total_products': total_products,
+        'active_products': active_products,
+        'low_stock_products': low_stock_products,
+        'out_of_stock_products': out_of_stock_products,
+        'total_stock_value': total_stock_value,
+        'recent_products': recent_products,
+        'low_stock_list': low_stock_list,
+        'category_stats': category_stats,
+        'price_stats': price_stats,
+    }
+    
+    return render(request, 'portal/products/product_dashboard.html', context)

@@ -1,0 +1,287 @@
+{% extends "portal/base.html" %}
+{% load humanize %}
+
+{% block title %}Daily Revenue Dashboard - Finance{% endblock %}
+
+{% block base_content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2><i class="fas fa-chart-line me-2"></i>Daily Revenue Dashboard</h2>
+                <div>
+                    <a href="{% url 'finance:daily_revenue_create' %}" class="btn btn-primary">
+                        <i class="fas fa-plus me-1"></i>New Entry
+                    </a>
+                    <a href="{% url 'finance:daily_revenue_list' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-list me-1"></i>View All
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Quick Stats -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card bg-primary text-white">
+                        <div class="card-body text-center">
+                            <h5 class="card-title"><i class="fas fa-calendar-day me-1"></i>This Week</h5>
+                            <h3>QAR {{ this_week_revenue|intcomma }}</h3>
+                            {% if week_change > 0 %}
+                                <small><i class="fas fa-arrow-up me-1"></i>+QAR {{ week_change|intcomma }} vs last week</small>
+                            {% elif week_change < 0 %}
+                                <small><i class="fas fa-arrow-down me-1"></i>QAR {{ week_change|intcomma }} vs last week</small>
+                            {% else %}
+                                <small>No change vs last week</small>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-success text-white">
+                        <div class="card-body text-center">
+                            <h5 class="card-title"><i class="fas fa-calendar-alt me-1"></i>This Month</h5>
+                            <h3>QAR {{ monthly_totals.total_revenue|intcomma }}</h3>
+                            <small>Net Revenue</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-info text-white">
+                        <div class="card-body text-center">
+                            <h5 class="card-title"><i class="fas fa-money-bill-wave me-1"></i>Total Sales</h5>
+                            <h3>QAR {{ monthly_totals.total_cash|add:monthly_totals.total_pos|add:monthly_totals.total_service|intcomma }}</h3>
+                            <small>Cash + POS + Service</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-warning text-white">
+                        <div class="card-body text-center">
+                            <h5 class="card-title"><i class="fas fa-database me-1"></i>Total Entries</h5>
+                            <h3>{{ total_entries }}</h3>
+                            <small>Revenue records</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Monthly Breakdown -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i>This Month Breakdown</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-6">
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span><i class="fas fa-money-bill me-1 text-success"></i>Cash Sales:</span>
+                                        <strong>QAR {{ monthly_totals.total_cash|intcomma }}</strong>
+                                    </div>
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span><i class="fas fa-credit-card me-1 text-primary"></i>POS Sales:</span>
+                                        <strong>QAR {{ monthly_totals.total_pos|intcomma }}</strong>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span><i class="fas fa-tools me-1 text-info"></i>Service Revenue:</span>
+                                        <strong>QAR {{ monthly_totals.total_service|intcomma }}</strong>
+                                    </div>
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span><i class="fas fa-shopping-cart me-1 text-danger"></i>Purchases:</span>
+                                        <strong>QAR {{ monthly_totals.total_purchase|intcomma }}</strong>
+                                    </div>
+                                </div>
+                            </div>
+                            <hr>
+                            <div class="d-flex justify-content-between">
+                                <span><strong><i class="fas fa-chart-line me-1"></i>Net Revenue:</strong></span>
+                                <strong class="{% if monthly_totals.total_revenue >= 0 %}text-success{% else %}text-danger{% endif %}">
+                                    QAR {{ monthly_totals.total_revenue|intcomma }}
+                                </strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Quick Entry Form -->
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="fas fa-plus-circle me-2"></i>Quick Entry</h5>
+                        </div>
+                        <div class="card-body">
+                            <form id="quick-entry-form">
+                                {% csrf_token %}
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="quick_date" class="form-label">Date</label>
+                                        <input type="date" class="form-control" id="quick_date" name="date" value="{{ today|date:'Y-m-d' }}" required>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="quick_cash" class="form-label">Cash Sales</label>
+                                        <input type="number" class="form-control" id="quick_cash" name="cash_sales" step="0.01" min="0" value="0">
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="quick_pos" class="form-label">POS Sales</label>
+                                        <input type="number" class="form-control" id="quick_pos" name="pos_sales" step="0.01" min="0" value="0">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="quick_service" class="form-label">Service Revenue</label>
+                                        <input type="number" class="form-control" id="quick_service" name="service_revenue" step="0.01" min="0" value="0">
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="quick_purchase" class="form-label">Purchases</label>
+                                        <input type="number" class="form-control" id="quick_purchase" name="purchase" step="0.01" min="0" value="0">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="calculated_revenue" class="form-label">Calculated Revenue</label>
+                                        <input type="text" class="form-control bg-light" id="calculated_revenue" readonly value="QAR 0.00">
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-success w-100" id="quick-entry-btn">
+                                    <i class="fas fa-save me-1"></i>Save Daily Revenue
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Recent Entries -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-history me-2"></i>Recent Entries</h5>
+                </div>
+                <div class="card-body">
+                    {% if recent_revenues %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Cash Sales</th>
+                                        <th>POS Sales</th>
+                                        <th>Service Revenue</th>
+                                        <th>Purchases</th>
+                                        <th>Net Revenue</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for revenue in recent_revenues %}
+                                    <tr>
+                                        <td>{{ revenue.date|date:"M d, Y" }}</td>
+                                        <td class="text-success">QAR {{ revenue.daily_cash_sales|intcomma }}</td>
+                                        <td class="text-primary">QAR {{ revenue.daily_pos_sales|intcomma }}</td>
+                                        <td class="text-info">QAR {{ revenue.daily_service_revenue|intcomma }}</td>
+                                        <td class="text-danger">QAR {{ revenue.daily_purchase|intcomma }}</td>
+                                        <td class="{% if revenue.daily_revenue >= 0 %}text-success{% else %}text-danger{% endif %} fw-bold">
+                                            QAR {{ revenue.daily_revenue|intcomma }}
+                                        </td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                <a href="{% url 'finance:daily_revenue_detail' revenue.pk %}" class="btn btn-outline-info btn-sm" title="View">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                <a href="{% url 'finance:daily_revenue_edit' revenue.pk %}" class="btn btn-outline-primary btn-sm" title="Edit">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                <a href="{% url 'finance:daily_revenue_pdf' revenue.pk %}" class="btn btn-outline-secondary btn-sm" title="PDF" target="_blank">
+                                                    <i class="fas fa-file-pdf"></i>
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No entries yet</h5>
+                            <p class="text-muted">Start by creating your first daily revenue entry.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('quick-entry-form');
+    const inputs = form.querySelectorAll('input[type="number"]');
+    const calculatedField = document.getElementById('calculated_revenue');
+    
+    // Calculate revenue on input change
+    function calculateRevenue() {
+        const cash = parseFloat(document.getElementById('quick_cash').value) || 0;
+        const pos = parseFloat(document.getElementById('quick_pos').value) || 0;
+        const service = parseFloat(document.getElementById('quick_service').value) || 0;
+        const purchase = parseFloat(document.getElementById('quick_purchase').value) || 0;
+        
+        const revenue = cash + pos + service - purchase;
+        calculatedField.value = `QAR ${revenue.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+        
+        // Color coding
+        if (revenue >= 0) {
+            calculatedField.className = 'form-control bg-light text-success fw-bold';
+        } else {
+            calculatedField.className = 'form-control bg-light text-danger fw-bold';
+        }
+    }
+    
+    // Add event listeners
+    inputs.forEach(input => {
+        input.addEventListener('input', calculateRevenue);
+    });
+    
+    // Form submission
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = {
+            date: document.getElementById('quick_date').value,
+            cash_sales: parseFloat(document.getElementById('quick_cash').value) || 0,
+            pos_sales: parseFloat(document.getElementById('quick_pos').value) || 0,
+            service_revenue: parseFloat(document.getElementById('quick_service').value) || 0,
+            purchase: parseFloat(document.getElementById('quick_purchase').value) || 0,
+        };
+        
+        fetch('{% url "finance:daily_revenue_quick_entry" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify(formData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                location.reload(); // Refresh to show updated data
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while saving the data.');
+        });
+    });
+    
+    // Initial calculation
+    calculateRevenue();
+});
+</script>
+{% endblock %}

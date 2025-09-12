@@ -1,0 +1,331 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Product Dashboard - Trendz Portal{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-1">Product Dashboard</h2>
+                    <p class="text-muted mb-0">Overview of your product inventory and performance</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <a href="{% url 'portal:product_list' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-list me-1"></i>View All Products
+                    </a>
+                    <a href="{% url 'portal:product_create' %}" class="btn btn-primary">
+                        <i class="fas fa-plus me-1"></i>Add Product
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Key Metrics -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title mb-1">Total Products</h6>
+                            <h2 class="mb-0">{{ total_products }}</h2>
+                            <small>{{ active_products }} active</small>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-boxes fa-3x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title mb-1">Stock Value</h6>
+                            <h2 class="mb-0">${{ total_stock_value|floatformat:0 }}</h2>
+                            <small>at cost price</small>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-dollar-sign fa-3x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title mb-1">Low Stock</h6>
+                            <h2 class="mb-0">{{ low_stock_products }}</h2>
+                            <small>needs attention</small>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-exclamation-triangle fa-3x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-danger text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title mb-1">Out of Stock</h6>
+                            <h2 class="mb-0">{{ out_of_stock_products }}</h2>
+                            <small>urgent restock</small>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-times-circle fa-3x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Recent Products -->
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">Recent Products</h6>
+                    <a href="{% url 'portal:product_list' %}" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="card-body">
+                    {% for product in recent_products %}
+                    <div class="d-flex align-items-center mb-3 {% if not forloop.last %}border-bottom pb-3{% endif %}">
+                        {% if product.image %}
+                            <img src="{{ product.image.url }}" alt="{{ product.name }}" 
+                                 class="rounded me-3" style="width: 50px; height: 50px; object-fit: cover;">
+                        {% else %}
+                            <div class="d-flex align-items-center justify-content-center rounded bg-light me-3" 
+                                 style="width: 50px; height: 50px;">
+                                <i class="fas fa-image text-muted"></i>
+                            </div>
+                        {% endif %}
+                        <div class="flex-grow-1">
+                            <h6 class="mb-1">{{ product.name|truncatechars:30 }}</h6>
+                            <small class="text-muted">{{ product.sku }} • {{ product.category.name }}</small>
+                            <div class="mt-1">
+                                <span class="badge bg-primary">${{ product.unit_price }}</span>
+                                {% if product.stock == 0 %}
+                                    <span class="badge bg-danger">Out of Stock</span>
+                                {% elif product.stock <= 10 %}
+                                    <span class="badge bg-warning">{{ product.stock }} left</span>
+                                {% else %}
+                                    <span class="badge bg-success">{{ product.stock }} in stock</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div>
+                            <a href="{% url 'portal:product_detail' product.pk %}" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">No products yet</p>
+                        <a href="{% url 'portal:product_create' %}" class="btn btn-primary">Add First Product</a>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Low Stock Alert -->
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">Low Stock Alert</h6>
+                    <span class="badge bg-warning">{{ low_stock_list|length }} items</span>
+                </div>
+                <div class="card-body">
+                    {% for product in low_stock_list %}
+                    <div class="d-flex align-items-center justify-content-between mb-3 {% if not forloop.last %}border-bottom pb-3{% endif %}">
+                        <div class="d-flex align-items-center">
+                            {% if product.image %}
+                                <img src="{{ product.image.url }}" alt="{{ product.name }}" 
+                                     class="rounded me-3" style="width: 40px; height: 40px; object-fit: cover;">
+                            {% else %}
+                                <div class="d-flex align-items-center justify-content-center rounded bg-light me-3" 
+                                     style="width: 40px; height: 40px;">
+                                    <i class="fas fa-image text-muted"></i>
+                                </div>
+                            {% endif %}
+                            <div>
+                                <h6 class="mb-1">{{ product.name|truncatechars:25 }}</h6>
+                                <small class="text-muted">{{ product.sku }}</small>
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            {% if product.stock == 0 %}
+                                <span class="badge bg-danger">Out of Stock</span>
+                            {% else %}
+                                <span class="badge bg-warning">{{ product.stock }} left</span>
+                            {% endif %}
+                            <div class="mt-1">
+                                <a href="{% url 'portal:product_update' product.pk %}" class="btn btn-xs btn-outline-primary">
+                                    <i class="fas fa-edit"></i> Update
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                        <p class="text-muted">All products have adequate stock</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Category Breakdown -->
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h6 class="mb-0">Category Breakdown</h6>
+                </div>
+                <div class="card-body">
+                    {% for category in category_stats %}
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <div class="d-flex align-items-center">
+                            <i class="{{ category.icon }} fa-2x text-primary me-3"></i>
+                            <div>
+                                <h6 class="mb-0">{{ category.name }}</h6>
+                                <small class="text-muted">{{ category.product_count }} products</small>
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <span class="badge bg-secondary">{{ category.total_stock }} units</span>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-tags fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">No categories with products</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Price Analysis -->
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h6 class="mb-0">Price Analysis</h6>
+                </div>
+                <div class="card-body">
+                    {% if price_stats.avg_cost %}
+                    <div class="row text-center">
+                        <div class="col-6 mb-3">
+                            <div class="border-end">
+                                <h4 class="text-primary mb-1">${{ price_stats.avg_cost|floatformat:2 }}</h4>
+                                <small class="text-muted">Average Cost</small>
+                            </div>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <h4 class="text-success mb-1">${{ price_stats.avg_unit|floatformat:2 }}</h4>
+                            <small class="text-muted">Average Price</small>
+                        </div>
+                        <div class="col-6">
+                            <div class="border-end">
+                                <h5 class="text-info mb-1">${{ price_stats.min_price|floatformat:2 }}</h5>
+                                <small class="text-muted">Lowest Price</small>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <h5 class="text-warning mb-1">${{ price_stats.max_price|floatformat:2 }}</h5>
+                            <small class="text-muted">Highest Price</small>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="text-center">
+                        {% with avg_margin=price_stats.avg_unit|sub:price_stats.avg_cost %}
+                        {% with margin_percent=avg_margin|div:price_stats.avg_cost|mul:100 %}
+                        <h5 class="text-success mb-1">{{ margin_percent|floatformat:1 }}%</h5>
+                        <small class="text-muted">Average Profit Margin</small>
+                        {% endwith %}
+                        {% endwith %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-chart-line fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">No pricing data available</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">Quick Actions</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <a href="{% url 'portal:product_create' %}" class="btn btn-outline-primary w-100">
+                                <i class="fas fa-plus fa-2x mb-2 d-block"></i>
+                                Add New Product
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="{% url 'portal:product_list' %}?stock_status=low_stock" class="btn btn-outline-warning w-100">
+                                <i class="fas fa-exclamation-triangle fa-2x mb-2 d-block"></i>
+                                Review Low Stock
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="{% url 'portal:product_list' %}?stock_status=out_of_stock" class="btn btn-outline-danger w-100">
+                                <i class="fas fa-times-circle fa-2x mb-2 d-block"></i>
+                                Out of Stock Items
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="/admin/portal/product/" class="btn btn-outline-secondary w-100">
+                                <i class="fas fa-cog fa-2x mb-2 d-block"></i>
+                                Admin Panel
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.btn-xs {
+    padding: 0.125rem 0.25rem;
+    font-size: 0.75rem;
+}
+
+.fa-2x {
+    font-size: 1.5em;
+}
+
+.opacity-50 {
+    opacity: 0.5;
+}
+</style>
+{% endblock %}

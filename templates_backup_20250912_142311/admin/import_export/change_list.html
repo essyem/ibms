@@ -1,0 +1,21 @@
+{% extends ie_base_change_list_template|default:"admin/change_list.html" %}
+{% load i18n admin_urls static import_export_tags %}
+
+{% block extrastyle %}
+  {{ block.super }}
+  <link rel="stylesheet" href="{% static "import_export/import_export.css" %}">
+  <link rel="stylesheet" href="{% static "css/trendz-admin.css" %}">
+{% endblock %}
+
+{# Original template renders object-tools only when has_add_permission is True. #}
+{# This hack allows sub templates to add to object-tools #}
+{% block object-tools %}
+  <ul class="object-tools">
+    {% block object-tools-items %}
+      {% include "admin/import_export/change_list_import_export.html" %}
+      {% if has_add_permission %}
+        {{ block.super }}
+      {% endif %}
+    {% endblock %}
+  </ul>
+{% endblock %}

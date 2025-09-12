@@ -1,4 +1,287 @@
-<footer class="trendz-footer">
-    <p>© {% now "Y" %} TRENDZ TRADING & SERVICES - Doha, Qatar</p>
-    <p>Contact: info@trendzqtr.com | +974 3051 4865</p>
-  </footer>
+<!-- Trendz Portal Footer -->
+{% load static %}
+<footer class="trendz-footer mt-auto">
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Company Info -->
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="footer-section">
+                    <div class="d-flex align-items-center mb-3">
+                        <img src="{% static 'images/trendz-logo.png' %}" alt="Trendz Logo" height="30" class="me-2">
+                        <h5 class="text-white mb-0">TRENDZ</h5>
+                    </div>
+                    <p class="text-light opacity-75 mb-3">
+                        Leading provider of comprehensive business management solutions in Qatar.
+                        Trusted by businesses since 2017.
+                    </p>
+                    <div class="social-links">
+                        <a href="#" class="social-link me-2" title="Facebook">
+                            <i class="fab fa-facebook-f"></i>
+                        </a>
+                        <a href="#" class="social-link me-2" title="LinkedIn">
+                            <i class="fab fa-linkedin-in"></i>
+                        </a>
+                        <a href="#" class="social-link me-2" title="Twitter">
+                            <i class="fab fa-twitter"></i>
+                        </a>
+                        <a href="#" class="social-link" title="Instagram">
+                            <i class="fab fa-instagram"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Links -->
+            <div class="col-lg-2 col-md-6 mb-4">
+                <div class="footer-section">
+                    <h6 class="text-white mb-3">
+                        <i class="fas fa-sitemap me-2"></i>Quick Links
+                    </h6>
+                    <ul class="footer-links">
+                        <li><a href="{% url 'portal:index' %}">
+                            <i class="fas fa-home me-1"></i>Home
+                        </a></li>
+                        <li><a href="{% url 'portal:dashboard' %}">
+                            <i class="fas fa-tachometer-alt me-1"></i>Dashboard
+                        </a></li>
+                        <li><a href="{% url 'portal:product_list' %}">
+                            <i class="fas fa-boxes me-1"></i>Products
+                        </a></li>
+                        <li><a href="{% url 'portal:invoice_list' %}">
+                            <i class="fas fa-file-invoice me-1"></i>Invoices
+                        </a></li>
+                        <li><a href="{% url 'portal:customer_list' %}">
+                            <i class="fas fa-users me-1"></i>Customers
+                        </a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Management Tools -->
+            <div class="col-lg-2 col-md-6 mb-4">
+                <div class="footer-section">
+                    <h6 class="text-white mb-3">
+                        <i class="fas fa-tools me-2"></i>Management
+                    </h6>
+                    <ul class="footer-links">
+                        <li><a href="{% url 'finance:dashboard' %}">
+                            <i class="fas fa-dollar-sign me-1"></i>Finance
+                        </a></li>
+                        <li><a href="{% url 'finance:daily_revenue_dashboard' %}">
+                            <i class="fas fa-calendar-day me-1"></i>Daily Revenue
+                        </a></li>
+                        <li><a href="{% url 'procurement:dashboard' %}">
+                            <i class="fas fa-truck me-1"></i>Procurement
+                        </a></li>
+                        <li><a href="{% url 'portal:barcode_scanner' %}">
+                            <i class="fas fa-qrcode me-1"></i>Barcode Scanner
+                        </a></li>
+                        {% if user.is_staff %}
+                        <li><a href="{% url 'admin:index' %}">
+                            <i class="fas fa-cogs me-1"></i>Admin Panel
+                        </a></li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Contact Information -->
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="footer-section">
+                    <h6 class="text-white mb-3">
+                        <i class="fas fa-map-marker-alt me-2"></i>Contact Information
+                    </h6>
+                    <div class="contact-info">
+                        <div class="contact-item mb-2">
+                            <i class="fas fa-building me-2 text-primary"></i>
+                            <span class="text-light">
+                                Sofitel Complex, Msheireb Street<br>
+                                <span class="ms-4">Doha, Qatar</span>
+                            </span>
+                        </div>
+                        <div class="contact-item mb-2">
+                            <i class="fas fa-phone me-2 text-primary"></i>
+                            <a href="tel:+97430514865" class="text-light text-decoration-none">
+                                +974 30514865
+                            </a>
+                        </div>
+                        <div class="contact-item mb-2">
+                            <i class="fas fa-envelope me-2 text-primary"></i>
+                            <a href="mailto:info@trendzqtr.com" class="text-light text-decoration-none">
+                                info@trendzqtr.com
+                            </a>
+                        </div>
+                        <div class="contact-item">
+                            <i class="fas fa-globe me-2 text-primary"></i>
+                            <a href="https://trendzqtr.com" class="text-light text-decoration-none" target="_blank">
+                                www.trendzqtr.com
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- System Status -->
+            <div class="col-lg-2 col-md-6 mb-4">
+                <div class="footer-section">
+                    <h6 class="text-white mb-3">
+                        <i class="fas fa-server me-2"></i>System Status
+                    </h6>
+                    <div class="system-status">
+                        <div class="status-item mb-2">
+                            <span class="status-indicator bg-success"></span>
+                            <small class="text-light">Portal Online</small>
+                        </div>
+                        <div class="status-item mb-2">
+                            <span class="status-indicator bg-success"></span>
+                            <small class="text-light">Database Active</small>
+                        </div>
+                        <div class="status-item mb-2">
+                            <span class="status-indicator bg-warning"></span>
+                            <small class="text-light">Maintenance Mode</small>
+                        </div>
+                        <div class="status-item">
+                            <i class="fas fa-clock me-1 text-primary"></i>
+                            <small class="text-light">Last Updated: <span id="lastUpdate"></span></small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Copyright -->
+        <div class="row border-top border-secondary pt-4 mt-4">
+            <div class="col-md-6">
+                <p class="text-light opacity-75 mb-0">
+                    © {% now "Y" %} TRENDZ Trading & Services. All rights reserved.
+                </p>
+            </div>
+            <div class="col-md-6 text-md-end">
+                <p class="text-light opacity-75 mb-0">
+                    <small>
+                        Portal Version 2.0 | 
+                        <a href="{% url 'portal:terms' %}" class="text-light text-decoration-none">Terms of Service</a> |
+                        <a href="{% url 'portal:enquiry' %}" class="text-light text-decoration-none">Support</a>
+                    </small>
+                </p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<style>
+.trendz-footer {
+    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+    color: #ecf0f1;
+    padding: 3rem 0 1rem;
+    margin-top: 2rem;
+}
+
+.footer-section h6 {
+    font-weight: 600;
+    border-bottom: 2px solid #3498db;
+    padding-bottom: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.footer-links {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.footer-links li {
+    margin-bottom: 0.5rem;
+}
+
+.footer-links a {
+    color: #bdc3c7;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+}
+
+.footer-links a:hover {
+    color: #3498db;
+    padding-left: 0.5rem;
+}
+
+.social-links .social-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 35px;
+    height: 35px;
+    background: rgba(52, 152, 219, 0.2);
+    color: #3498db;
+    text-decoration: none;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+}
+
+.social-links .social-link:hover {
+    background: #3498db;
+    color: white;
+    transform: translateY(-3px);
+}
+
+.contact-info .contact-item {
+    display: flex;
+    align-items: flex-start;
+    font-size: 0.9rem;
+}
+
+.contact-info a:hover {
+    color: #3498db !important;
+}
+
+.system-status .status-item {
+    display: flex;
+    align-items: center;
+    font-size: 0.8rem;
+}
+
+.status-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 0.5rem;
+    display: inline-block;
+}
+
+.status-indicator.bg-success {
+    background-color: #27ae60 !important;
+    box-shadow: 0 0 5px #27ae60;
+}
+
+.status-indicator.bg-warning {
+    background-color: #f39c12 !important;
+    box-shadow: 0 0 5px #f39c12;
+}
+
+@media (max-width: 768px) {
+    .trendz-footer {
+        padding: 2rem 0 1rem;
+    }
+    
+    .trendz-footer .col-md-6:last-child {
+        text-align: center !important;
+        margin-top: 1rem;
+    }
+}
+</style>
+
+<script>
+// Update last update time
+document.addEventListener('DOMContentLoaded', function() {
+    const lastUpdateElement = document.getElementById('lastUpdate');
+    if (lastUpdateElement) {
+        const now = new Date();
+        lastUpdateElement.textContent = now.toLocaleTimeString('en-US', { 
+            hour12: true, 
+            hour: '2-digit', 
+            minute: '2-digit' 
+        });
+    }
+});
+</script>
