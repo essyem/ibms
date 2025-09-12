@@ -5,127 +5,12 @@
 
 {% block extra_css %}
 {{ block.super }}
-<style>
-    /* Trendz Portal Specific Dashboard Styling */
-    .trendz-dashboard {
-        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-        min-height: 100vh;
-    }
-    
-    .dashboard-header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: 2rem 0;
-        margin-bottom: 2rem;
-        border-radius: 0 0 20px 20px;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-    }
-    
-    .welcome-card {
-        background: rgba(255,255,255,0.95);
-        backdrop-filter: blur(10px);
-        border-radius: 15px;
-        padding: 2rem;
-        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-        border: 1px solid rgba(255,255,255,0.2);
-    }
-    
-    .quick-stats .stat-card {
-        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-        color: white;
-        border-radius: 15px;
-        padding: 1.5rem;
-        margin-bottom: 1rem;
-        transition: transform 0.3s ease;
-        border: none;
-        box-shadow: 0 5px 15px rgba(79, 172, 254, 0.3);
-    }
-    
-    .quick-stats .stat-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 25px rgba(79, 172, 254, 0.4);
-    }
-    
-    .quick-actions .action-card {
-        background: white;
-        border-radius: 15px;
-        padding: 1.5rem;
-        text-align: center;
-        transition: all 0.3s ease;
-        border: 1px solid #e9ecef;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        margin-bottom: 1rem;
-    }
-    
-    .quick-actions .action-card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-        border-color: #007bff;
-    }
-    
-    .quick-actions .action-card .icon {
-        font-size: 2.5rem;
-        margin-bottom: 1rem;
-        color: #007bff;
-    }
-    
-    .recent-activity {
-        background: white;
-        border-radius: 15px;
-        padding: 1.5rem;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    }
-    
-    .activity-item {
-        padding: 1rem;
-        border-left: 3px solid #007bff;
-        margin-bottom: 1rem;
-        background: #f8f9fa;
-        border-radius: 0 10px 10px 0;
-    }
-    
-    .trendz-logo-dashboard {
-        max-height: 60px;
-        filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
-    }
-</style>
+<link rel="stylesheet" href="{% static 'portal/css/dashboard.css' %}">
 {% endblock %}
 
-{% block dashboard_header %}
-<div class="dashboard-header">
-    <div class="container">
-        <div class="row align-items-center">
-            <div class="col-md-8">
-                <div class="d-flex align-items-center">
-                    <img src="{% static 'images/trendz-logo.png' %}" alt="Trendz Logo" class="trendz-logo-dashboard me-3">
-                    <div>
-                        <h1 class="h2 mb-1">Welcome to Trendz Portal</h1>
-                        <p class="mb-0 opacity-75">Complete Business Management Dashboard</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4 text-end">
-                {% if user.is_authenticated %}
-                    <div class="welcome-user">
-                        <h4 class="mb-1">Hello, {{ user.get_full_name|default:user.username }}!</h4>
-                        <small class="opacity-75">
-                            {% if user.is_superuser %}
-                                <i class="fas fa-crown me-1"></i>Super Administrator
-                            {% elif user.is_staff %}
-                                <i class="fas fa-user-shield me-1"></i>Staff Member
-                            {% else %}
-                                <i class="fas fa-user me-1"></i>Portal User
-                            {% endif %}
-                        </small>
-                    </div>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-</div>
-{% endblock %}
+{% block content %}
 
-{% block dashboard_content %}
+
 <div class="container">
     <!-- Quick Stats Row -->
     <div class="row mb-4">
@@ -140,6 +25,8 @@
                             Your comprehensive business management portal providing real-time insights, 
                             streamlined operations, and powerful analytics for Trendz Trading & Services.
                         </p>
+                        <!-- Placeholder where the full dashboard summary (cards/tables) will be injected asynchronously -->
+                        <div id="dashboard-summary-placeholder" class="mt-3"></div>
                         <div class="d-flex gap-2 flex-wrap">
                             <a href="{% url 'portal:product_dashboard' %}" class="btn btn-primary btn-sm">
                                 <i class="fas fa-boxes me-1"></i>Product Analytics
@@ -170,6 +57,9 @@
                                     <div class="bg-warning rounded-circle d-inline-block" style="width: 12px; height: 12px;"></div>
                                     <br><small class="text-muted">Maintenance</small>
                                 </div>
+                            </div>
+                            <div class="mt-3">
+                                <canvas id="chartRevenue" height="100"></canvas>
                             </div>
                         </div>
                     </div>
@@ -242,36 +132,54 @@
             </div>
         </div>
     </div>
+    
+    <!-- Top Customers -->
+    <div class="row mb-4">
+        <div class="col-lg-8">
+            <div class="recent-activity">
+                <h5 class="mb-3">Top Customers (by revenue)</h5>
+                <canvas id="chartTopCustomers" height="120"></canvas>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="recent-activity">
+                <h5 class="mb-3">Quick Stats</h5>
+                <div class="quick-stats">
+                    <div class="stat-card mb-2">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <small>Total Customers</small>
+                                <div class="stat-value">{{ total_customers }}</div>
+                            </div>
+                            <div style="width:90px"><canvas class="sparkline" id="sparkCustomers"></canvas></div>
+                        </div>
+                    </div>
+                    <div class="stat-card mb-2">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <small>Monthly Revenue</small>
+                                <div class="stat-value">QAR {{ monthly_revenue|floatformat:0 }}</div>
+                            </div>
+                            <div style="width:90px"><canvas class="sparkline" id="sparkRevenue"></canvas></div>
+                        </div>
+                    </div>
+                    <div class="stat-card mb-2">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <small>Active Products</small>
+                                <div class="stat-value">{{ active_products }}</div>
+                            </div>
+                            <div style="width:90px"><canvas class="sparkline" id="sparkProducts"></canvas></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
 {{ block.super }}
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Add smooth animations to dashboard elements
-    const cards = document.querySelectorAll('.action-card, .stat-card, .welcome-card');
-    cards.forEach((card, index) => {
-        card.style.opacity = '0';
-        card.style.transform = 'translateY(20px)';
-        card.style.transition = 'all 0.6s ease';
-        
-        setTimeout(() => {
-            card.style.opacity = '1';
-            card.style.transform = 'translateY(0)';
-        }, index * 100);
-    });
-    
-    // Add click analytics
-    document.querySelectorAll('.action-card').forEach(card => {
-        card.addEventListener('click', function() {
-            // Add subtle click effect
-            this.style.transform = 'scale(0.95)';
-            setTimeout(() => {
-                this.style.transform = 'scale(1)';
-            }, 150);
-        });
-    });
-});
-</script>
+<script src="{% static 'portal/js/dashboard_charts.js' %}"></script>
 {% endblock %}

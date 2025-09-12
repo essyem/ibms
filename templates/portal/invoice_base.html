@@ -1,50 +1,442 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Trendz Portal{% endblock %}
+{% block title %}Invoices - Trendz Portal{% endblock %}
 
 {% block extra_css %}
-    <!-- Project invoice styles (tracked in repo) -->
-    <link href="{% static 'portal/css/invoice.css' %}" rel="stylesheet">
+<style>
+    /* Invoice App - Professional Blue Theme */
+    :root {
+        --invoice-bg: #0a0e27;
+        --invoice-card-bg: #1a1f3a;
+        --invoice-accent: #3b82f6;
+        --invoice-secondary: #6366f1;
+        --invoice-text: #ffffff;
+        --invoice-muted: #94a3b8;
+        --invoice-border: #334155;
+        --invoice-success: #10b981;
+        --invoice-danger: #ef4444;
+        --invoice-warning: #f59e0b;
+        --invoice-info: #06b6d4;
+    }
+    
+    /* Override main body styling for invoice pages */
+    body {
+        background: linear-gradient(135deg, var(--invoice-bg) 0%, #1e1b4b 100%) !important;
+        color: var(--invoice-text) !important;
+        font-family: 'Segoe UI', 'Open Sans', sans-serif;
+    }
+    
+    /* Invoice Navbar - Professional Blue */
+    .navbar {
+        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%) !important;
+        border-bottom: 3px solid var(--invoice-accent);
+        box-shadow: 0 5px 20px rgba(59, 130, 246, 0.4);
+        padding: 1rem 0 !important;
+        min-height: 75px;
+    }
+    
+    .navbar-brand {
+        color: var(--invoice-accent) !important;
+        font-weight: 800;
+        font-size: 2rem !important;
+        text-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+        display: flex;
+        align-items: center;
+    }
+    
+    .navbar-brand i {
+        font-size: 2.2rem;
+        margin-right: 0.8rem;
+        color: var(--invoice-accent);
+    }
+    
+    .navbar-brand:hover {
+        color: #ffffff !important;
+        text-shadow: 0 0 15px rgba(59, 130, 246, 0.8);
+        transform: scale(1.03);
+        transition: all 0.3s ease;
+    }
+    
+    .navbar-nav .nav-link {
+        color: var(--invoice-muted) !important;
+        font-weight: 600;
+        font-size: 1.05rem !important;
+        padding: 0.9rem 1.3rem !important;
+        transition: all 0.3s ease;
+        border-radius: 8px;
+        margin: 0 0.2rem;
+        text-transform: capitalize;
+    }
+    
+    .navbar-nav .nav-link:hover,
+    .navbar-nav .nav-link.active {
+        color: var(--invoice-accent) !important;
+        background: rgba(59, 130, 246, 0.1);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 15px rgba(59, 130, 246, 0.2);
+    }
+    
+    .dropdown-menu {
+        background: var(--invoice-card-bg) !important;
+        border: 1px solid var(--invoice-border);
+        box-shadow: 0 12px 35px rgba(0, 0, 0, 0.5);
+        border-radius: 12px;
+        margin-top: 8px;
+    }
+    
+    .dropdown-item {
+        color: var(--invoice-text) !important;
+        transition: all 0.3s ease;
+        padding: 0.9rem 1.3rem;
+        font-weight: 500;
+    }
+    
+    .dropdown-item:hover {
+        background: var(--invoice-accent) !important;
+        color: #ffffff !important;
+        transform: translateX(5px);
+    }
+    
+    /* Invoice Cards */
+    .card {
+        background: var(--invoice-card-bg) !important;
+        border: 1px solid var(--invoice-border) !important;
+        border-radius: 15px !important;
+        color: var(--invoice-text) !important;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3) !important;
+        transition: all 0.3s ease !important;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, var(--invoice-accent), var(--invoice-secondary));
+    }
+    
+    .card:hover {
+        transform: translateY(-6px) !important;
+        box-shadow: 0 15px 35px rgba(59, 130, 246, 0.2) !important;
+        border-color: var(--invoice-accent) !important;
+    }
+    
+    .card-header {
+        background: rgba(59, 130, 246, 0.1) !important;
+        border-bottom: 1px solid var(--invoice-border) !important;
+        color: var(--invoice-accent) !important;
+        font-weight: 700;
+        font-size: 1.1rem;
+    }
+    
+    .card-title {
+        color: var(--invoice-accent) !important;
+        font-weight: 700;
+        font-size: 1.3rem;
+    }
+    
+    /* Invoice Buttons */
+    .btn-primary {
+        background: linear-gradient(135deg, var(--invoice-accent), #2563eb) !important;
+        border: none !important;
+        color: #ffffff !important;
+        font-weight: 700;
+        padding: 12px 28px;
+        border-radius: 30px;
+        transition: all 0.3s ease;
+        text-transform: capitalize;
+        letter-spacing: 0.5px;
+        box-shadow: 0 6px 18px rgba(59, 130, 246, 0.3);
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-3px) scale(1.03);
+        box-shadow: 0 12px 28px rgba(59, 130, 246, 0.4);
+        background: linear-gradient(135deg, #2563eb, var(--invoice-accent)) !important;
+    }
+    
+    .btn-success {
+        background: var(--invoice-success) !important;
+        border: none !important;
+        border-radius: 25px;
+        font-weight: 600;
+    }
+    
+    .btn-warning {
+        background: var(--invoice-warning) !important;
+        border: none !important;
+        border-radius: 25px;
+        font-weight: 600;
+        color: #000000 !important;
+    }
+    
+    .btn-danger {
+        background: var(--invoice-danger) !important;
+        border: none !important;
+        border-radius: 25px;
+        font-weight: 600;
+    }
+    
+    /* Invoice Tables */
+    .table {
+        background: var(--invoice-card-bg) !important;
+        color: var(--invoice-text) !important;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        border: 1px solid var(--invoice-border);
+    }
+    
+    .table th {
+        background: var(--invoice-accent) !important;
+        color: #ffffff !important;
+        font-weight: 700;
+        border: none !important;
+        padding: 1.2rem;
+        text-transform: capitalize;
+        letter-spacing: 0.5px;
+        font-size: 1rem;
+    }
+    
+    .table td {
+        border-color: var(--invoice-border) !important;
+        padding: 1rem;
+        color: var(--invoice-text) !important;
+        font-weight: 500;
+    }
+    
+    .table tbody tr:hover {
+        background: rgba(59, 130, 246, 0.1) !important;
+        transition: all 0.2s ease;
+    }
+    
+    /* Invoice Forms */
+    .form-control, .form-select {
+        background: var(--invoice-card-bg) !important;
+        border: 2px solid var(--invoice-border) !important;
+        color: var(--invoice-text) !important;
+        border-radius: 12px;
+        padding: 15px;
+        font-size: 1rem;
+        font-weight: 500;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        background: var(--invoice-card-bg) !important;
+        border-color: var(--invoice-accent) !important;
+        color: var(--invoice-text) !important;
+        box-shadow: 0 0 20px rgba(59, 130, 246, 0.3) !important;
+    }
+    
+    .form-label {
+        color: var(--invoice-accent) !important;
+        font-weight: 600;
+        margin-bottom: 0.8rem;
+        font-size: 1rem;
+    }
+    
+    /* Invoice Badges */
+    .badge {
+        font-size: 0.85rem;
+        font-weight: 600;
+        padding: 0.6rem 1.2rem;
+        border-radius: 20px;
+        text-transform: capitalize;
+    }
+    
+    .badge.bg-success {
+        background: var(--invoice-success) !important;
+        color: #ffffff !important;
+    }
+    
+    .badge.bg-warning {
+        background: var(--invoice-warning) !important;
+        color: #000000 !important;
+    }
+    
+    .badge.bg-danger {
+        background: var(--invoice-danger) !important;
+        color: #ffffff !important;
+    }
+    
+    .badge.bg-primary {
+        background: var(--invoice-accent) !important;
+        color: #ffffff !important;
+    }
+    
+    .badge.bg-secondary {
+        background: #64748b !important;
+        color: #ffffff !important;
+    }
+    
+    /* Invoice Alerts */
+    .alert-success {
+        background: rgba(16, 185, 129, 0.2) !important;
+        border: 1px solid var(--invoice-success) !important;
+        color: var(--invoice-success) !important;
+        border-radius: 12px;
+        padding: 1.2rem;
+        font-weight: 600;
+    }
+    
+    .alert-danger {
+        background: rgba(239, 68, 68, 0.2) !important;
+        border: 1px solid var(--invoice-danger) !important;
+        color: var(--invoice-danger) !important;
+        border-radius: 12px;
+        padding: 1.2rem;
+        font-weight: 600;
+    }
+    
+    .alert-warning {
+        background: rgba(245, 158, 11, 0.2) !important;
+        border: 1px solid var(--invoice-warning) !important;
+        color: var(--invoice-warning) !important;
+        border-radius: 12px;
+        padding: 1.2rem;
+        font-weight: 600;
+    }
+    
+    .alert-info {
+        background: rgba(6, 182, 212, 0.2) !important;
+        border: 1px solid var(--invoice-info) !important;
+        color: var(--invoice-info) !important;
+        border-radius: 12px;
+        padding: 1.2rem;
+        font-weight: 600;
+    }
+    
+    /* Invoice Footer */
+    .footer {
+        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%) !important;
+        border-top: 3px solid var(--invoice-accent);
+        color: var(--invoice-text) !important;
+        padding: 2.5rem 0 1.5rem;
+    }
+    
+    /* Invoice Currency Styling */
+    .invoice-currency {
+        color: var(--invoice-success) !important;
+        font-weight: 700;
+        font-family: 'Courier New', monospace;
+        font-size: 1.1rem;
+    }
+    
+    .invoice-total {
+        color: var(--invoice-accent) !important;
+        font-weight: 800;
+        font-size: 1.3rem;
+    }
+    
+    /* Invoice Status Colors */
+    .status-paid {
+        color: var(--invoice-success) !important;
+        background: rgba(16, 185, 129, 0.1);
+        padding: 0.3rem 0.8rem;
+        border-radius: 15px;
+        border: 1px solid var(--invoice-success);
+    }
+    
+    .status-pending {
+        color: var(--invoice-warning) !important;
+        background: rgba(245, 158, 11, 0.1);
+        padding: 0.3rem 0.8rem;
+        border-radius: 15px;
+        border: 1px solid var(--invoice-warning);
+    }
+    
+    .status-overdue {
+        color: var(--invoice-danger) !important;
+        background: rgba(239, 68, 68, 0.1);
+        padding: 0.3rem 0.8rem;
+        border-radius: 15px;
+        border: 1px solid var(--invoice-danger);
+    }
+    
+    /* Invoice Responsive */
+    @media (max-width: 768px) {
+        .navbar-brand {
+            font-size: 1.6rem !important;
+        }
+        
+        .navbar {
+            padding: 0.8rem 0 !important;
+            min-height: 65px;
+        }
+    }
+</style>
     {% block invoice_extra_head %}{% endblock %}
     {% block invoice_extra_css %}{% endblock %}
-    <style>
-        body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-        }
-    </style>
 {% endblock %}
 
 {% block content %}
-    <!-- Main Content -->
-    <div class="container-fluid py-4">
-        {% if messages %}
-        <div class="container">
-            {% for message in messages %}
-            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                {{ message }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-            {% endfor %}
+<div class="container-fluid">
+    {% if messages %}
+    <div class="container mt-3">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            <i class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' %}exclamation-circle{% elif message.tags == 'warning' %}exclamation-triangle{% else %}info-circle{% endif %} me-2"></i>
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
-        {% endif %}
-        
-        {% block invoice_content %}
-        {% endblock %}
+        {% endfor %}
     </div>
-
-    <!-- Footer -->
-    <footer class="bg-light text-center text-muted py-3 mt-auto">
-        <div class="container">
-            <small>&copy; {{ now|date:"Y" }} Trendz Trading &amp; Services. All rights reserved.</small>
-            {% block footer %}{% endblock %}
-        </div>
-    </footer>
+    {% endif %}
+    
+    {% block invoice_content %}
+    {% endblock %}
+</div>
 {% endblock %}
 
 {% block extra_js %}
+<script>
+    // Invoice-specific JavaScript enhancements
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add blue glow effect to important elements
+        const importantElements = document.querySelectorAll('.btn-primary, .card');
+        importantElements.forEach(element => {
+            element.addEventListener('mouseenter', function() {
+                this.style.transition = 'all 0.3s ease';
+            });
+        });
+        
+        // Format currency displays
+        const currencyElements = document.querySelectorAll('.invoice-currency, .invoice-total');
+        currencyElements.forEach(element => {
+            const value = parseFloat(element.textContent.replace(/[^0-9.-]/g, ''));
+            if (value > 0) {
+                element.style.color = 'var(--invoice-success)';
+            }
+        });
+        
+        // Add professional loading animation for forms
+        const forms = document.querySelectorAll('form');
+        forms.forEach(form => {
+            form.addEventListener('submit', function() {
+                const submitBtn = form.querySelector('button[type="submit"]');
+                if (submitBtn) {
+                    submitBtn.classList.add('invoice-loading');
+                    submitBtn.innerHTML = '<i class="fas fa-file-invoice fa-spin me-2"></i>Processing Invoice...';
+                }
+            });
+        });
+        
+        // Auto-format invoice numbers
+        const invoiceInputs = document.querySelectorAll('input[name*="invoice"], input[name*="number"]');
+        invoiceInputs.forEach(input => {
+            input.addEventListener('blur', function() {
+                if (this.value && !this.value.startsWith('INV-')) {
+                    this.value = 'INV-' + this.value;
+                }
+            });
+        });
+    });
+</script>
     <!-- Scripts -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     {% block invoice_extra_js %}{% endblock %}
 {% endblock %}

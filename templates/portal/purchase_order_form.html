@@ -1,9 +1,10 @@
-{% extends 'portal/procurement_base.html' %}
+{% extends 'procurement/procurement_base.html' %}
 {% load crispy_forms_tags %}
+{% load widget_tweaks %}
 
 {% block title %}
     {% if object %}Edit Purchase Order{% else %}Create New Purchase Order{% endif %} - Procurement
-{% endblock procurement_content %}
+{% endblock %}
 
 {% block procurement_content %}
 <div class="container mt-4">
@@ -134,4 +135,4 @@
         </div>
     </div>
 </div>
-{% endblock procurement_content %}
+{% endblock %}

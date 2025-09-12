@@ -1,0 +1,411 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Procurement - Trendz Portal{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Procurement App - Industrial Green Theme */
+    :root {
+        --procurement-bg: #0f1419;
+        --procurement-card-bg: #1e2328;
+        --procurement-accent: #00e676;
+        --procurement-secondary: #26a69a;
+        --procurement-text: #ffffff;
+        --procurement-muted: #90a4ae;
+        --procurement-border: #37474f;
+        --procurement-success: #4caf50;
+        --procurement-danger: #f44336;
+        --procurement-warning: #ff9800;
+        --procurement-info: #2196f3;
+    }
+    
+    /* Override main body styling for procurement pages */
+    body {
+        background: linear-gradient(135deg, var(--procurement-bg) 0%, #1a1a2e 100%) !important;
+        color: var(--procurement-text) !important;
+        font-family: 'Inter', 'Roboto', sans-serif;
+    }
+    
+    /* Procurement Navbar - Large Industrial Style */
+    .navbar {
+        background: linear-gradient(135deg, #0d1117 0%, #21262d 100%) !important;
+        border-bottom: 4px solid var(--procurement-accent);
+        box-shadow: 0 6px 25px rgba(0, 230, 118, 0.3);
+        padding: 1.2rem 0 !important; /* Larger navbar */
+        min-height: 80px;
+    }
+    
+    .navbar-brand {
+        color: var(--procurement-accent) !important;
+        font-weight: 900;
+        font-size: 2.2rem !important; /* Larger brand text */
+        text-shadow: 0 0 15px rgba(0, 230, 118, 0.6);
+        display: flex;
+        align-items: center;
+    }
+    
+    .navbar-brand i {
+        font-size: 2.5rem;
+        margin-right: 1rem;
+        color: var(--procurement-accent);
+    }
+    
+    .navbar-brand:hover {
+        color: #ffffff !important;
+        text-shadow: 0 0 20px rgba(0, 230, 118, 0.9);
+        transform: scale(1.05);
+        transition: all 0.3s ease;
+    }
+    
+    .navbar-nav .nav-link {
+        color: var(--procurement-muted) !important;
+        font-weight: 700;
+        font-size: 1.1rem !important; /* Larger nav links */
+        padding: 1rem 1.5rem !important; /* Larger padding */
+        transition: all 0.3s ease;
+        border-radius: 10px;
+        margin: 0 0.3rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    .navbar-nav .nav-link:hover,
+    .navbar-nav .nav-link.active {
+        color: var(--procurement-accent) !important;
+        background: rgba(0, 230, 118, 0.15);
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(0, 230, 118, 0.3);
+    }
+    
+    .dropdown-menu {
+        background: var(--procurement-card-bg) !important;
+        border: 2px solid var(--procurement-border);
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6);
+        border-radius: 15px;
+        margin-top: 10px;
+    }
+    
+    .dropdown-item {
+        color: var(--procurement-text) !important;
+        transition: all 0.3s ease;
+        padding: 1rem 1.5rem;
+        font-weight: 600;
+    }
+    
+    .dropdown-item:hover {
+        background: var(--procurement-accent) !important;
+        color: #000000 !important;
+        transform: translateX(10px);
+    }
+    
+    /* Procurement Container */
+    .procurement-container {
+        padding: 3rem 2rem;
+        min-height: calc(100vh - 160px);
+    }
+    
+    /* Procurement Page Header */
+    .page-header {
+        background: var(--procurement-card-bg);
+        border: 2px solid var(--procurement-border);
+        border-radius: 20px;
+        padding: 3rem 2rem;
+        margin-bottom: 3rem;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .page-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 8px;
+        background: linear-gradient(90deg, var(--procurement-accent), var(--procurement-secondary), var(--procurement-accent));
+    }
+    
+    .page-header h2 {
+        color: var(--procurement-accent);
+        font-size: 3.5rem;
+        font-weight: 900;
+        margin-bottom: 1rem;
+        text-shadow: 0 0 25px rgba(0, 230, 118, 0.4);
+        text-transform: uppercase;
+        letter-spacing: 2px;
+    }
+    
+    .page-header p {
+        color: var(--procurement-muted);
+        font-size: 1.3rem;
+        margin: 0;
+        font-weight: 500;
+    }
+    
+    /* Procurement Cards */
+    .card {
+        background: var(--procurement-card-bg) !important;
+        border: 2px solid var(--procurement-border) !important;
+        border-radius: 20px !important;
+        color: var(--procurement-text) !important;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4) !important;
+        transition: all 0.4s ease !important;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 6px;
+        background: linear-gradient(90deg, var(--procurement-accent), var(--procurement-secondary));
+    }
+    
+    .card:hover {
+        transform: translateY(-10px) scale(1.02) !important;
+        box-shadow: 0 20px 50px rgba(0, 230, 118, 0.3) !important;
+        border-color: var(--procurement-accent) !important;
+    }
+    
+    .card-header {
+        background: rgba(0, 230, 118, 0.1) !important;
+        border-bottom: 2px solid var(--procurement-border) !important;
+        color: var(--procurement-accent) !important;
+        font-weight: 800;
+        font-size: 1.2rem;
+        text-transform: uppercase;
+    }
+    
+    .card-title {
+        color: var(--procurement-accent) !important;
+        font-weight: 800;
+        font-size: 1.4rem;
+    }
+    
+    /* Procurement Buttons */
+    .btn-primary {
+        background: linear-gradient(135deg, var(--procurement-accent), #00c853) !important;
+        border: none !important;
+        color: #000000 !important;
+        font-weight: 800;
+        padding: 15px 35px;
+        border-radius: 35px;
+        transition: all 0.3s ease;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        box-shadow: 0 8px 20px rgba(0, 230, 118, 0.3);
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-4px) scale(1.05);
+        box-shadow: 0 15px 35px rgba(0, 230, 118, 0.5);
+        background: linear-gradient(135deg, #ffffff, var(--procurement-accent)) !important;
+    }
+    
+    .btn-secondary {
+        background: var(--procurement-secondary) !important;
+        border: none !important;
+        color: #ffffff !important;
+        font-weight: 700;
+        border-radius: 25px;
+    }
+    
+    /* Procurement Tables */
+    .table {
+        background: var(--procurement-card-bg) !important;
+        color: var(--procurement-text) !important;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+        border: 2px solid var(--procurement-border);
+    }
+    
+    .table th {
+        background: var(--procurement-accent) !important;
+        color: #000000 !important;
+        font-weight: 800;
+        border: none !important;
+        padding: 1.5rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-size: 1.1rem;
+    }
+    
+    .table td {
+        border-color: var(--procurement-border) !important;
+        padding: 1.2rem;
+        color: var(--procurement-text) !important;
+        font-weight: 500;
+    }
+    
+    .table tbody tr:hover {
+        background: rgba(0, 230, 118, 0.1) !important;
+        transform: scale(1.01);
+        transition: all 0.2s ease;
+    }
+    
+    /* Procurement Forms */
+    .form-control, .form-select {
+        background: var(--procurement-card-bg) !important;
+        border: 3px solid var(--procurement-border) !important;
+        color: var(--procurement-text) !important;
+        border-radius: 15px;
+        padding: 18px;
+        font-size: 1.1rem;
+        font-weight: 500;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        background: var(--procurement-card-bg) !important;
+        border-color: var(--procurement-accent) !important;
+        color: var(--procurement-text) !important;
+        box-shadow: 0 0 25px rgba(0, 230, 118, 0.4) !important;
+        transform: scale(1.02);
+    }
+    
+    .form-label {
+        color: var(--procurement-accent) !important;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        font-size: 1.1rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    /* Procurement Alerts */
+    .alert-success {
+        background: rgba(76, 175, 80, 0.2) !important;
+        border: 2px solid var(--procurement-success) !important;
+        color: var(--procurement-success) !important;
+        border-radius: 15px;
+        padding: 1.5rem;
+        font-weight: 600;
+    }
+    
+    .alert-danger {
+        background: rgba(244, 67, 54, 0.2) !important;
+        border: 2px solid var(--procurement-danger) !important;
+        color: var(--procurement-danger) !important;
+        border-radius: 15px;
+        padding: 1.5rem;
+        font-weight: 600;
+    }
+    
+    .alert-warning {
+        background: rgba(255, 152, 0, 0.2) !important;
+        border: 2px solid var(--procurement-warning) !important;
+        color: var(--procurement-warning) !important;
+        border-radius: 15px;
+        padding: 1.5rem;
+        font-weight: 600;
+    }
+    
+    /* Procurement Grid */
+    .procurement-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        gap: 2.5rem;
+        margin: 3rem 0;
+    }
+    
+    /* Procurement Status Badges */
+    .badge {
+        font-size: 0.9rem;
+        font-weight: 700;
+        padding: 0.8rem 1.5rem;
+        border-radius: 25px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    .badge.bg-success {
+        background: var(--procurement-success) !important;
+        color: #ffffff !important;
+    }
+    
+    .badge.bg-warning {
+        background: var(--procurement-warning) !important;
+        color: #000000 !important;
+    }
+    
+    .badge.bg-danger {
+        background: var(--procurement-danger) !important;
+        color: #ffffff !important;
+    }
+    
+    /* Procurement Footer */
+    .footer {
+        background: linear-gradient(135deg, #0d1117 0%, #21262d 100%) !important;
+        border-top: 4px solid var(--procurement-accent);
+        color: var(--procurement-text) !important;
+        padding: 3rem 0 2rem;
+    }
+    
+    /* Procurement Responsive */
+    @media (max-width: 768px) {
+        .navbar-brand {
+            font-size: 1.8rem !important;
+        }
+        
+        .page-header h2 {
+            font-size: 2.5rem;
+        }
+        
+        .procurement-grid {
+            grid-template-columns: 1fr;
+            gap: 2rem;
+        }
+        
+        .navbar {
+            padding: 1rem 0 !important;
+            min-height: 70px;
+        }
+        
+        .navbar-nav .nav-link {
+            padding: 0.8rem 1.2rem !important;
+            font-size: 1rem !important;
+        }
+    }
+    
+    /* Procurement Animation Effects */
+    @keyframes procurement-pulse {
+        0% { box-shadow: 0 0 0 0 rgba(0, 230, 118, 0.7); }
+        70% { box-shadow: 0 0 0 10px rgba(0, 230, 118, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(0, 230, 118, 0); }
+    }
+    
+    .procurement-pulse {
+        animation: procurement-pulse 2s infinite;
+    }
+    
+    /* Procurement Loading States */
+    .procurement-loading {
+        background: linear-gradient(90deg, var(--procurement-card-bg), var(--procurement-border), var(--procurement-card-bg));
+        background-size: 200% 100%;
+        animation: procurement-loading 1.5s infinite;
+    }
+    
+    @keyframes procurement-loading {
+        0% { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid procurement-container">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-header">
+                <h2>Procurement</h2>
+            </div>
+            {% block procurement_content %}{% endblock %}
+        </div>
+    </div>
+</div>
+{% endblock %}

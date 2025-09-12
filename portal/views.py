@@ -4,7 +4,7 @@ from django.views.generic import (CreateView, UpdateView,
 ListView, DetailView, View)
 from portal.models import Invoice, InvoiceItem, Product, Customer
 from procurement.models import Supplier, PurchaseOrder
-from django.db.models import Sum, Q, Avg, Count, F, Case, When, DecimalField, Min
+from django.db.models import Sum, Q, Avg, Count, F, Case, When, DecimalField, Min, Max
 from django.db.models.functions import Cast
 from django.contrib.auth.decorators import login_required
 from django.db.models.functions import TruncDate, TruncMonth
@@ -1602,7 +1602,8 @@ def dashboard_view(request):
         'avg_order_value': avg_order_value,
     }
     
-    return render(request, 'portal/dashboard.html', context)
+    # Render enhanced dashboard with improved styling
+    return render(request, 'portal/dashboard_enhanced.html', context)
 
 @dashboard_access_required
 def analytics_api(request):
@@ -1658,6 +1659,69 @@ def analytics_api(request):
         'revenue_trend': revenue_data,
         'top_customers': customer_data,
     })
+
+
+@dashboard_access_required
+def dashboard_summary_api(request):
+    """
+    Returns rendered HTML for the dashboard summary (cards/tables) so the main dashboard can load quickly
+    and fetch heavy data asynchronously.
+    """
+    # Build the same heavy context used previously but keep it minimal and efficient
+    total_customers = Customer.objects.count()
+    active_products = Product.objects.filter(is_active=True).count()
+    active_suppliers = Supplier.objects.filter(is_active=True).count()
+    pending_invoices = Invoice.objects.filter(status__in=['draft', 'pending']).count()
+
+    monthly_revenue = Invoice.objects.filter(
+        date__gte=timezone.now().date().replace(day=1),
+        status='paid'
+    ).aggregate(total=Sum('grand_total'))['total'] or 0
+
+    # Product/Procurement aggregates (limited sets)
+    total_inventory_cost_value = Product.objects.filter(is_active=True).aggregate(total_value=Sum(F('cost_price') * F('stock')))['total_value'] or 0
+    total_inventory_value = Product.objects.filter(is_active=True).aggregate(total_value=Sum(F('unit_price') * F('stock')))['total_value'] or 0
+    potential_profit = total_inventory_value - total_inventory_cost_value
+
+    total_purchase_orders = PurchaseOrder.objects.count()
+    total_procurement_value = PurchaseOrder.objects.aggregate(total=Sum('total'))['total'] or 0
+    monthly_procurement = PurchaseOrder.objects.filter(order_date__gte=timezone.now().date().replace(day=1)).aggregate(total=Sum('total'))['total'] or 0
+    avg_order_value = 0
+    if total_purchase_orders > 0:
+        avg_order_value = total_procurement_value / total_purchase_orders
+
+    products_by_category = Product.objects.filter(is_active=True).values('category__name').annotate(
+        count=Count('id'),
+        total_cost_value=Sum(F('cost_price') * F('stock')),
+        total_value=Sum(F('unit_price') * F('stock')),
+        profit=Sum((F('unit_price') - F('cost_price')) * F('stock'))
+    ).order_by('-count')[:5]
+
+    high_value_products = Product.objects.filter(is_active=True).annotate(
+        profit_per_unit=F('unit_price') - F('cost_price'),
+        total_cost_value=F('cost_price') * F('stock'),
+        total_selling_value=F('unit_price') * F('stock')
+    ).order_by('-unit_price')[:10]
+
+    ctx = {
+        'total_customers': total_customers,
+        'pending_invoices': pending_invoices,
+        'monthly_revenue': monthly_revenue,
+        'active_products': active_products,
+        'active_suppliers': active_suppliers,
+        'total_inventory_cost_value': total_inventory_cost_value,
+        'total_inventory_value': total_inventory_value,
+        'potential_profit': potential_profit,
+        'total_purchase_orders': total_purchase_orders,
+        'total_procurement_value': total_procurement_value,
+        'monthly_procurement': monthly_procurement,
+        'avg_order_value': avg_order_value,
+        'products_by_category': products_by_category,
+        'high_value_products': high_value_products,
+    }
+
+    html = render(request, 'portal/_dashboard_summary.html', ctx).content.decode('utf-8')
+    return JsonResponse({'html': html})
 
 @reports_access_required
 def report_view(request):
@@ -2629,6 +2693,15 @@ def product_dashboard(request):
         min_price=Min('unit_price'),
         max_price=Max('unit_price')
     )
+    # Compute average margin (absolute and percent) safely here so templates don't need custom filters
+    avg_cost = price_stats.get('avg_cost') or 0
+    avg_unit = price_stats.get('avg_unit') or 0
+    try:
+        avg_margin = avg_unit - avg_cost
+        margin_percent = (avg_margin / avg_cost) * 100 if avg_cost and avg_cost != 0 else 0
+    except Exception:
+        avg_margin = 0
+        margin_percent = 0
     
     context = {
         'total_products': total_products,
@@ -2640,6 +2713,8 @@ def product_dashboard(request):
         'low_stock_list': low_stock_list,
         'category_stats': category_stats,
         'price_stats': price_stats,
+        'avg_margin': avg_margin,
+        'margin_percent': margin_percent,
     }
     
     return render(request, 'portal/products/product_dashboard.html', context)

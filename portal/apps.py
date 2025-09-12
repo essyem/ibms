@@ -6,11 +6,22 @@ class PortalConfig(AppConfig):
     name = 'portal'
 
     def ready(self):
-        # Import compatibility shim early so it patches pydyf before
-        # WeasyPrint is ever imported elsewhere in the app.
+        """Application ready hook.
+
+        Import a compatibility shim that patches pydyf before WeasyPrint is
+        imported elsewhere. Any errors are intentionally ignored so the
+        application can still start; failures will surface when PDF
+        generation is actually attempted.
+        """
         try:
             from .utils import weasy_pydyf_compat  # noqa: F401
         except Exception:
-            # Don't let a shim failure prevent the app from starting; the
-            # error will be visible in logs when PDF generation is attempted.
+            # Keep startup resilient; log/debug output will show any problems
+            # if PDF features are used later.
+            pass
+        
+        # Import signals to register them
+        try:
+            from . import signals  # noqa: F401
+        except Exception:
             pass

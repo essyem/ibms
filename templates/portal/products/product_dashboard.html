@@ -256,12 +256,8 @@
                     <hr>
                     
                     <div class="text-center">
-                        {% with avg_margin=price_stats.avg_unit|sub:price_stats.avg_cost %}
-                        {% with margin_percent=avg_margin|div:price_stats.avg_cost|mul:100 %}
                         <h5 class="text-success mb-1">{{ margin_percent|floatformat:1 }}%</h5>
                         <small class="text-muted">Average Profit Margin</small>
-                        {% endwith %}
-                        {% endwith %}
                     </div>
                     {% else %}
                     <div class="text-center py-4">

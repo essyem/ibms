@@ -6,7 +6,7 @@ from import_export.widgets import ForeignKeyWidget
 from django.contrib.admin import AdminSite
 from django.utils.translation import gettext_lazy as _
 from portal.models import (CartItem, Product, Category, Order, Customer, 
-        Cart, ProductEnquiry, Invoice, InvoiceItem)
+        Cart, ProductEnquiry, Invoice, InvoiceItem, SoldItem)
 from portal.widgets import ProductSearchWidget
 from django.utils.html import format_html
 from django import forms
@@ -448,8 +448,38 @@ class CategoryAdmin(admin.ModelAdmin):
     description_short.short_description = "Description"
 
 
-
-
+@admin.register(SoldItem)
+class SoldItemAdmin(admin.ModelAdmin):
+    list_display = ('product_name', 'quantity', 'unit_price', 'subtotal_display', 'invoice_number', 'date_sold', 'customer_name')
+    list_filter = ('date_sold', 'category_name', 'product_name')
+    search_fields = ('product_name', 'product_sku', 'invoice__invoice_number', 'invoice__customer__full_name')
+    readonly_fields = ('invoice', 'product_name', 'quantity', 'unit_price', 'date_sold', 'product', 'product_sku', 'category_name')
+    ordering = ('-date_sold',)
+    
+    def subtotal_display(self, obj):
+        return f"QAR {obj.subtotal():.2f}"
+    subtotal_display.short_description = "Subtotal"
+    
+    def invoice_number(self, obj):
+        return obj.invoice.invoice_number
+    invoice_number.short_description = "Invoice #"
+    
+    def customer_name(self, obj):
+        return obj.invoice.customer.company_name or obj.invoice.customer.full_name
+    customer_name.short_description = "Customer"
+    
+    def has_add_permission(self, request):
+        # Prevent manual addition - these should only be created by signals
+        return False
+    
+    def has_change_permission(self, request, obj=None):
+        # Prevent editing - these are historical records
+        return False
+    
+    def get_queryset(self, request):
+        # Order by date sold descending by default
+        qs = super().get_queryset(request)
+        return qs.select_related('invoice', 'invoice__customer', 'product').order_by('-date_sold')
 
 
 # Register a simple admin class for barcode management

@@ -288,11 +288,14 @@ class InvoiceItem(SiteModel):
     product = models.ForeignKey('Product', on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField(default=1)
     unit_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    use_product_price = models.BooleanField(default=True, 
+                                          help_text="If True, uses product's unit price. If False, allows custom price.")
     
     def save(self, *args, **kwargs):
-        # Auto-set unit_price from product if not provided
-        if self.product and not self.unit_price:
+        # Auto-set unit_price from product only if use_product_price is True and no custom price provided
+        if self.product and self.use_product_price and not self.unit_price:
             self.unit_price = self.product.unit_price
+        # If use_product_price is False, keep whatever unit_price was set manually
         super().save(*args, **kwargs)
     
     def subtotal(self):
@@ -303,6 +306,36 @@ class InvoiceItem(SiteModel):
     
     def __str__(self):
         return f"{self.product.name} ({self.quantity} x {self.unit_price})"
+
+
+class SoldItem(SiteModel):
+    """
+    Tracks items sold through paid invoices without reducing master inventory stock.
+    This allows for sales reporting while keeping product stock separate.
+    """
+    invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE, related_name='sold_items')
+    product_name = models.CharField(max_length=200, help_text="Product name at time of sale")
+    quantity = models.PositiveIntegerField(default=1)
+    unit_price = models.DecimalField(max_digits=10, decimal_places=2)
+    date_sold = models.DateTimeField(auto_now_add=True)
+    product = models.ForeignKey('Product', on_delete=models.SET_NULL, null=True, blank=True, 
+                               help_text="Reference to original product (may be null if product deleted)")
+    
+    # Additional fields for better tracking
+    product_sku = models.CharField(max_length=100, blank=True, null=True)
+    category_name = models.CharField(max_length=100, blank=True, null=True)
+    
+    class Meta:
+        ordering = ['-date_sold']
+        verbose_name = "Sold Item"
+        verbose_name_plural = "Sold Items"
+    
+    def subtotal(self):
+        from decimal import Decimal
+        return Decimal(str(self.quantity)) * self.unit_price
+    
+    def __str__(self):
+        return f"{self.product_name} - {self.quantity} units sold on {self.date_sold.strftime('%Y-%m-%d')}"
 
 
 class Category(SiteModel):

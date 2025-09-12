@@ -1,7 +1,7 @@
 <!-- templates/portal/barcode_scanner.html -->
-{% extends 'portal/base.html' %}
+{% extends 'portal/invoice_base.html' %}
 
-{% block extra_css %}
+{% block invoice_extra_css %}
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 <style>
     .text-sm {
@@ -10,7 +10,8 @@
     
     .scanner-container {
         position: relative;
-        background: #f8f9fa;
+        background: var(--invoice-card-bg);
+        border: 1px solid var(--invoice-border);
         border-radius: 8px;
         overflow: hidden;
     }
@@ -23,17 +24,23 @@
     }
     
     .product-info-card {
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        transition: transform 0.2s ease;
+        background: var(--invoice-card-bg) !important;
+        border: 1px solid var(--invoice-border) !important;
+        color: var(--invoice-text) !important;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        transition: all 0.3s ease;
     }
     
     .product-info-card:hover {
-        transform: translateY(-2px);
+        transform: translateY(-4px);
+        box-shadow: 0 15px 35px rgba(59, 130, 246, 0.2);
+        border-color: var(--invoice-accent) !important;
     }
     
     .spinner-border-sm {
         width: 1rem;
         height: 1rem;
+        color: var(--invoice-accent);
     }
     
     .badge {
@@ -41,11 +48,28 @@
     }
     
     .border {
-        border-color: #dee2e6 !important;
+        border-color: var(--invoice-border) !important;
     }
     
     .card-body .row .border {
-        background-color: #fafafa;
+        background-color: rgba(59, 130, 246, 0.05) !important;
+        border-color: var(--invoice-border) !important;
+    }
+    
+    .product-name {
+        color: var(--invoice-accent) !important;
+        font-weight: 700;
+    }
+    
+    .product-price {
+        color: var(--invoice-success) !important;
+        font-weight: 600;
+        font-family: 'Courier New', monospace;
+    }
+    
+    .stock-info {
+        color: var(--invoice-info) !important;
+        font-weight: 600;
     }
     
     @media (max-width: 768px) {
@@ -60,7 +84,7 @@
 </style>
 {% endblock %}
 
-{% block content %}
+{% block invoice_content %}
 <div class="container mt-4">
     <div class="row mb-4">
         <div class="col-12">

@@ -1,9 +1,9 @@
-{% extends 'base.html' %}
+{% extends 'finance/finance_base.html' %}
 {% load static %}
 
-{% block title %}Finance - Trendz Technologies{% endblock %}
+{% block title %}Finance - Trendz Portal{% endblock %}
 
-{% block content %}
+{% block finance_content %}
 <div class="section">
     <div class="section-header">
         <h1>💰 Finance Management</h1>
@@ -66,21 +66,21 @@
     </div>
 
     <div style="margin-top: 2rem;">
-        <div class="card-grid">
+        <div class="card-grid finance-quick-actions">
             <div class="card">
                 <h3>📋 Current Month Summary</h3>
                 <div style="margin-top: 1rem;">
                     <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
                         <span>Total Income:</span>
-                        <strong style="color: #28a745;">$0.00</strong>
+                        <strong style="color: var(--finance-success);">QAR 0.00</strong>
                     </div>
                     <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
                         <span>Total Expenses:</span>
-                        <strong style="color: #dc3545;">$0.00</strong>
+                        <strong style="color: var(--finance-danger);">QAR 0.00</strong>
                     </div>
                     <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; padding-top: 0.5rem; border-top: var(--border);">
                         <span><strong>Net Profit:</strong></span>
-                        <strong>$0.00</strong>
+                        <strong>QAR 0.00</strong>
                     </div>
                 </div>
             </div>
@@ -119,10 +119,4 @@
     </div>
     {% endif %}
 </div>
-
-<style>
-    .card a:hover {
-        transform: translateY(-2px);
-    }
-</style>
 {% endblock %}

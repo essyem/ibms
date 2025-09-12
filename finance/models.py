@@ -80,7 +80,7 @@ class FinanceTransaction(FinanceSiteModel):
         verbose_name_plural = 'Finance Transactions'
     
     def __str__(self):
-        return f"{self.site.domain}: {self.get_type_display()} - ${self.amount}"
+        return f"{self.site.domain}: {self.get_type_display()} - QAR {self.amount}"
 
 
 class FinancialSummary(FinanceSiteModel):

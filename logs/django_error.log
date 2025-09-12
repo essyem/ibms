@@ -3423,3 +3423,828 @@ Traceback (most recent call last):
     raise TemplateSyntaxError(
 django.template.exceptions.TemplateSyntaxError: 'block' tag with name 'extra_css' appears more than once
 ERROR 2025-09-12 14:42:28,421 basehttp 349996 131610431166144 "GET /procurement/suppliers/ HTTP/1.1" 500 219910
+ERROR 2025-09-12 15:02:44,630 log 352329 130695242745536 Internal Server Error: /
+Traceback (most recent call last):
+  File "/home/essyem/tp/trendzportal/.venv/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/trendzportal/.venv/lib/python3.12/site-packages/django/core/handlers/base.py", line 220, in _get_response
+    response = response.render()
+               ^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/trendzportal/.venv/lib/python3.12/site-packages/django/template/response.py", line 114, in render
+    self.content = self.rendered_content
+                   ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/trendzportal/.venv/lib/python3.12/site-packages/django/template/response.py", line 92, in rendered_content
+    return template.render(context, self._request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/trendzportal/.venv/lib/python3.12/site-packages/django/template/backends/django.py", line 107, in render
+    return self.template.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/trendzportal/.venv/lib/python3.12/site-packages/django/template/base.py", line 171, in render
+    return self._render(context)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/trendzportal/.venv/lib/python3.12/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/trendzportal/.venv/lib/python3.12/site-packages/django/template/base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/trendzportal/.venv/lib/python3.12/site-packages/django/template/base.py", line 977, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/trendzportal/.venv/lib/python3.12/site-packages/django/template/loader_tags.py", line 134, in render
+    compiled_parent = self.get_parent(context)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/trendzportal/.venv/lib/python3.12/site-packages/django/template/loader_tags.py", line 131, in get_parent
+    return self.find_template(parent, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/trendzportal/.venv/lib/python3.12/site-packages/django/template/loader_tags.py", line 109, in find_template
+    template, origin = context.template.engine.find_template(
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/trendzportal/.venv/lib/python3.12/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/trendzportal/.venv/lib/python3.12/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/trendzportal/.venv/lib/python3.12/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+           ^^^^^^^^^
+  File "/home/essyem/tp/trendzportal/.venv/lib/python3.12/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+                    ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/trendzportal/.venv/lib/python3.12/site-packages/django/template/base.py", line 196, in compile_nodelist
+    nodelist = parser.parse()
+               ^^^^^^^^^^^^^^
+  File "/home/essyem/tp/trendzportal/.venv/lib/python3.12/site-packages/django/template/base.py", line 518, in parse
+    raise self.error(token, e)
+  File "/home/essyem/tp/trendzportal/.venv/lib/python3.12/site-packages/django/template/base.py", line 516, in parse
+    compiled_result = compile_func(self, token)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/trendzportal/.venv/lib/python3.12/site-packages/django/template/loader_tags.py", line 228, in do_block
+    raise TemplateSyntaxError(
+django.template.exceptions.TemplateSyntaxError: 'block' tag with name 'title' appears more than once
+ERROR 2025-09-12 15:02:44,633 basehttp 352329 130695242745536 "GET / HTTP/1.1" 500 197571
+ERROR 2025-09-12 15:07:43,984 log 352729 130377415165632 Internal Server Error: /products/dashboard/
+Traceback (most recent call last):
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/trendzportal/portal/views.py", line 2630, in product_dashboard
+    max_price=Max('unit_price')
+              ^^^
+NameError: name 'Max' is not defined. Did you mean: 'max'?
+ERROR 2025-09-12 15:07:43,986 basehttp 352729 130377415165632 "GET /products/dashboard/ HTTP/1.1" 500 71426
+ERROR 2025-09-12 15:23:20,330 log 354969 137416455374528 Internal Server Error: /products/668/
+Traceback (most recent call last):
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/core/handlers/base.py", line 220, in _get_response
+    response = response.render()
+               ^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/response.py", line 114, in render
+    self.content = self.rendered_content
+                   ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/response.py", line 90, in rendered_content
+    template = self.resolve_template(self.template_name)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/response.py", line 72, in resolve_template
+    return select_template(template, using=self.using)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/loader.py", line 42, in select_template
+    return engine.get_template(template_name)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/backends/django.py", line 79, in get_template
+    return Template(self.engine.get_template(template_name), self)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+           ^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+                    ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/base.py", line 196, in compile_nodelist
+    nodelist = parser.parse()
+               ^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/base.py", line 518, in parse
+    raise self.error(token, e)
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/base.py", line 516, in parse
+    compiled_result = compile_func(self, token)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/loader_tags.py", line 299, in do_extends
+    nodelist = parser.parse()
+               ^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/base.py", line 518, in parse
+    raise self.error(token, e)
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/base.py", line 516, in parse
+    compiled_result = compile_func(self, token)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/loader_tags.py", line 234, in do_block
+    nodelist = parser.parse(("endblock",))
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/base.py", line 489, in parse
+    raise self.error(token, e)
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/base.py", line 487, in parse
+    filter_expression = self.compile_filter(token.contents)
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/base.py", line 609, in compile_filter
+    return FilterExpression(token, self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/base.py", line 705, in __init__
+    filter_func = parser.find_filter(filter_name)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/base.py", line 615, in find_filter
+    raise TemplateSyntaxError("Invalid filter: '%s'" % filter_name)
+django.template.exceptions.TemplateSyntaxError: Invalid filter: 'mul'
+ERROR 2025-09-12 15:23:20,335 basehttp 354969 137416455374528 "GET /products/668/ HTTP/1.1" 500 253648
+ERROR 2025-09-12 15:28:43,048 log 354969 137416455374528 Internal Server Error: /procurement/orders/
+Traceback (most recent call last):
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/core/handlers/base.py", line 220, in _get_response
+    response = response.render()
+               ^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/response.py", line 114, in render
+    self.content = self.rendered_content
+                   ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/response.py", line 90, in rendered_content
+    template = self.resolve_template(self.template_name)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/response.py", line 72, in resolve_template
+    return select_template(template, using=self.using)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/loader.py", line 42, in select_template
+    return engine.get_template(template_name)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/backends/django.py", line 79, in get_template
+    return Template(self.engine.get_template(template_name), self)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+           ^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+                    ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/base.py", line 196, in compile_nodelist
+    nodelist = parser.parse()
+               ^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/base.py", line 518, in parse
+    raise self.error(token, e)
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/base.py", line 516, in parse
+    compiled_result = compile_func(self, token)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/loader_tags.py", line 299, in do_extends
+    nodelist = parser.parse()
+               ^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/base.py", line 518, in parse
+    raise self.error(token, e)
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/base.py", line 516, in parse
+    compiled_result = compile_func(self, token)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/loader_tags.py", line 240, in do_block
+    parser.invalid_block_tag(endblock, "endblock", acceptable_endblocks)
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/base.py", line 567, in invalid_block_tag
+    raise self.error(
+django.template.exceptions.TemplateSyntaxError: Invalid block tag on line 4: 'endblock', expected 'endblock' or 'endblock title'. Did you forget to register or load this tag?
+ERROR 2025-09-12 15:28:43,050 basehttp 354969 137416455374528 "GET /procurement/orders/ HTTP/1.1" 500 220718
+ERROR 2025-09-12 15:29:44,509 log 354969 137416455374528 Internal Server Error: /procurement/orders/
+Traceback (most recent call last):
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/core/handlers/base.py", line 220, in _get_response
+    response = response.render()
+               ^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/response.py", line 114, in render
+    self.content = self.rendered_content
+                   ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/response.py", line 90, in rendered_content
+    template = self.resolve_template(self.template_name)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/response.py", line 72, in resolve_template
+    return select_template(template, using=self.using)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/loader.py", line 42, in select_template
+    return engine.get_template(template_name)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/backends/django.py", line 79, in get_template
+    return Template(self.engine.get_template(template_name), self)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+           ^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+                    ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/base.py", line 196, in compile_nodelist
+    nodelist = parser.parse()
+               ^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/base.py", line 518, in parse
+    raise self.error(token, e)
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/base.py", line 516, in parse
+    compiled_result = compile_func(self, token)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/loader_tags.py", line 299, in do_extends
+    nodelist = parser.parse()
+               ^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/base.py", line 518, in parse
+    raise self.error(token, e)
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/base.py", line 516, in parse
+    compiled_result = compile_func(self, token)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/loader_tags.py", line 240, in do_block
+    parser.invalid_block_tag(endblock, "endblock", acceptable_endblocks)
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/base.py", line 567, in invalid_block_tag
+    raise self.error(
+django.template.exceptions.TemplateSyntaxError: Invalid block tag on line 211: 'endblock', expected 'endblock' or 'endblock extra_js'. Did you forget to register or load this tag?
+ERROR 2025-09-12 15:29:44,511 basehttp 354969 137416455374528 "GET /procurement/orders/ HTTP/1.1" 500 180317
+ERROR 2025-09-12 15:41:15,502 log 355957 132513061426880 Internal Server Error: /products/dashboard/
+Traceback (most recent call last):
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/trendzportal/portal/views.py", line 2631, in product_dashboard
+    max_price=Max('unit_price')
+              ^^^
+NameError: name 'Max' is not defined. Did you mean: 'max'?
+ERROR 2025-09-12 15:41:15,513 basehttp 355957 132513061426880 "GET /products/dashboard/ HTTP/1.1" 500 71945
+ERROR 2025-09-12 15:41:26,362 log 355957 132513061426880 Internal Server Error: /products/dashboard/
+Traceback (most recent call last):
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/trendzportal/portal/views.py", line 2631, in product_dashboard
+    max_price=Max('unit_price')
+              ^^^
+NameError: name 'Max' is not defined. Did you mean: 'max'?
+ERROR 2025-09-12 15:41:26,364 basehttp 355957 132513061426880 "GET /products/dashboard/ HTTP/1.1" 500 71945
+ERROR 2025-09-12 15:59:46,118 log 357518 126984816563904 Internal Server Error: /products/666/
+Traceback (most recent call last):
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/core/handlers/base.py", line 220, in _get_response
+    response = response.render()
+               ^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/response.py", line 114, in render
+    self.content = self.rendered_content
+                   ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/response.py", line 90, in rendered_content
+    template = self.resolve_template(self.template_name)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/response.py", line 72, in resolve_template
+    return select_template(template, using=self.using)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/loader.py", line 42, in select_template
+    return engine.get_template(template_name)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/backends/django.py", line 79, in get_template
+    return Template(self.engine.get_template(template_name), self)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+           ^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+                    ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/base.py", line 196, in compile_nodelist
+    nodelist = parser.parse()
+               ^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/base.py", line 518, in parse
+    raise self.error(token, e)
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/base.py", line 516, in parse
+    compiled_result = compile_func(self, token)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/loader_tags.py", line 299, in do_extends
+    nodelist = parser.parse()
+               ^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/base.py", line 518, in parse
+    raise self.error(token, e)
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/base.py", line 516, in parse
+    compiled_result = compile_func(self, token)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/loader_tags.py", line 234, in do_block
+    nodelist = parser.parse(("endblock",))
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/base.py", line 489, in parse
+    raise self.error(token, e)
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/base.py", line 487, in parse
+    filter_expression = self.compile_filter(token.contents)
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/base.py", line 609, in compile_filter
+    return FilterExpression(token, self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/base.py", line 705, in __init__
+    filter_func = parser.find_filter(filter_name)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/base.py", line 615, in find_filter
+    raise TemplateSyntaxError("Invalid filter: '%s'" % filter_name)
+django.template.exceptions.TemplateSyntaxError: Invalid filter: 'mul'
+ERROR 2025-09-12 15:59:46,459 basehttp 357518 126984816563904 "GET /products/666/ HTTP/1.1" 500 253648
+ERROR 2025-09-12 16:29:06,133 log 360723 138020040730304 Internal Server Error: /products/dashboard/
+Traceback (most recent call last):
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/trendzportal/portal/views.py", line 2631, in product_dashboard
+    max_price=Max('unit_price')
+              ^^^
+NameError: name 'Max' is not defined. Did you mean: 'max'?
+ERROR 2025-09-12 16:29:06,158 basehttp 360723 138020040730304 "GET /products/dashboard/ HTTP/1.1" 500 71579
+ERROR 2025-09-12 16:29:31,408 log 360723 138020040730304 Internal Server Error: /products/dashboard/
+Traceback (most recent call last):
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/trendzportal/portal/views.py", line 2631, in product_dashboard
+    max_price=Max('unit_price')
+              ^^^
+NameError: name 'Max' is not defined. Did you mean: 'max'?
+ERROR 2025-09-12 16:29:31,409 basehttp 360723 138020040730304 "GET /products/dashboard/ HTTP/1.1" 500 71569
+ERROR 2025-09-12 16:29:56,021 log 360723 138020040730304 Internal Server Error: /procurement/orders/create/
+Traceback (most recent call last):
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/core/handlers/base.py", line 220, in _get_response
+    response = response.render()
+               ^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/response.py", line 114, in render
+    self.content = self.rendered_content
+                   ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/response.py", line 90, in rendered_content
+    template = self.resolve_template(self.template_name)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/response.py", line 72, in resolve_template
+    return select_template(template, using=self.using)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/loader.py", line 42, in select_template
+    return engine.get_template(template_name)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/backends/django.py", line 79, in get_template
+    return Template(self.engine.get_template(template_name), self)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+           ^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+                    ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/base.py", line 196, in compile_nodelist
+    nodelist = parser.parse()
+               ^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/base.py", line 518, in parse
+    raise self.error(token, e)
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/base.py", line 516, in parse
+    compiled_result = compile_func(self, token)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/loader_tags.py", line 299, in do_extends
+    nodelist = parser.parse()
+               ^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/base.py", line 518, in parse
+    raise self.error(token, e)
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/base.py", line 516, in parse
+    compiled_result = compile_func(self, token)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/loader_tags.py", line 234, in do_block
+    nodelist = parser.parse(("endblock",))
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/base.py", line 489, in parse
+    raise self.error(token, e)
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/base.py", line 487, in parse
+    filter_expression = self.compile_filter(token.contents)
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/base.py", line 609, in compile_filter
+    return FilterExpression(token, self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/base.py", line 705, in __init__
+    filter_func = parser.find_filter(filter_name)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/base.py", line 615, in find_filter
+    raise TemplateSyntaxError("Invalid filter: '%s'" % filter_name)
+django.template.exceptions.TemplateSyntaxError: Invalid filter: 'add_class'
+ERROR 2025-09-12 16:29:56,025 basehttp 360723 138020040730304 "GET /procurement/orders/create/ HTTP/1.1" 500 233474
+ERROR 2025-09-12 16:41:05,556 log 362382 131140316821184 Internal Server Error: /products/dashboard/
+Traceback (most recent call last):
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/trendzportal/portal/views.py", line 2694, in product_dashboard
+    max_price=Max('unit_price')
+              ^^^
+NameError: name 'Max' is not defined. Did you mean: 'max'?
+ERROR 2025-09-12 16:41:05,564 basehttp 362382 131140316821184 "GET /products/dashboard/ HTTP/1.1" 500 71579
+ERROR 2025-09-12 16:44:39,512 log 362907 128907336480448 Internal Server Error: /products/dashboard/
+Traceback (most recent call last):
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/trendzportal/portal/views.py", line 2694, in product_dashboard
+    max_price=Max('unit_price')
+              ^^^
+NameError: name 'Max' is not defined. Did you mean: 'max'?
+ERROR 2025-09-12 16:44:39,514 basehttp 362907 128907336480448 "GET /products/dashboard/ HTTP/1.1" 500 72028
+ERROR 2025-09-12 16:45:24,001 log 362907 128907336480448 Internal Server Error: /products/dashboard/
+Traceback (most recent call last):
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/trendzportal/portal/views.py", line 2694, in product_dashboard
+    max_price=Max('unit_price')
+              ^^^
+NameError: name 'Max' is not defined. Did you mean: 'max'?
+ERROR 2025-09-12 16:45:24,002 basehttp 362907 128907336480448 "GET /products/dashboard/ HTTP/1.1" 500 72027
+ERROR 2025-09-12 16:48:28,159 log 363599 130859948721856 Internal Server Error: /products/dashboard/
+Traceback (most recent call last):
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/trendzportal/portal/views.py", line 2709, in product_dashboard
+    return render(request, 'portal/products/product_dashboard.html', context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/loader.py", line 15, in get_template
+    return engine.get_template(template_name)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/backends/django.py", line 79, in get_template
+    return Template(self.engine.get_template(template_name), self)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+           ^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+                    ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/base.py", line 196, in compile_nodelist
+    nodelist = parser.parse()
+               ^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/base.py", line 518, in parse
+    raise self.error(token, e)
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/base.py", line 516, in parse
+    compiled_result = compile_func(self, token)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/loader_tags.py", line 299, in do_extends
+    nodelist = parser.parse()
+               ^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/base.py", line 518, in parse
+    raise self.error(token, e)
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/base.py", line 516, in parse
+    compiled_result = compile_func(self, token)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/loader_tags.py", line 234, in do_block
+    nodelist = parser.parse(("endblock",))
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/base.py", line 518, in parse
+    raise self.error(token, e)
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/base.py", line 516, in parse
+    compiled_result = compile_func(self, token)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/defaulttags.py", line 962, in do_if
+    nodelist = parser.parse(("elif", "else", "endif"))
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/base.py", line 518, in parse
+    raise self.error(token, e)
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/base.py", line 516, in parse
+    compiled_result = compile_func(self, token)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/defaulttags.py", line 1531, in do_with
+    extra_context = token_kwargs(remaining_bits, parser, support_legacy=True)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/base.py", line 1127, in token_kwargs
+    kwargs[key] = parser.compile_filter(value)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/base.py", line 609, in compile_filter
+    return FilterExpression(token, self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/base.py", line 705, in __init__
+    filter_func = parser.find_filter(filter_name)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/base.py", line 615, in find_filter
+    raise TemplateSyntaxError("Invalid filter: '%s'" % filter_name)
+django.template.exceptions.TemplateSyntaxError: Invalid filter: 'sub'
+ERROR 2025-09-12 16:48:28,164 basehttp 363599 130859948721856 "GET /products/dashboard/ HTTP/1.1" 500 255254
+ERROR 2025-09-12 16:49:43,836 log 363888 129190992316096 Internal Server Error: /finance/daily-revenue/add/
+Traceback (most recent call last):
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/defaulttags.py", line 1035, in find_library
+    return parser.libraries[name]
+           ~~~~~~~~~~~~~~~~^^^^^^
+KeyError: 'widget_tweaks'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/core/handlers/base.py", line 220, in _get_response
+    response = response.render()
+               ^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/response.py", line 114, in render
+    self.content = self.rendered_content
+                   ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/response.py", line 90, in rendered_content
+    template = self.resolve_template(self.template_name)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/response.py", line 72, in resolve_template
+    return select_template(template, using=self.using)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/loader.py", line 42, in select_template
+    return engine.get_template(template_name)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/backends/django.py", line 79, in get_template
+    return Template(self.engine.get_template(template_name), self)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+           ^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+                    ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/base.py", line 196, in compile_nodelist
+    nodelist = parser.parse()
+               ^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/base.py", line 518, in parse
+    raise self.error(token, e)
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/base.py", line 516, in parse
+    compiled_result = compile_func(self, token)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/loader_tags.py", line 299, in do_extends
+    nodelist = parser.parse()
+               ^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/base.py", line 518, in parse
+    raise self.error(token, e)
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/base.py", line 516, in parse
+    compiled_result = compile_func(self, token)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/defaulttags.py", line 1097, in load
+    lib = find_library(parser, name)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/defaulttags.py", line 1037, in find_library
+    raise TemplateSyntaxError(
+django.template.exceptions.TemplateSyntaxError: 'widget_tweaks' is not a registered tag library. Must be one of:
+admin_list
+admin_modify
+admin_urls
+arabic_filters
+cache
+crispy_forms_field
+crispy_forms_filters
+crispy_forms_tags
+crispy_forms_utils
+debugger_tags
+highlighting
+humanize
+i18n
+import_export_tags
+indent_text
+l10n
+log
+math_filters
+rbac_tags
+rest_framework
+static
+syntax_color
+tz
+widont
+ERROR 2025-09-12 16:49:43,839 basehttp 363888 129190992316096 "GET /finance/daily-revenue/add/ HTTP/1.1" 500 234116
+ERROR 2025-09-12 18:13:57,606 log 373600 127098766526144 Internal Server Error: /procurement/orders/create/
+Traceback (most recent call last):
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/core/handlers/base.py", line 220, in _get_response
+    response = response.render()
+               ^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/response.py", line 114, in render
+    self.content = self.rendered_content
+                   ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/response.py", line 90, in rendered_content
+    template = self.resolve_template(self.template_name)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/response.py", line 72, in resolve_template
+    return select_template(template, using=self.using)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/loader.py", line 42, in select_template
+    return engine.get_template(template_name)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/backends/django.py", line 79, in get_template
+    return Template(self.engine.get_template(template_name), self)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+           ^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+                    ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/base.py", line 196, in compile_nodelist
+    nodelist = parser.parse()
+               ^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/base.py", line 518, in parse
+    raise self.error(token, e)
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/base.py", line 516, in parse
+    compiled_result = compile_func(self, token)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/loader_tags.py", line 299, in do_extends
+    nodelist = parser.parse()
+               ^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/base.py", line 518, in parse
+    raise self.error(token, e)
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/base.py", line 516, in parse
+    compiled_result = compile_func(self, token)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/loader_tags.py", line 234, in do_block
+    nodelist = parser.parse(("endblock",))
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/base.py", line 489, in parse
+    raise self.error(token, e)
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/base.py", line 487, in parse
+    filter_expression = self.compile_filter(token.contents)
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/base.py", line 609, in compile_filter
+    return FilterExpression(token, self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/base.py", line 705, in __init__
+    filter_func = parser.find_filter(filter_name)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/base.py", line 615, in find_filter
+    raise TemplateSyntaxError("Invalid filter: '%s'" % filter_name)
+django.template.exceptions.TemplateSyntaxError: Invalid filter: 'add_class'
+ERROR 2025-09-12 18:13:57,612 basehttp 373600 127098766526144 "GET /procurement/orders/create/ HTTP/1.1" 500 234271
+ERROR 2025-09-12 18:21:48,793 log 373600 127098766526144 Internal Server Error: /procurement/orders/create/
+Traceback (most recent call last):
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/core/handlers/base.py", line 220, in _get_response
+    response = response.render()
+               ^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/response.py", line 114, in render
+    self.content = self.rendered_content
+                   ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/response.py", line 90, in rendered_content
+    template = self.resolve_template(self.template_name)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/response.py", line 72, in resolve_template
+    return select_template(template, using=self.using)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/loader.py", line 42, in select_template
+    return engine.get_template(template_name)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/backends/django.py", line 79, in get_template
+    return Template(self.engine.get_template(template_name), self)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+           ^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+                    ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/base.py", line 196, in compile_nodelist
+    nodelist = parser.parse()
+               ^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/base.py", line 518, in parse
+    raise self.error(token, e)
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/base.py", line 516, in parse
+    compiled_result = compile_func(self, token)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/loader_tags.py", line 299, in do_extends
+    nodelist = parser.parse()
+               ^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/base.py", line 518, in parse
+    raise self.error(token, e)
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/base.py", line 516, in parse
+    compiled_result = compile_func(self, token)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/loader_tags.py", line 234, in do_block
+    nodelist = parser.parse(("endblock",))
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/base.py", line 489, in parse
+    raise self.error(token, e)
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/base.py", line 487, in parse
+    filter_expression = self.compile_filter(token.contents)
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/base.py", line 609, in compile_filter
+    return FilterExpression(token, self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/base.py", line 705, in __init__
+    filter_func = parser.find_filter(filter_name)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/template/base.py", line 615, in find_filter
+    raise TemplateSyntaxError("Invalid filter: '%s'" % filter_name)
+django.template.exceptions.TemplateSyntaxError: Invalid filter: 'add_class'
+ERROR 2025-09-12 18:21:48,795 basehttp 373600 127098766526144 "GET /procurement/orders/create/ HTTP/1.1" 500 234271

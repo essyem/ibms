@@ -83,13 +83,34 @@
                 this.handleProductSelection($(e.target));
             });
 
-            // Quantity/Price Changes
-            $(document).on('input change', '.quantity, .unit-price', (e) => {
+            // Quantity or unit price change
+            $(document).on('input', '.quantity, .unit-price', (e) => {
                 this.calculateRowTotal($(e.target).closest('tr'));
             });
-
-<<<<<<< Updated upstream
-            // Unit Price Changes (delegated)
+            
+            // Price override checkbox
+            $(document).on('change', '.use-product-price', (e) => {
+                const $checkbox = $(e.target);
+                const $row = $checkbox.closest('tr');
+                const $unitPriceInput = $row.find('.unit-price');
+                
+                if ($checkbox.is(':checked')) {
+                    // Reset to product price
+                    const $select = $row.find('.product-select');
+                    const $option = $select.find('option:selected');
+                    if ($option.val()) {
+                        const productPrice = $option.data('unit-price') || $option.data('selling-price') || 0;
+                        $unitPriceInput.val(parseFloat(productPrice).toFixed(2));
+                        $unitPriceInput.prop('readonly', true);
+                    }
+                } else {
+                    // Allow manual editing
+                    $unitPriceInput.prop('readonly', false);
+                    $unitPriceInput.focus();
+                }
+                
+                this.calculateRowTotal($row);
+            });            // Unit Price Changes (delegated)
             $(document).on('input change', '.unit-price', (e) => {
                 this.calculateRowTotal($(e.target).closest('tr'));
             });
@@ -212,21 +233,10 @@
 
         console.log('✅ Displaying', customers.length, 'customers');
         customers.forEach((customer) => {
-            const $item = $('<div class="customer-search-result-item">')
-                .css({
-                    'padding': '8px',
-                    'border-bottom': '1px solid #eee',
-                    'cursor': 'pointer',
-                    'background': '#f8f9fa'
-                })
-                .hover(function() {
-                    $(this).css('background', '#e9ecef');
-                }, function() {
-                    $(this).css('background', '#f8f9fa');
-                })
+            const $item = $('<div class="customer-search-result-item customer-item">')
                 .html(`
                     <strong>${customer.display_text}</strong><br>
-                    <small class="text-muted">${customer.phone || 'No phone'}</small>
+                    <small style="color: #94a3b8;">${customer.phone || 'No phone'}</small>
                 `)
                 .data('customer', customer)
                 .on('click', (e) => {
@@ -311,15 +321,19 @@
         }
 
         searchProducts(query, $row) {
+            console.log('🔍 Searching products for:', query);
             $.ajax({
                 url: '/ajax/product-search/',
                 method: 'GET',
                 data: { q: query },
                 success: (response) => {
+                    console.log('✅ Product search success:', response);
                     this.displaySearchResults(response.products, $row);
                 },
                 error: (xhr) => {
                     console.error('❌ Product search error:', xhr);
+                    console.error('Status:', xhr.status, 'Text:', xhr.statusText);
+                    console.error('Response:', xhr.responseText);
                     this.showError('Product search failed');
                 }
             });
@@ -330,19 +344,14 @@
             $results.empty();
 
             if (!products || products.length === 0) {
-                $results.html('<div class="no-results">No products found</div>').show();
+                $results.html('<div class="no-results p-2" style="color: #94a3b8;">No products found</div>').show();
                 return;
             }
 
+            console.log('✅ Displaying', products.length, 'products');
             products.forEach((product) => {
-                const $item = $('<div class="search-result-item">')
-                    .css({
-                        'padding': '8px',
-                        'border-bottom': '1px solid #eee',
-                        'cursor': 'pointer',
-                        'background': '#f8f9fa'
-                    })
-                    .html(`${product.display_text}<br><small class="text-muted">${product.stock_text}</small>`)
+                const $item = $('<div class="search-result-item product-item">')
+                    .html(`${product.display_text}<br><small style="color: #94a3b8;">${product.stock_text}</small>`)
                     .data('product', product)
                     .on('click', () => {
                         this.selectProduct(product, $row);
@@ -359,10 +368,30 @@
 
             const $select = $row.find('.product-select');
             const $searchInput = $row.find('.product-search-input');
+            const $unitPriceInput = $row.find('.unit-price');
 
             $select.val(product.id);
             $searchInput.val(product.name);
-            $row.find('.unit-price').val(product.unit_price);
+            
+            // Set unit price with option to override
+            const productPrice = parseFloat(product.unit_price || 0);
+            $unitPriceInput.val(productPrice.toFixed(2));
+            
+            // Add price override controls if they don't exist
+            if (!$row.find('.price-override-controls').length) {
+                const $priceCell = $unitPriceInput.closest('td');
+                $priceCell.append(`
+                    <div class="price-override-controls mt-1">
+                        <small>
+                            <label class="form-check-label" style="color: #94a3b8;">
+                                <input type="checkbox" class="form-check-input use-product-price" checked> 
+                                Use product price (QAR ${productPrice.toFixed(2)})
+                            </label>
+                        </small>
+                    </div>
+                `);
+            }
+            
             this.calculateRowTotal($row);
         }
 
@@ -392,11 +421,13 @@
         }
 
         lookupProductByBarcode(barcode, $row) {
+            console.log('🔍 Looking up product by barcode:', barcode);
             $.ajax({
                 url: '/ajax/barcode-lookup/',
                 method: 'GET',
                 data: { barcode: barcode },
                 success: (response) => {
+                    console.log('✅ Barcode lookup success:', response);
                     if (response.product) {
                         this.selectProduct(response.product, $row);
                         this.showSuccess(`Product found: ${response.product.name}`);
@@ -406,6 +437,8 @@
                 },
                 error: (xhr) => {
                     console.error('❌ Barcode lookup error:', xhr);
+                    console.error('Status:', xhr.status, 'Text:', xhr.statusText);
+                    console.error('Response:', xhr.responseText);
                     this.showError('Barcode lookup failed');
                 }
             });

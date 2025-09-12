@@ -20,6 +20,7 @@ urlpatterns = [
     path('reports/', report_view, name='reports'),
     path('reports/export/', export_reports, name='export_reports'),
     path('api/analytics/', analytics_api, name='analytics_api'),
+    path('dashboard_summary_api/', views.dashboard_summary_api, name='dashboard_summary_api'),
     path('profile/', views.profile, name='profile'),
     path('enquiry/', views.enquiry, name='enquiry'),
     path('terms/', views.terms, name='terms'),

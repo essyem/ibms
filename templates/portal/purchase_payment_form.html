@@ -4,7 +4,7 @@
 
 {% block title %}
     {% if object %}Edit Payment{% else %}Record Payment{% endif %} - Trendz Finance
-{% endblock procurement_content %}
+{% endblock %}
 
 {% block procurement_content %}
 <div class="row justify-content-center">
@@ -152,7 +152,7 @@
         </div>
     </div>
 </div>
-{% endblock procurement_content %}
+{% endblock %}
 
 {% block extra_js %}
 <script>
@@ -177,4 +177,4 @@ function updateBalance() {
 document.getElementById('id_amount_due').addEventListener('input', updateBalance);
 document.getElementById('id_amount_paid').addEventListener('input', updateBalance);
 </script>
-{% endblock procurement_content %}
+{% endblock extra_js %}

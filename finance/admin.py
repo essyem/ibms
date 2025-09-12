@@ -89,7 +89,7 @@ class FinanceTransactionAdmin(admin.ModelAdmin):
     def amount_display(self, obj):
         """Display amount with currency and color coding"""
         color = 'green' if obj.type in ['sale', 'sale_receipt'] else 'red'
-        amount_str = f"${obj.amount:,.2f}"
+        amount_str = f"QAR {obj.amount:,.2f}"
         return format_html(
             '<span style="color: {}; font-weight: bold;">{}</span>',
             color,
@@ -163,9 +163,9 @@ class FinancialSummaryAdmin(admin.ModelAdmin):
         
         return format_html(
             '<div style="text-align: center;">'
-            '<strong style="color: green;">${}</strong><br>'
+            '<strong style="color: green;">QAR {}</strong><br>'
             '<small>{} invoices</small><br>'
-            '<small>Avg: ${}</small>'
+            '<small>Avg: QAR {}</small>'
             '</div>',
             f"{total_sales:,.2f}",
             total_invoices,
@@ -181,9 +181,9 @@ class FinancialSummaryAdmin(admin.ModelAdmin):
         
         return format_html(
             '<div style="text-align: center;">'
-            '<strong style="color: orange;">${}</strong><br>'
+            '<strong style="color: orange;">QAR {}</strong><br>'
             '<small>{} orders</small><br>'
-            '<small>Paid: ${}</small>'
+            '<small>Paid: QAR {}</small>'
             '</div>',
             f"{total_purchases:,.2f}",
             total_purchase_orders,
@@ -199,7 +199,7 @@ class FinancialSummaryAdmin(admin.ModelAdmin):
         
         return format_html(
             '<div style="text-align: center;">'
-            '<strong style="color: {};">${}</strong><br>'
+            '<strong style="color: {};">QAR {}</strong><br>'
             '<small>{}% margin</small>'
             '</div>',
             color,
@@ -217,9 +217,9 @@ class FinancialSummaryAdmin(admin.ModelAdmin):
         
         return format_html(
             '<div style="text-align: center;">'
-            '<span style="color: green;">In: ${}</span><br>'
-            '<span style="color: red;">Out: ${}</span><br>'
-            '<strong style="color: {};">Net: ${}</strong>'
+            '<span style="color: green;">In: QAR {}</span><br>'
+            '<span style="color: red;">Out: QAR {}</span><br>'
+            '<strong style="color: {};">Net: QAR {}</strong>'
             '</div>',
             f"{cash_inflow:,.2f}",
             f"{cash_outflow:,.2f}",
@@ -274,7 +274,7 @@ class InventoryTransactionAdmin(admin.ModelAdmin):
     
     def total_cost_display(self, obj):
         """Display total cost"""
-        return f'${obj.total_cost:,.2f}'
+        return f'QAR {obj.total_cost:,.2f}'
     total_cost_display.short_description = 'Total Cost'
     total_cost_display.admin_order_field = 'total_cost'
     
@@ -284,7 +284,7 @@ class InventoryTransactionAdmin(admin.ModelAdmin):
         if profit != 0:
             color = 'green' if profit > 0 else 'red'
             return format_html(
-                '<span style="color: {}; font-weight: bold;">${}</span>',
+                '<span style="color: {}; font-weight: bold;">QAR {}</span>',
                 color, f"{profit:,.2f}"
             )
         return '-'
