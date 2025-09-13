@@ -1,9 +1,10 @@
-{% extends "finance/finance_base.html" %}
+{% extends "base.html" %}
 {% load widget_tweaks %}
 
 {% block title %}{% if object %}Edit{% else %}Add{% endif %} Transaction - Finance{% endblock %}
 
-{% block finance_content %}
+{% block content %}
+<div class="container-fluid">
 <div class="container-fluid">
     <div class="row">
         <div class="col-md-12">

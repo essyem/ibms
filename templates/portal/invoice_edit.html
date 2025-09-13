@@ -1,4 +1,4 @@
-{% extends "portal/invoice_base.html" %}
+{% extends "base.html" %}
 {% load static %}
 
 {% block title %}Edit Invoice - Trendz Portal{% endblock %}
@@ -126,7 +126,7 @@
 </style>
 {% endblock %}
 
-{% block invoice_content %}
+{% block content %}
 <div class="container mt-5 pt-3">
     <div class="row">
         <div class="col-12">
@@ -303,7 +303,7 @@
                                     <div class="card-body">
                                         <div class="form-group">
                                             <label class="form-label">Subtotal:</label>
-                                            <input type="text" class="form-control" id="subtotal" value="{{ object.subtotal|floatformat:2 }}" readonly>
+                                            <input type="text" class="form-control" id="subtotal" name="subtotal" value="{{ object.subtotal|floatformat:2 }}" readonly>
                                         </div>
                                         
                                         <div class="form-group">
@@ -314,25 +314,25 @@
                                         <div class="row">
                                             <div class="col-md-6 form-group">
                                                 <label class="form-label">Discount Type:</label>
-                                                <select class="form-select" id="discount-type">
+                                                <select class="form-select" id="discount-type" name="discount_type">
                                                     <option value="percent" {% if object.discount_type == 'percent' %}selected{% endif %}>Percentage</option>
                                                     <option value="amount" {% if object.discount_type == 'amount' %}selected{% endif %}>Fixed Amount</option>
                                                 </select>
                                             </div>
                                             <div class="col-md-6 form-group">
                                                 <label class="form-label">Discount Value:</label>
-                                                <input type="number" class="form-control" id="discount-value" value="{{ object.discount_value|default:0 }}" step="0.01" min="0">
+                                                <input type="number" class="form-control" id="discount-value" name="discount_value" value="{{ object.discount_value|default:0 }}" step="0.01" min="0">
                                             </div>
                                         </div>
                                         
                                         <div class="form-group">
                                             <label class="form-label">Discount Amount:</label>
-                                            <input type="text" class="form-control" id="discount-amount" value="{{ object.discount_amount|default:0|floatformat:2 }}" readonly>
+                                            <input type="text" class="form-control" id="discount-amount" name="discount_amount" value="{{ object.discount_amount|default:0|floatformat:2 }}" readonly>
                                         </div>
                                         
                                         <div class="form-group">
                                             <label class="form-label">Grand Total:</label>
-                                            <input type="text" class="form-control" id="grand-total" value="{{ object.grand_total|floatformat:2 }}" readonly>
+                                            <input type="text" class="form-control" id="grand-total" name="grand_total" value="{{ object.grand_total|floatformat:2 }}" readonly>
                                         </div>
                                     </div>
                                 </div>

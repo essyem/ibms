@@ -1,7 +1,8 @@
-{% extends 'procurement/procurement_base.html' %}
+{% extends 'base.html' %}
 
 {% block title %}Purchase Orders - Trendz Procurement{% endblock %}
 
-{% block procurement_content %}
+{% block content %}
+<div class="container-fluid">
 {% include 'portal/purchase_order_list.html' %}
 {% endblock %}

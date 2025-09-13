@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Welcome to Trendz Portal{% endblock %}
+{% block title %}Welcome to TrendzApps - IBMS{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -96,7 +96,7 @@
 <!-- Hero Section -->
 <section class="landing-hero">
     <div class="container">
-        <h1 class="display-3 mb-4">Welcome to Trendz Portal</h1>        {% if user.is_authenticated %}
+        <h1 class="display-3 mb-4">Welcome to TrendzApps - IBMS</h1>        {% if user.is_authenticated %}
             <!-- Content for logged-in users -->
             <p class="lead mb-4">Welcome back, {{ user.username }}!</p>
             <div class="d-flex gap-3 justify-content-center flex-wrap">
@@ -201,7 +201,7 @@
             <div class="col-lg-8">
                 <div class="auth-section text-center">
                     <h2 class="mb-4">Ready to Get Started?</h2>
-                    <p class="lead mb-4">Join hundreds of businesses using Trendz Portal to streamline their operations.</p>
+                    <p class="lead mb-4">Join hundreds of businesses using TrendzApps - IBMS to streamline their operations.</p>
                     <div class="d-flex gap-3 justify-content-center flex-wrap">
                         <a href="{% url 'admin:login' %}" class="btn btn-light btn-lg cta-btn">
                             <i class="fas fa-sign-in-alt me-2"></i>Login

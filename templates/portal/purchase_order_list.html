@@ -1,9 +1,10 @@
 <!-- templates/portal/purchase_order_list.html -->
-{% extends 'portal/procurement_base.html' %}
+{% extends 'base.html' %}
 
 {% block title %}Purchase Orders - Trendz Procurement{% endblock %}
 
-{% block procurement_content %}
+{% block content %}
+<div class="container-fluid">
 <div class="row mb-4">
     <div class="col-12">
         <div class="content-card">
@@ -45,7 +46,7 @@
                     </div>
                 </div>
 
-                {% if purchase_orders %}
+                {% if orders %}
                     <div class="table-responsive">
                         <table class="table table-hover">
                             <thead>
@@ -61,7 +62,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                {% for order in purchase_orders %}
+                                {% for order in orders %}
                                 <tr>
                                     <td>
                                         <strong>PO-{{ order.reference }}</strong>
@@ -109,11 +110,13 @@
                                             <a href="{% url 'procurement:purchase_order_edit' order.pk %}" class="btn btn-sm btn-outline-primary">
                                                 <i class="fas fa-edit"></i>
                                             </a>
+                                            {% comment %}
                                             {% if not order.payments.exists %}
                                                 <a href="{% url 'finance:purchase_payment_create' %}?order={{ order.pk }}" class="btn btn-sm btn-outline-success">
                                                     <i class="fas fa-credit-card"></i>
                                                 </a>
                                             {% endif %}
+                                            {% endcomment %}
                                         </div>
                                     </td>
                                 </tr>

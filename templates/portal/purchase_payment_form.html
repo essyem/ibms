@@ -1,12 +1,13 @@
 <!-- templates/portal/purchase_payment_form.html -->
-{% extends 'portal/procurement_base.html' %}
+{% extends 'base.html' %}
 {% load crispy_forms_tags %}
 
 {% block title %}
     {% if object %}Edit Payment{% else %}Record Payment{% endif %} - Trendz Finance
 {% endblock %}
 
-{% block procurement_content %}
+{% block content %}
+<div class="container-fluid">
 <div class="row justify-content-center">
     <div class="col-lg-8">
         <div class="content-card">

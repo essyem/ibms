@@ -1,6 +1,6 @@
 # portal/views.py
 from django.views import View
-from django.views.generic import (CreateView, UpdateView, 
+from django.views.generic import (CreateView, UpdateView, DeleteView,
 ListView, DetailView, View)
 from portal.models import Invoice, InvoiceItem, Product, Customer
 from procurement.models import Supplier, PurchaseOrder
@@ -15,7 +15,7 @@ from django.contrib import messages
 import decimal
 from decimal import Decimal
 from django.http import JsonResponse, HttpResponse, Http404, HttpResponseRedirect
-from django.urls import reverse
+from django.urls import reverse, reverse_lazy
 from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 from django.views.decorators.http import require_http_methods
 from .decorators import superuser_required, dashboard_access_required, reports_access_required
@@ -1025,9 +1025,12 @@ class InvoiceUpdateView(UpdateView):
                 invoice.subtotal = form.cleaned_data.get('subtotal', 0)
                 invoice.tax = form.cleaned_data.get('tax', 0)
                 invoice.discount_type = form.cleaned_data.get('discount_type', 'amount')
-                invoice.discount_value = form.cleaned_data.get('discount_value', 0)
+                discount_value = form.cleaned_data.get('discount_value', 0)
+                print(f"DEBUG: discount_value from form: {discount_value} (type: {type(discount_value)})")
+                invoice.discount_value = discount_value if discount_value is not None else 0
                 invoice.discount_amount = form.cleaned_data.get('discount_amount', 0)
                 invoice.grand_total = form.cleaned_data.get('grand_total', 0)
+                print(f"DEBUG: invoice.discount_value before save: {invoice.discount_value}")
                 invoice.save()
                 
                 messages.success(self.request, f"Invoice #{invoice.invoice_number} updated successfully!")
@@ -1184,6 +1187,28 @@ class InvoiceListView(ListView):
             'current_date_to': self.request.GET.get('date_to', ''),
         })
         return context
+
+
+class InvoiceDeleteView(DeleteView):
+    model = Invoice
+    success_url = reverse_lazy('portal:invoice_list')
+    
+    def get_queryset(self):
+        return super().get_queryset().filter(site=self.request.site)
+    
+    def delete(self, request, *args, **kwargs):
+        # Get the object before deletion for success message
+        self.object = self.get_object()
+        invoice_number = self.object.invoice_number
+        
+        # Perform the deletion
+        response = super().delete(request, *args, **kwargs)
+        
+        # Add success message
+        messages.success(request, f'Invoice #{invoice_number} has been deleted successfully.')
+        
+        return response
+
 
 def get_product_details(request, product_id):
     product = get_object_or_404(Product, pk=product_id)

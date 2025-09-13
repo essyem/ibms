@@ -277,6 +277,12 @@ class Invoice(SiteModel):
 
     def save(self, *args, **kwargs):
         print(f"Model save - incoming status: {self.status}")
+        
+        # Ensure discount_value is never null
+        if self.discount_value is None:
+            self.discount_value = 0
+            print(f"DEBUG: Set discount_value from None to 0")
+        
         super().save(*args, **kwargs)
         print(f"Model save - after save status: {self.status}")
 

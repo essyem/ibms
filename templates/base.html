@@ -3,87 +3,170 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Trendz Portal{% endblock %}</title>
-    
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Font Awesome -->
+    <title>{% block title %}TrendzApps - IBMS | Integrated Business Management System{% endblock %}</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="icon" href="{% static 'favicon/favicon.ico' %}">
     <style>
         :root {
-            --primary-color: #007bff;
-            --secondary-color: #6c757d;
-            --success-color: #28a745;
-            --danger-color: #dc3545;
-            --warning-color: #ffc107;
-            --info-color: #17a2b8;
+            --primary-color: #336699;
+            --secondary-color: #50b3a2;
+            --accent-color: #ff6b35;
+            --dark-color: #2c3e50;
             --light-color: #f8f9fa;
-            --dark-color: #343a40;
         }
         
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
         }
         
-        .navbar-brand {
-            font-weight: 700;
-            color: var(--primary-color) !important;
+        .navbar-custom {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
         
-        .card {
-            border: none;
-            border-radius: 15px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        .brand-logo {
+            max-height: 40px;
         }
         
-        .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-        }
-        
-        .btn-primary {
-            background: linear-gradient(45deg, #007bff, #0056b3);
-            border: none;
-            border-radius: 25px;
-            padding: 10px 25px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-        
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0, 123, 255, 0.4);
-        }
-        
-        .form-control, .form-select {
-            border-radius: 10px;
-            border: 1px solid #e9ecef;
-            padding: 12px 15px;
-            transition: all 0.3s ease;
-        }
-        
-        .form-control:focus, .form-select:focus {
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
-        }
-        
-        .footer {
-            background: #343a40;
+        /* Header styles */
+        .trendz-header {
+            background: linear-gradient(135deg, #336699 0%, #50b3a2 100%);
             color: white;
-            padding: 40px 0 20px;
-            margin-top: 60px;
+            padding: 1rem 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.15);
         }
         
+        .trendz-header h1 {
+            font-weight: 700;
+            font-size: 1.8rem;
+            margin: 0;
+        }
+        
+        .trendz-header a {
+            color: rgba(255,255,255,0.9);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        
+        .trendz-header a:hover {
+            color: white;
+        }
+        
+        /* Navigation styles */
+        .navbar-nav .nav-link {
+            font-weight: 500;
+            padding: 0.8rem 1.2rem !important;
+            transition: all 0.3s ease;
+            border-radius: 25px;
+            margin: 0 0.2rem;
+        }
+        
+        .navbar-nav .nav-link:hover {
+            background: rgba(255,255,255,0.15);
+            transform: translateY(-2px);
+        }
+        
+        /* Footer styles */
+        .footer {
+            background: linear-gradient(135deg, var(--dark-color) 0%, var(--primary-color) 100%);
+            color: white;
+            margin-top: auto;
+        }
+        
+        .footer a {
+            color: rgba(255,255,255,0.8);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        
+        .footer a:hover {
+            color: white;
+        }
+        
+        /* Smooth scrolling */
+        html {
+            scroll-behavior: smooth;
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: var(--primary-color);
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--secondary-color);
+        }
+        
+        /* Responsive adjustments */
         @media (max-width: 768px) {
-            .hero-section {
-                padding: 40px 0;
+            .trendz-header h1 {
+                font-size: 1.4rem;
+            }
+            
+            .trendz-header .col-md-6:last-child {
+                text-align: center !important;
+                margin-top: 10px;
+            }
+            
+            .navbar-brand {
+                font-size: 1.1rem !important;
+            }
+            
+            .navbar-nav .nav-link {
+                padding: 0.6rem 1rem !important;
+                margin: 0.1rem 0;
+            }
+            
+            .dropdown-menu {
+                border: none;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            }
+            
+            .footer {
+                text-align: center !important;
+            }
+            
+            .footer .col-md-6:last-child {
+                margin-top: 1rem;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .navbar-brand {
+                font-size: 1rem !important;
+            }
+            
+            .container {
+                padding-left: 15px;
+                padding-right: 15px;
+            }
+            
+            .navbar-nav .nav-link {
+                padding: 0.5rem 0.8rem !important;
+                font-size: 0.9rem;
+            }
+            
+            .dropdown-item {
+                padding: 0.5rem 1rem;
+                font-size: 0.9rem;
             }
         }
     </style>
-    
+
     {% block extra_css %}{% endblock %}
 </head>
 <body>
@@ -91,8 +174,9 @@
     <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
         <div class="container">
             <a class="navbar-brand" href="{% url 'portal:index' %}">
-                <i class="fas fa-chart-line me-2"></i>
-                Trendz Portal
+                <i class="fas fa-business-time me-2"></i>
+                <span class="d-none d-sm-inline">TrendzApps - IBMS</span>
+                <span class="d-inline d-sm-none">TrendzApps</span>
             </a>
             
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -138,12 +222,15 @@
                         </ul>
                     </li>
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="invoicesDropdown" role="button" data-bs-toggle="dropdown">
-                            <i class="fas fa-file-invoice me-1"></i>Invoices
+                        <a class="nav-link dropdown-toggle" href="#" id="salesDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-shopping-cart me-1"></i>Sales
                         </a>
                         <ul class="dropdown-menu">
                             <li><a class="dropdown-item" href="{% url 'portal:invoice_list' %}"><i class="fas fa-list me-2"></i>All Invoices</a></li>
                             <li><a class="dropdown-item" href="{% url 'portal:invoice_create' %}"><i class="fas fa-plus me-2"></i>Create Invoice</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{% url 'portal:customer_list' %}"><i class="fas fa-users me-2"></i>All Customers</a></li>
+                            <li><a class="dropdown-item" href="{% url 'portal:customer_create' %}"><i class="fas fa-user-plus me-2"></i>Add Customer</a></li>
                         </ul>
                     </li>
                 </ul>
@@ -157,7 +244,6 @@
                         </a>
                         <ul class="dropdown-menu">
                             <li><a class="dropdown-item" href="{% url 'portal:dashboard' %}"><i class="fas fa-tachometer-alt me-2"></i>Dashboard</a></li>
-                            <li><a class="dropdown-item" href="{% url 'portal:profile' %}"><i class="fas fa-user-edit me-2"></i>Profile</a></li>
                             {% if user.is_staff %}
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item" href="{% url 'admin:index' %}"><i class="fas fa-cog me-2"></i>Admin Panel</a></li>
@@ -195,19 +281,19 @@
     </main>
 
     <!-- Footer -->
-    <footer class="footer">
+    <footer class="footer py-4">
         <div class="container">
             <div class="row">
-                <div class="col-md-6">
-                    <h5><i class="fas fa-chart-line me-2"></i>Trendz Portal</h5>
-                    <p class="mb-0">Your comprehensive business management solution.</p>
+                <div class="col-md-6 mb-3 mb-md-0">
+                    <h5><i class="fas fa-business-time me-2"></i>TrendzApps - IBMS</h5>
+                    <p class="mb-2">Integrated Business Management System</p>
                     <p class="mb-0">
                         <i class="fas fa-envelope me-2"></i>hello@trendzapps.com<br>
                         <i class="fas fa-phone me-2"></i>+974 3051 4865
                     </p>
                 </div>
                 <div class="col-md-6 text-md-end">
-                    <p class="mb-0">&copy; {{ current_year|default:"2025" }} Trendz Trading & Services. All rights reserved.</p>
+                    <p class="mb-0">&copy; 2025 Trendz Trading & Services. All rights reserved.</p>
                 </div>
             </div>
         </div>

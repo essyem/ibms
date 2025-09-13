@@ -1,11 +1,12 @@
-{% extends 'portal/procurement_base.html' %}
+{% extends 'base.html' %}
 {% load crispy_forms_tags %}
 
 {% block title %}
     {% if object %}Edit Supplier{% else %}Add New Supplier{% endif %} - Procurement
 {% endblock %}
 
-{% block procurement_content %}
+{% block content %}
+<div class="container-fluid">
 <div class="container mt-4">
     <div class="row justify-content-center">
         <div class="col-lg-8">

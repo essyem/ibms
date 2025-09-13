@@ -207,10 +207,10 @@
                                         </td>
                                         <td>
                                             <div class="text-sm">
-                                                <div>Cost: ${{ product.cost_price }}</div>
-                                                <div>Price: <strong>${{ product.unit_price }}</strong></div>
+                                                <div>Cost: QAR {{ product.cost_price }}</div>
+                                                <div>Price: <strong>QAR {{ product.unit_price }}</strong></div>
                                                 <small class="text-success">
-                                                    Profit: ${{ product.profit_amount|floatformat:2 }}
+                                                    Profit: QAR {{ product.profit_amount|floatformat:2 }}
                                                     ({{ product.profit_margin|floatformat:1 }}%)
                                                 </small>
                                             </div>
@@ -292,8 +292,8 @@
                                             <span class="badge bg-secondary">{{ product.category.name }}</span>
                                         </p>
                                         <div class="mb-2">
-                                            <strong>${{ product.unit_price }}</strong>
-                                            <small class="text-muted">(Cost: ${{ product.cost_price }})</small>
+                                            <strong>QAR {{ product.unit_price }}</strong>
+                                            <small class="text-muted">(Cost: QAR {{ product.cost_price }})</small>
                                         </div>
                                         <div class="mb-2">
                                             {% if product.stock == 0 %}

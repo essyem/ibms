@@ -49,11 +49,11 @@
                     <div class="d-flex justify-content-between">
                         <div>
                             <h6 class="card-title mb-1">Stock Value</h6>
-                            <h2 class="mb-0">${{ total_stock_value|floatformat:0 }}</h2>
+                            <h2 class="mb-0">QAR {{ total_stock_value|floatformat:0 }}</h2>
                             <small>at cost price</small>
                         </div>
                         <div class="align-self-center">
-                            <i class="fas fa-dollar-sign fa-3x opacity-50"></i>
+                            <i class="fas fa-coins fa-3x opacity-50"></i>
                         </div>
                     </div>
                 </div>
@@ -117,7 +117,7 @@
                             <h6 class="mb-1">{{ product.name|truncatechars:30 }}</h6>
                             <small class="text-muted">{{ product.sku }} • {{ product.category.name }}</small>
                             <div class="mt-1">
-                                <span class="badge bg-primary">${{ product.unit_price }}</span>
+                                <span class="badge bg-primary">QAR {{ product.unit_price }}</span>
                                 {% if product.stock == 0 %}
                                     <span class="badge bg-danger">Out of Stock</span>
                                 {% elif product.stock <= 10 %}
@@ -233,22 +233,22 @@
                     <div class="row text-center">
                         <div class="col-6 mb-3">
                             <div class="border-end">
-                                <h4 class="text-primary mb-1">${{ price_stats.avg_cost|floatformat:2 }}</h4>
+                                <h4 class="text-primary mb-1">QAR {{ price_stats.avg_cost|floatformat:2 }}</h4>
                                 <small class="text-muted">Average Cost</small>
                             </div>
                         </div>
                         <div class="col-6 mb-3">
-                            <h4 class="text-success mb-1">${{ price_stats.avg_unit|floatformat:2 }}</h4>
+                            <h4 class="text-success mb-1">QAR {{ price_stats.avg_unit|floatformat:2 }}</h4>
                             <small class="text-muted">Average Price</small>
                         </div>
                         <div class="col-6">
                             <div class="border-end">
-                                <h5 class="text-info mb-1">${{ price_stats.min_price|floatformat:2 }}</h5>
+                                <h5 class="text-info mb-1">QAR {{ price_stats.min_price|floatformat:2 }}</h5>
                                 <small class="text-muted">Lowest Price</small>
                             </div>
                         </div>
                         <div class="col-6">
-                            <h5 class="text-warning mb-1">${{ price_stats.max_price|floatformat:2 }}</h5>
+                            <h5 class="text-warning mb-1">QAR {{ price_stats.max_price|floatformat:2 }}</h5>
                             <small class="text-muted">Highest Price</small>
                         </div>
                     </div>

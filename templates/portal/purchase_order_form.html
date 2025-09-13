@@ -1,4 +1,4 @@
-{% extends 'procurement/procurement_base.html' %}
+{% extends 'base.html' %}
 {% load crispy_forms_tags %}
 {% load widget_tweaks %}
 
@@ -6,7 +6,8 @@
     {% if object %}Edit Purchase Order{% else %}Create New Purchase Order{% endif %} - Procurement
 {% endblock %}
 
-{% block procurement_content %}
+{% block content %}
+<div class="container-fluid">
 <div class="container mt-4">
     <div class="row justify-content-center">
         <div class="col-lg-10">

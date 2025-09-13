@@ -1,72 +1,11 @@
-{% extends "portal/invoice_base.html" %}
+{% extends "base.html" %}
 {% load static %}
 
 {% block title %}Create Invoice - Trendz Portal{% endblock %}
 
 {% block extra_head %}
 <meta name="csrf-token" content="{{ csrf_token }}">
-<style>
-.customer-search-container {
-    position: relative;
-}
-.customer-search-results {
-    position: absolute !important;
-    z-index: 1050 !important;
-    background: white !important;
-    width: 100% !important;
-    max-height: 300px !important;
-    overflow-y: auto !important;
-    border: 1px solid #ddd !important;
-    border-radius: 0 0 4px 4px !important;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
-}
-.customer-search-result-item {
-    padding: 8px !important;
-    border-bottom: 1px solid #eee !important;
-    cursor: pointer !important;
-    background: #f8f9fa !important;
-}
-.customer-search-result-item:hover {
-    background: #e9ecef !important;
-}
-.customer-search-result-item:last-child {
-    border-bottom: none !important;
-}
 
-/* Product search results styling */
-.product-search-container {
-    position: relative;
-}
-.search-results {
-    position: absolute !important;
-    z-index: 1040 !important;
-    background: white !important;
-    width: 100% !important;
-    max-height: 300px !important;
-    overflow-y: auto !important;
-    border: 1px solid #ddd !important;
-    border-radius: 0 0 4px 4px !important;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
-    top: 100% !important;
-}
-.search-result-item {
-    padding: 8px !important;
-    border-bottom: 1px solid #eee !important;
-    cursor: pointer !important;
-    background: #f8f9fa !important;
-}
-.search-result-item:hover {
-    background: #e9ecef !important;
-}
-.search-result-item:last-child {
-    border-bottom: none !important;
-}
-.no-results {
-    padding: 8px !important;
-    color: #6c757d !important;
-    font-style: italic !important;
-}
-</style>
 {% endblock %}
 
 {% block content %}

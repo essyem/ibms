@@ -11,7 +11,7 @@ urlpatterns = [
     path('', TemplateView.as_view(template_name='portal/index.html'), name='index'),
     # Authentication URLs
     path('accounts/login/', auth_views.LoginView.as_view(template_name='registration/login.html'), name='login'),
-    path('accounts/logout/', auth_views.LogoutView.as_view(template_name='registration/logged_out.html'), name='logout'),
+    path('accounts/logout/', auth_views.LogoutView.as_view(next_page='/'), name='logout'),
     #path('accounts/registration/', auth_views.RegistrationView.as_view(template_name='registration/registration.html'), name='registration'),
     #path('accounts/password_change/', auth_views.PasswordChangeView.as_view(template_name='registration/password_change_form.html'), name='password_change'),
 

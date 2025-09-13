@@ -1,7 +1,7 @@
 {% extends "portal/dashboard.html" %}
 {% load static %}
 
-{% block title %}Trendz Portal - Dashboard{% endblock %}
+{% block title %}TrendzApps Dashboard - IBMS{% endblock %}
 
 {% block extra_css %}
 {{ block.super }}
@@ -17,7 +17,7 @@
         <div class="col-12">
             <div class="welcome-card">
                 <div class="row">
-                    <div class="col-md-8">
+                    <div class="col-md-12">
                         <h3 class="text-primary mb-3">
                             <i class="fas fa-chart-line me-2"></i>Business Overview
                         </h3>
@@ -37,30 +37,6 @@
                             <a href="{% url 'portal:reports' %}" class="btn btn-info btn-sm">
                                 <i class="fas fa-chart-bar me-1"></i>Reports
                             </a>
-                        </div>
-                    </div>
-                    <div class="col-md-4 text-center">
-                        <div class="system-status">
-                            <h5 class="text-success mb-3">
-                                <i class="fas fa-check-circle me-2"></i>System Status: Online
-                            </h5>
-                            <div class="d-flex justify-content-center gap-3">
-                                <div class="text-center">
-                                    <div class="bg-success rounded-circle d-inline-block" style="width: 12px; height: 12px;"></div>
-                                    <br><small class="text-muted">Database</small>
-                                </div>
-                                <div class="text-center">
-                                    <div class="bg-success rounded-circle d-inline-block" style="width: 12px; height: 12px;"></div>
-                                    <br><small class="text-muted">Portal</small>
-                                </div>
-                                <div class="text-center">
-                                    <div class="bg-warning rounded-circle d-inline-block" style="width: 12px; height: 12px;"></div>
-                                    <br><small class="text-muted">Maintenance</small>
-                                </div>
-                            </div>
-                            <div class="mt-3">
-                                <canvas id="chartRevenue" height="100"></canvas>
-                            </div>
                         </div>
                     </div>
                 </div>

@@ -1,5 +1,5 @@
 <!-- templates/portal/barcode_scanner.html -->
-{% extends 'portal/invoice_base.html' %}
+{% extends 'base.html' %}
 
 {% block invoice_extra_css %}
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -84,7 +84,7 @@
 </style>
 {% endblock %}
 
-{% block invoice_content %}
+{% block content %}
 <div class="container mt-4">
     <div class="row mb-4">
         <div class="col-12">

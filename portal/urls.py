@@ -4,7 +4,7 @@ from . import views
 from .views import (
     ProductSearchView, product_search_fallback, barcode_scanner_view,
     barcode_scan, InvoiceCreateView, InvoiceUpdateView, InvoiceDetailView, InvoiceListView,
-    get_product_details, dashboard_view, report_view, analytics_api, export_reports,
+    InvoiceDeleteView, get_product_details, dashboard_view, report_view, analytics_api, export_reports,
     CustomerListView, CustomerCreateView, CustomerDetailView, CustomerUpdateView,
     ProductListView, ProductDetailView, ProductCreateView, ProductUpdateView,
     product_delete, product_toggle_active, product_dashboard
@@ -42,6 +42,7 @@ urlpatterns = [
     path('invoices/create/', InvoiceCreateView.as_view(), name='invoice_create'),
     path('invoices/<int:pk>/', InvoiceDetailView.as_view(), name='invoice_detail'),
     path('invoices/<int:pk>/edit/', InvoiceUpdateView.as_view(), name='invoice_update'),
+    path('invoices/<int:pk>/delete/', InvoiceDeleteView.as_view(), name='invoice_delete'),
     path('invoices/<int:pk>/pdf/', views.InvoicePDFView.as_view(), name='invoice_pdf'),
     
     # Customer management
