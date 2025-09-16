@@ -1,0 +1,480 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% load static %}
+
+{% block title %}Product Catalog - TrendzApps{% endblock %}
+
+{% block extra_css %}
+<style>
+.catalog-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 2rem 0;
+    margin-bottom: 2rem;
+}
+
+.product-card {
+    border: none;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    height: 100%;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.product-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.product-image {
+    height: 250px;
+    background: linear-gradient(45deg, #f8f9fa, #e9ecef);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.product-image i {
+    font-size: 4rem;
+    color: #6c757d;
+}
+
+.product-info {
+    padding: 1.5rem;
+}
+
+.product-name {
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+    font-size: 1.1rem;
+    line-height: 1.3;
+}
+
+.product-price {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #e74c3c;
+    margin-bottom: 1rem;
+}
+
+.product-sku {
+    font-size: 0.85rem;
+    color: #6c757d;
+    margin-bottom: 0.5rem;
+}
+
+.stock-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font-size: 0.75rem;
+}
+
+.add-to-cart-btn {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    border: none;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 25px;
+    transition: all 0.3s ease;
+    width: 100%;
+}
+
+.add-to-cart-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+    color: white;
+}
+
+.filters-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    margin-bottom: 2rem;
+}
+
+.social-share {
+    position: fixed;
+    top: 50%;
+    right: 20px;
+    transform: translateY(-50%);
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.social-btn {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+.social-btn:hover {
+    transform: scale(1.1);
+    color: white;
+}
+
+.social-btn.facebook { background: #3b5998; }
+.social-btn.twitter { background: #1da1f2; }
+.social-btn.whatsapp { background: #25d366; }
+
+.whatsapp-float {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
+}
+
+.whatsapp-btn {
+    background: #25d366;
+    color: white;
+    border-radius: 50px;
+    padding: 15px 25px;
+    text-decoration: none;
+    box-shadow: 0 4px 15px rgba(37, 211, 102, 0.3);
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.whatsapp-btn:hover {
+    background: #20c75a;
+    transform: translateY(-2px);
+    color: white;
+}
+
+.price-range-slider {
+    margin: 1rem 0;
+}
+
+@media (max-width: 768px) {
+    .social-share { display: none; }
+    
+    .product-card {
+        margin-bottom: 1rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Catalog Header -->
+<div class="catalog-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="mb-2"><i class="fas fa-store me-2"></i>Product Catalog</h1>
+                <p class="mb-0">Discover our amazing range of products with competitive prices</p>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <div class="h3 mb-0">{{ total_products|intcomma }} Products Available</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <!-- Filters Section -->
+    <div class="filters-card">
+        <div class="card-body">
+            <form method="get" class="row align-items-end">
+                <div class="col-md-3 mb-3">
+                    <label class="form-label"><i class="fas fa-search me-1"></i>Search Products</label>
+                    <input type="text" name="q" class="form-control" 
+                           placeholder="Search by name, SKU, or description..." 
+                           value="{{ current_search }}">
+                </div>
+                
+                <div class="col-md-2 mb-3">
+                    <label class="form-label"><i class="fas fa-tags me-1"></i>Category</label>
+                    <select name="category" class="form-select">
+                        <option value="">All Categories</option>
+                        {% for category in categories %}
+                            <option value="{{ category.id }}" 
+                                    {% if current_category == category.id|stringformat:"s" %}selected{% endif %}>
+                                {{ category.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="col-md-2 mb-3">
+                    <label class="form-label"><i class="fas fa-sort me-1"></i>Sort By</label>
+                    <select name="sort" class="form-select">
+                        <option value="newest" {% if current_sort == 'newest' %}selected{% endif %}>Newest First</option>
+                        <option value="price_low" {% if current_sort == 'price_low' %}selected{% endif %}>Price: Low to High</option>
+                        <option value="price_high" {% if current_sort == 'price_high' %}selected{% endif %}>Price: High to Low</option>
+                        <option value="name" {% if current_sort == 'name' %}selected{% endif %}>Name A-Z</option>
+                        <option value="popular" {% if current_sort == 'popular' %}selected{% endif %}>Most Popular</option>
+                    </select>
+                </div>
+                
+                <div class="col-md-2 mb-3">
+                    <label class="form-label"><i class="fas fa-money-bill me-1"></i>Min Price (QAR)</label>
+                    <input type="number" name="min_price" class="form-control" 
+                           placeholder="0" value="{{ current_min_price }}" min="0" step="0.01">
+                </div>
+                
+                <div class="col-md-2 mb-3">
+                    <label class="form-label">Max Price (QAR)</label>
+                    <input type="number" name="max_price" class="form-control" 
+                           placeholder="1000" value="{{ current_max_price }}" min="0" step="0.01">
+                </div>
+                
+                <div class="col-md-1 mb-3">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-filter"></i>
+                    </button>
+                </div>
+            </form>
+            
+            {% if current_search or current_category or current_min_price or current_max_price %}
+            <div class="mt-3">
+                <a href="{% url 'portal:public_catalog' %}" class="btn btn-outline-secondary btn-sm">
+                    <i class="fas fa-times me-1"></i>Clear All Filters
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Products Grid -->
+    <div class="row">
+        {% for product in products %}
+        <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+            <div class="card product-card">
+                <div class="product-image">
+                    <i class="fas fa-box"></i>
+                    {% if product.stock <= 10 %}
+                    <span class="badge bg-warning stock-badge">
+                        {% if product.stock == 0 %}
+                            Out of Stock
+                        {% else %}
+                            Low Stock
+                        {% endif %}
+                    </span>
+                    {% endif %}
+                </div>
+                
+                <div class="product-info">
+                    <div class="product-sku">SKU: {{ product.sku }}</div>
+                    <h5 class="product-name">{{ product.name }}</h5>
+                    
+                    {% if product.description %}
+                    <p class="text-muted small mb-2">
+                        {{ product.description|truncatewords:10 }}
+                    </p>
+                    {% endif %}
+                    
+                    <div class="product-price">QAR {{ product.unit_price|floatformat:2 }}</div>
+                    
+                    <div class="d-flex gap-2">
+                        <a href="{% url 'portal:public_product_detail' product.pk %}" 
+                           class="btn btn-outline-primary flex-fill">
+                            <i class="fas fa-eye me-1"></i>View Details
+                        </a>
+                        
+                        {% if product.stock > 0 %}
+                        <button class="btn add-to-cart-btn flex-fill" 
+                                onclick="addToCart({{ product.id }}, '{{ product.name|addslashes }}')">
+                            <i class="fas fa-shopping-cart me-1"></i>Add to Cart
+                        </button>
+                        {% else %}
+                        <button class="btn btn-secondary flex-fill" disabled>
+                            <i class="fas fa-times me-1"></i>Out of Stock
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12 text-center py-5">
+            <i class="fas fa-search fa-3x text-muted mb-3"></i>
+            <h4 class="text-muted">No products found</h4>
+            <p class="text-muted">Try adjusting your search criteria or browse our categories.</p>
+            <a href="{% url 'portal:public_catalog' %}" class="btn btn-primary">
+                <i class="fas fa-store me-1"></i>View All Products
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if is_paginated %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <nav aria-label="Product pagination">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page=1">
+                                <i class="fas fa-angle-double-left"></i>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.previous_page_number }}">
+                                <i class="fas fa-angle-left"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+                    
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ num }}</span>
+                            </li>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <li class="page-item">
+                                <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ num }}">{{ num }}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.next_page_number }}">
+                                <i class="fas fa-angle-right"></i>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.paginator.num_pages }}">
+                                <i class="fas fa-angle-double-right"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Social Share Sidebar -->
+<div class="social-share">
+    <a href="https://www.facebook.com/sharer/sharer.php?u={{ request.build_absolute_uri }}" 
+       target="_blank" class="social-btn facebook" title="Share on Facebook">
+        <i class="fab fa-facebook-f"></i>
+    </a>
+    <a href="https://twitter.com/intent/tweet?url={{ request.build_absolute_uri }}&text=Check out our amazing product catalog!" 
+       target="_blank" class="social-btn twitter" title="Share on Twitter">
+        <i class="fab fa-twitter"></i>
+    </a>
+    <a href="https://wa.me/{{ whatsapp_number|cut:'+' }}?text=Hi! I'm browsing your product catalog and would like to know more about your products." 
+       target="_blank" class="social-btn whatsapp" title="Contact via WhatsApp">
+        <i class="fab fa-whatsapp"></i>
+    </a>
+</div>
+
+<!-- WhatsApp Float Button -->
+<div class="whatsapp-float">
+    <a href="https://wa.me/{{ whatsapp_number|cut:'+' }}?text=Hi! I'm interested in your products. Can you help me with more information?" 
+       target="_blank" class="whatsapp-btn">
+        <i class="fab fa-whatsapp fa-lg"></i>
+        <span class="d-none d-md-inline">Chat with us!</span>
+    </a>
+</div>
+
+<!-- Shopping Cart Toast (will be shown when items are added) -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+    <div id="cart-toast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header bg-success text-white">
+            <i class="fas fa-shopping-cart me-2"></i>
+            <strong class="me-auto">Added to Cart</strong>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+        </div>
+        <div class="toast-body">
+            <span id="cart-message">Product added to cart successfully!</span>
+            <div class="mt-2">
+                <a href="#" class="btn btn-sm btn-outline-primary me-2" onclick="viewCart()">View Cart</a>
+                <button class="btn btn-sm btn-success" onclick="continueShoppingToast()">Continue Shopping</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Shopping cart functionality
+let cart = JSON.parse(localStorage.getItem('shopping_cart') || '{}');
+
+function addToCart(productId, productName) {
+    if (cart[productId]) {
+        cart[productId].quantity += 1;
+    } else {
+        cart[productId] = {
+            name: productName,
+            quantity: 1
+        };
+    }
+    
+    localStorage.setItem('shopping_cart', JSON.stringify(cart));
+    updateCartCounter();
+    showCartToast(productName);
+}
+
+function updateCartCounter() {
+    const totalItems = Object.values(cart).reduce((sum, item) => sum + item.quantity, 0);
+    const cartCounter = document.getElementById('cart-counter');
+    if (cartCounter) {
+        cartCounter.textContent = totalItems;
+        cartCounter.style.display = totalItems > 0 ? 'block' : 'none';
+    }
+}
+
+function showCartToast(productName) {
+    const toast = new bootstrap.Toast(document.getElementById('cart-toast'));
+    document.getElementById('cart-message').textContent = `"${productName}" added to cart successfully!`;
+    toast.show();
+}
+
+function viewCart() {
+    // This will be implemented when we create the cart page
+    alert('Cart functionality will be implemented in the next step!');
+}
+
+function continueShoppingToast() {
+    const toast = bootstrap.Toast.getInstance(document.getElementById('cart-toast'));
+    toast.hide();
+}
+
+// Initialize cart counter on page load
+document.addEventListener('DOMContentLoaded', function() {
+    updateCartCounter();
+});
+
+// Share functionality
+function shareOnSocial(platform, url, title) {
+    let shareUrl;
+    switch(platform) {
+        case 'facebook':
+            shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
+            break;
+        case 'twitter':
+            shareUrl = `https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title)}`;
+            break;
+        case 'linkedin':
+            shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`;
+            break;
+    }
+    
+    if (shareUrl) {
+        window.open(shareUrl, '_blank', 'width=600,height=400');
+    }
+}
+</script>
+{% endblock %}

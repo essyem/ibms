@@ -7,7 +7,12 @@ from .views import (
     InvoiceDeleteView, get_product_details, dashboard_view, report_view, analytics_api, export_reports,
     CustomerListView, CustomerCreateView, CustomerDetailView, CustomerUpdateView,
     ProductListView, ProductDetailView, ProductCreateView, ProductUpdateView,
-    product_delete, product_toggle_active, product_dashboard
+    product_delete, product_toggle_active, product_dashboard,
+    PublicProductCatalogView, PublicProductDetailView
+)
+from .cart_views import (
+    add_to_cart, update_cart_item, remove_from_cart, cart_count,
+    CartView, CheckoutView, order_confirmation
 )
 from . import ajax_views
 
@@ -36,6 +41,19 @@ urlpatterns = [
     path('products/<int:pk>/delete/', product_delete, name='product_delete'),
     path('products/<int:pk>/toggle-active/', product_toggle_active, name='product_toggle_active'),
     path('api/products/<int:product_id>/', get_product_details, name='product_details'),
+    
+    # Public product catalog (e-commerce)
+    path('catalog/', PublicProductCatalogView.as_view(), name='public_catalog'),
+    path('catalog/<int:pk>/', PublicProductDetailView.as_view(), name='public_product_detail'),
+    
+    # Shopping cart and checkout
+    path('cart/', CartView.as_view(), name='cart'),
+    path('cart/add/', add_to_cart, name='add_to_cart'),
+    path('cart/update/', update_cart_item, name='update_cart_item'),
+    path('cart/remove/', remove_from_cart, name='remove_from_cart'),
+    path('cart/count/', cart_count, name='cart_count'),
+    path('checkout/', CheckoutView.as_view(), name='checkout'),
+    path('order-confirmation/<str:order_number>/', order_confirmation, name='order_confirmation'),
     
     # Invoice management
     path('invoices/', InvoiceListView.as_view(), name='invoice_list'),

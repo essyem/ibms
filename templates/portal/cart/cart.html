@@ -1,0 +1,440 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% load static %}
+
+{% block title %}Shopping Cart - TrendzApps{% endblock %}
+
+{% block extra_css %}
+<style>
+.cart-header {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    color: white;
+    padding: 2rem 0;
+    margin-bottom: 2rem;
+}
+
+.cart-item-card {
+    border: none;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    border-radius: 12px;
+    margin-bottom: 1rem;
+    transition: all 0.3s ease;
+}
+
+.cart-item-card:hover {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.product-image {
+    width: 100px;
+    height: 100px;
+    background: linear-gradient(45deg, #f8f9fa, #e9ecef);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.product-image i {
+    font-size: 2.5rem;
+    color: #6c757d;
+}
+
+.quantity-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.quantity-btn {
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    border: 2px solid #28a745;
+    background: white;
+    color: #28a745;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.quantity-btn:hover {
+    background: #28a745;
+    color: white;
+}
+
+.quantity-input {
+    width: 60px;
+    text-align: center;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    padding: 8px;
+}
+
+.cart-summary {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    padding: 2rem;
+    position: sticky;
+    top: 20px;
+}
+
+.checkout-btn {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    border: none;
+    color: white;
+    padding: 1rem 2rem;
+    border-radius: 25px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    width: 100%;
+    transition: all 0.3s ease;
+}
+
+.checkout-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(40, 167, 69, 0.3);
+    color: white;
+}
+
+.whatsapp-btn {
+    background: #25d366;
+    border: none;
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 25px;
+    font-weight: 600;
+    width: 100%;
+    margin-top: 1rem;
+    transition: all 0.3s ease;
+}
+
+.whatsapp-btn:hover {
+    background: #20c75a;
+    color: white;
+}
+
+.empty-cart {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: #6c757d;
+}
+
+.empty-cart i {
+    font-size: 4rem;
+    margin-bottom: 2rem;
+}
+
+.continue-shopping-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 25px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.continue-shopping-btn:hover {
+    transform: translateY(-2px);
+    color: white;
+}
+
+.remove-item-btn {
+    background: #dc3545;
+    border: none;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    transition: all 0.3s ease;
+}
+
+.remove-item-btn:hover {
+    background: #c82333;
+    transform: translateY(-1px);
+}
+
+@media (max-width: 768px) {
+    .cart-item-card .row {
+        align-items: start;
+    }
+    
+    .product-image {
+        width: 80px;
+        height: 80px;
+    }
+    
+    .quantity-controls {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Cart Header -->
+<div class="cart-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="mb-2"><i class="fas fa-shopping-cart me-2"></i>Shopping Cart</h1>
+                <p class="mb-0">Review your selected items and proceed to checkout</p>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <div class="h4 mb-0">{{ total_items|intcomma }} Item{{ total_items|pluralize }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    {% if cart_items %}
+    <div class="row">
+        <!-- Cart Items -->
+        <div class="col-lg-8">
+            {% for item in cart_items %}
+            <div class="cart-item-card">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <!-- Product Image -->
+                        <div class="col-md-2 col-3 text-center">
+                            <div class="product-image">
+                                <i class="fas fa-box"></i>
+                            </div>
+                        </div>
+                        
+                        <!-- Product Info -->
+                        <div class="col-md-4 col-9">
+                            <h6 class="mb-1">{{ item.product.name }}</h6>
+                            <p class="text-muted small mb-1">SKU: {{ item.product.sku }}</p>
+                            {% if item.product.category %}
+                            <p class="text-muted small mb-1">Category: {{ item.product.category.name }}</p>
+                            {% endif %}
+                            <p class="text-success small mb-0">
+                                <i class="fas fa-check-circle me-1"></i>In Stock ({{ item.product.stock }} available)
+                            </p>
+                        </div>
+                        
+                        <!-- Quantity Controls -->
+                        <div class="col-md-3 col-6 text-center">
+                            <div class="quantity-controls">
+                                <button class="quantity-btn" onclick="updateQuantity({{ item.id }}, {{ item.quantity }} - 1)">
+                                    <i class="fas fa-minus"></i>
+                                </button>
+                                <input type="number" class="quantity-input" 
+                                       value="{{ item.quantity }}" min="1" max="{{ item.product.stock }}"
+                                       onchange="updateQuantity({{ item.id }}, this.value)">
+                                <button class="quantity-btn" onclick="updateQuantity({{ item.id }}, {{ item.quantity }} + 1)">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Price and Actions -->
+                        <div class="col-md-3 col-6 text-center">
+                            <div class="h6 text-danger mb-2" id="item-total-{{ item.id }}">
+                                QAR {{ item.quantity|mul:item.product.unit_price|floatformat:2 }}
+                            </div>
+                            <div class="small text-muted mb-2">
+                                QAR {{ item.product.unit_price|floatformat:2 }} each
+                            </div>
+                            <button class="remove-item-btn" onclick="removeItem({{ item.id }})">
+                                <i class="fas fa-trash me-1"></i>Remove
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+            
+            <!-- Continue Shopping -->
+            <div class="text-center mt-4">
+                <a href="{% url 'portal:public_catalog' %}" class="continue-shopping-btn">
+                    <i class="fas fa-arrow-left me-2"></i>Continue Shopping
+                </a>
+            </div>
+        </div>
+        
+        <!-- Cart Summary -->
+        <div class="col-lg-4">
+            <div class="cart-summary">
+                <h5 class="mb-4"><i class="fas fa-receipt me-2"></i>Order Summary</h5>
+                
+                <div class="d-flex justify-content-between mb-3">
+                    <span>Items ({{ total_items }})</span>
+                    <span id="cart-subtotal">QAR {{ total_amount|floatformat:2 }}</span>
+                </div>
+                
+                <div class="d-flex justify-content-between mb-3">
+                    <span>Delivery</span>
+                    <span class="text-success">FREE</span>
+                </div>
+                
+                <hr>
+                
+                <div class="d-flex justify-content-between mb-4">
+                    <strong>Total</strong>
+                    <strong class="text-danger" id="cart-total">QAR {{ total_amount|floatformat:2 }}</strong>
+                </div>
+                
+                <a href="{% url 'portal:checkout' %}" class="checkout-btn">
+                    <i class="fas fa-credit-card me-2"></i>Proceed to Checkout
+                </a>
+                
+                <a href="https://wa.me/{{ whatsapp_number|cut:'+' }}?text=Hi! I have items in my cart and would like to place an order. Can you help me?" 
+                   target="_blank" class="whatsapp-btn">
+                    <i class="fab fa-whatsapp me-2"></i>Order via WhatsApp
+                </a>
+                
+                <div class="text-center mt-3">
+                    <small class="text-muted">
+                        <i class="fas fa-shield-alt me-1"></i>
+                        Secure checkout with 100% buyer protection
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    {% else %}
+    <!-- Empty Cart -->
+    <div class="empty-cart">
+        <i class="fas fa-shopping-cart"></i>
+        <h3>Your cart is empty</h3>
+        <p>Looks like you haven't added any items to your cart yet.</p>
+        <a href="{% url 'portal:public_catalog' %}" class="btn btn-primary btn-lg">
+            <i class="fas fa-store me-2"></i>Start Shopping
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Toast for cart updates -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+    <div id="cart-update-toast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header">
+            <i class="fas fa-shopping-cart me-2"></i>
+            <strong class="me-auto">Cart Updated</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+        </div>
+        <div class="toast-body" id="cart-update-message">
+            Cart updated successfully!
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function updateQuantity(itemId, newQuantity) {
+    if (newQuantity < 1) {
+        if (confirm('Remove this item from cart?')) {
+            removeItem(itemId);
+        }
+        return;
+    }
+    
+    fetch('{% url "portal:update_cart_item" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+        },
+        body: JSON.stringify({
+            item_id: itemId,
+            quantity: newQuantity
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Update item total price
+            document.getElementById(`item-total-${itemId}`).textContent = 
+                `QAR ${data.item_total_price.toFixed(2)}`;
+            
+            // Update cart totals
+            document.getElementById('cart-subtotal').textContent = 
+                `QAR ${data.cart_total_amount.toFixed(2)}`;
+            document.getElementById('cart-total').textContent = 
+                `QAR ${data.cart_total_amount.toFixed(2)}`;
+            
+            // Update navbar cart counter
+            updateCartCounter();
+            
+            showToast(data.message);
+        } else {
+            alert(data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error updating cart item');
+    });
+}
+
+function removeItem(itemId) {
+    if (!confirm('Are you sure you want to remove this item?')) {
+        return;
+    }
+    
+    fetch('{% url "portal:remove_from_cart" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+        },
+        body: JSON.stringify({
+            item_id: itemId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Reload page to reflect changes
+            location.reload();
+        } else {
+            alert(data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error removing item from cart');
+    });
+}
+
+function updateCartCounter() {
+    fetch('{% url "portal:cart_count" %}')
+    .then(response => response.json())
+    .then(data => {
+        const cartCounter = document.getElementById('cart-counter');
+        if (cartCounter) {
+            cartCounter.textContent = data.cart_total_items;
+            cartCounter.style.display = data.cart_total_items > 0 ? 'block' : 'none';
+        }
+    });
+}
+
+function showToast(message) {
+    document.getElementById('cart-update-message').textContent = message;
+    const toast = new bootstrap.Toast(document.getElementById('cart-update-toast'));
+    toast.show();
+}
+
+// Add CSRF token to page if not present
+document.addEventListener('DOMContentLoaded', function() {
+    if (!document.querySelector('[name=csrfmiddlewaretoken]')) {
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = 'csrfmiddlewaretoken';
+        csrfInput.value = '{{ csrf_token }}';
+        document.body.appendChild(csrfInput);
+    }
+});
+</script>
+{% endblock %}

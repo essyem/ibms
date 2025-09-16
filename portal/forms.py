@@ -73,7 +73,7 @@ class InvoiceItemForm(forms.ModelForm):
         })
         
         if self.instance and self.instance.product:
-            self.fields['unit_price'].initial = self.instance.product.selling_price
+            self.fields['unit_price'].initial = self.instance.product.unit_price
 
 
 class InvoiceAdminForm(forms.ModelForm):
@@ -106,25 +106,27 @@ class ProductForm(forms.ModelForm):
                 'step': '0.01',
                 'required': 'required'
             }),
-            'selling_price': forms.NumberInput(attrs={
+            'unit_price': forms.NumberInput(attrs={
                 'step': '0.01',
                 'required': 'required'
             }),
             'stock': forms.NumberInput(attrs={'class': 'form-control', 'min': 0}),
-            'warranty_period': forms.TextInput(attrs={'class': 'form-control'}),
+            'warranty_period': forms.NumberInput(attrs={'class': 'form-control', 'min': 0}),
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'image': forms.ClearableFileInput(attrs={'class': 'form-control', 'accept': 'image/*'}),
             'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-            
+            'barcode': forms.TextInput(attrs={'class': 'form-control'}),
         }
+    
     def clean(self):
         cleaned_data = super().clean()
         cost_price = cleaned_data.get('cost_price')
-        selling_price = cleaned_data.get('selling_price')
+        unit_price = cleaned_data.get('unit_price')
         
-        if cost_price is not None and selling_price is not None:
-            if selling_price < cost_price:
-                self.add_error('selling_price', 
-                    "Selling price cannot be less than cost price")
+        if cost_price is not None and unit_price is not None:
+            if unit_price < cost_price:
+                self.add_error('unit_price', 
+                    "Unit price cannot be less than cost price")
         
         return cleaned_data
 

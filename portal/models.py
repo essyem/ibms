@@ -431,9 +431,38 @@ class Product(SiteModel):
 
 
 class Cart(SiteModel):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
+    session_key = models.CharField(max_length=40, null=True, blank=True, help_text="For anonymous users")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        # Ensure one cart per user or session
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user'], 
+                condition=models.Q(user__isnull=False),
+                name='unique_cart_per_user'
+            ),
+            models.UniqueConstraint(
+                fields=['session_key'], 
+                condition=models.Q(session_key__isnull=False),
+                name='unique_cart_per_session'
+            ),
+        ]
+    
+    def __str__(self):
+        if self.user:
+            return f"Cart for {self.user.username}"
+        return f"Anonymous cart {self.session_key}"
+    
+    @property
+    def total_items(self):
+        return sum(item.quantity for item in self.cartitem_set.all())
+    
+    @property
+    def total_amount(self):
+        return sum(item.quantity * item.product.selling_price for item in self.cartitem_set.all())
 
 class CartItem(SiteModel):
     cart = models.ForeignKey(Cart, on_delete=models.CASCADE)

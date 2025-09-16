@@ -127,7 +127,7 @@
                                     Cost Price <span class="text-danger">*</span>
                                 </label>
                                 <div class="input-group">
-                                    <span class="input-group-text">$</span>
+                                    <span class="input-group-text">QAR</span>
                                     {{ form.cost_price }}
                                 </div>
                                 {% if form.cost_price.errors %}
@@ -140,7 +140,7 @@
                                     Unit Price <span class="text-danger">*</span>
                                 </label>
                                 <div class="input-group">
-                                    <span class="input-group-text">$</span>
+                                    <span class="input-group-text">QAR</span>
                                     {{ form.unit_price }}
                                 </div>
                                 {% if form.unit_price.errors %}
@@ -318,7 +318,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const profitMargin = ((profitAmount / costPrice) * 100);
             
             document.getElementById('profit-margin').textContent = 
-                `$${profitAmount.toFixed(2)} (${profitMargin.toFixed(1)}%)`;
+                `QAR ${profitAmount.toFixed(2)} (${profitMargin.toFixed(1)}%)`;
             
             // Show profit alert
             const alertDiv = document.getElementById('profit-alert');
@@ -364,8 +364,8 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
             <div class="mb-2">
                 <small class="text-muted">Stock:</small> ${stock} units<br>
-                <small class="text-muted">Stock Value:</small> $${stockValue}<br>
-                <small class="text-muted">Potential Revenue:</small> $${potentialRevenue}
+                <small class="text-muted">Stock Value:</small> QAR ${stockValue}<br>
+                <small class="text-muted">Potential Revenue:</small> QAR ${potentialRevenue}
             </div>
             <div>
                 <span class="badge ${isActive ? 'bg-success' : 'bg-secondary'}">

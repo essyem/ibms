@@ -7,6 +7,7 @@ from procurement.models import Supplier, PurchaseOrder
 from django.db.models import Sum, Q, Avg, Count, F, Case, When, DecimalField, Min, Max
 from django.db.models.functions import Cast
 from django.contrib.auth.decorators import login_required
+from django.utils.decorators import method_decorator
 from django.db.models.functions import TruncDate, TruncMonth
 from django.db import transaction
 from django.shortcuts import render, redirect, get_object_or_404
@@ -61,6 +62,7 @@ def process_arabic_text(text):
         return text
 
 class InvoicePDFView(View):
+    @method_decorator(login_required, name='dispatch')
     def get(self, request, pk, *args, **kwargs):
         """Handle PDF generation with Arabic support using WeasyPrint"""
         invoice = get_object_or_404(Invoice, pk=pk)
@@ -295,6 +297,7 @@ class InvoicePDFView(View):
             return HttpResponse(f"Server error during PDF generation: {str(e)}", status=500)
 
 @method_decorator(ensure_csrf_cookie, name='dispatch')
+@method_decorator(login_required, name='dispatch')
 class InvoiceCreateView(CreateView):
     model = Invoice
     form_class = InvoiceForm
@@ -989,6 +992,7 @@ class InvoiceCreateView(CreateView):
     def get_success_url(self):
         return reverse('portal:invoice_detail', kwargs={'pk': self.object.pk})
 
+@method_decorator(login_required, name='dispatch')
 class InvoiceUpdateView(UpdateView):
     model = Invoice
     form_class = InvoiceForm
@@ -1098,6 +1102,7 @@ class InvoiceUpdateView(UpdateView):
             invoice.items.filter(id__in=items_to_delete).delete()
 
 
+@method_decorator(login_required, name='dispatch')
 class InvoiceDetailView(DetailView):
     model = Invoice
     template_name = 'portal/invoice_detail.html'
@@ -1117,6 +1122,7 @@ class InvoiceDetailView(DetailView):
         })
         return context
 
+@method_decorator(login_required, name='dispatch')
 class InvoiceListView(ListView):
     model = Invoice
     template_name = 'portal/invoice_list.html'
@@ -1189,6 +1195,7 @@ class InvoiceListView(ListView):
         return context
 
 
+@method_decorator(login_required, name='dispatch')
 class InvoiceDeleteView(DeleteView):
     model = Invoice
     success_url = reverse_lazy('portal:invoice_list')
@@ -1210,6 +1217,7 @@ class InvoiceDeleteView(DeleteView):
         return response
 
 
+@login_required
 def get_product_details(request, product_id):
     product = get_object_or_404(Product, pk=product_id)
     return JsonResponse({
@@ -1221,6 +1229,7 @@ def get_product_details(request, product_id):
         'image_url': product.image.url if product.image else None
     })
 
+@login_required
 def enquiry(request):
     if request.method == 'POST':
         form = ProductEnquiryForm(request.POST)
@@ -1246,11 +1255,13 @@ def register(request):
 def terms(request):
     return render(request, 'portal/terms.html')
 
+@login_required
 def profile(request):
     return render(request, 'portal/profile.html', {
         'featured_products': Product.objects.filter(is_active=True)[:4]
     })
 
+@method_decorator(login_required, name='dispatch')
 class ProductSearchView(ListView):
     model = Product
     template_name = 'portal/products/search.html'  # Updated path to follow Django conventions
@@ -1274,11 +1285,13 @@ class ProductSearchView(ListView):
         context['query'] = self.request.GET.get('q', '')
         return context
 
+@login_required
 def product_search_fallback(request):
     return render(request, 'portal/products/search_empty.html')
 
 @csrf_exempt  # For simplicity in development, remove in production with proper CSRF handling
 @require_http_methods(["POST"])
+@login_required
 def barcode_scan(request):
     """
     Enhanced barcode scanner that fetches complete product details including:
@@ -1361,6 +1374,7 @@ def barcode_scan(request):
 from django.views.decorators.csrf import csrf_exempt
 
 @csrf_exempt
+@login_required
 def customer_search(request):
     print(f"🔍 customer_search called with query: {request.GET.get('q', '')}")
     query = request.GET.get('q', '')
@@ -1392,11 +1406,20 @@ def customer_search(request):
     return JsonResponse({'customers': results})
 
 # BarcodeScanner
+@login_required
 def barcode_scanner_view(request):
     """Render the barcode scanner interface page"""
     return render(request, 'portal/barcode_scanner.html')
 
+def custom_logout(request):
+    """Custom logout view that properly clears session and redirects"""
+    from django.contrib.auth import logout
+    logout(request)
+    messages.success(request, 'You have been successfully logged out.')
+    return redirect('/')
+
 # Multi-tenant index view
+@login_required
 def index(request):
     """
     Main index view that renders site-specific templates
@@ -2036,6 +2059,7 @@ def report_view(request):
     
     return render(request, 'portal/report.html', context)
 
+@login_required
 def export_reports(request):
     export_type = request.GET.get('export', 'invoices')
     
@@ -2414,6 +2438,7 @@ def report_view(request):
 '''
 
 # Customer Management Views
+@method_decorator(login_required, name='dispatch')
 class CustomerListView(ListView):
     model = Customer
     template_name = 'portal/customer_list.html'
@@ -2436,6 +2461,7 @@ class CustomerListView(ListView):
         context['search'] = self.request.GET.get('search', '')
         return context
 
+@method_decorator(login_required, name='dispatch')
 class CustomerCreateView(CreateView):
     model = Customer
     form_class = CustomerForm
@@ -2473,6 +2499,7 @@ class CustomerCreateView(CreateView):
             }, status=400)
         return super().form_invalid(form)
 
+@method_decorator(login_required, name='dispatch')
 class CustomerDetailView(DetailView):
     model = Customer
     template_name = 'portal/customer_detail.html'
@@ -2486,6 +2513,7 @@ class CustomerDetailView(DetailView):
         ).order_by('-date')[:10]  # Last 10 invoices
         return context
 
+@method_decorator(login_required, name='dispatch')
 class CustomerUpdateView(UpdateView):
     model = Customer
     form_class = CustomerForm
@@ -2503,6 +2531,7 @@ class CustomerUpdateView(UpdateView):
 # PRODUCT MANAGEMENT VIEWS
 # =============================================================================
 
+@method_decorator(login_required, name='dispatch')
 class ProductListView(ListView):
     """Frontend product list view with filtering and search"""
     model = Product
@@ -2562,6 +2591,7 @@ class ProductListView(ListView):
         return context
 
 
+@method_decorator(login_required, name='dispatch')
 class ProductDetailView(DetailView):
     """Frontend product detail view"""
     model = Product
@@ -2586,6 +2616,132 @@ class ProductDetailView(DetailView):
         return context
 
 
+class PublicProductCatalogView(ListView):
+    """Public product catalog view for e-commerce functionality"""
+    model = Product
+    template_name = 'portal/products/public_catalog.html'
+    context_object_name = 'products'
+    paginate_by = 24  # More products per page for grid view
+    
+    def get_queryset(self):
+        # Only show active products with stock > 0
+        queryset = Product.objects.filter(
+            is_active=True,
+            stock__gt=0
+        ).select_related('category').order_by('-id')
+        
+        # Search functionality
+        search_query = self.request.GET.get('q', '')
+        if search_query:
+            queryset = queryset.filter(
+                Q(name__icontains=search_query) |
+                Q(sku__icontains=search_query) |
+                Q(barcode__icontains=search_query) |
+                Q(description__icontains=search_query)
+            )
+        
+        # Category filter
+        category_id = self.request.GET.get('category', '')
+        if category_id:
+            queryset = queryset.filter(category_id=category_id)
+        
+        # Price range filter
+        min_price = self.request.GET.get('min_price', '')
+        max_price = self.request.GET.get('max_price', '')
+        if min_price:
+            try:
+                queryset = queryset.filter(unit_price__gte=Decimal(min_price))
+            except (ValueError, TypeError):
+                pass
+        if max_price:
+            try:
+                queryset = queryset.filter(unit_price__lte=Decimal(max_price))
+            except (ValueError, TypeError):
+                pass
+        
+        # Sorting
+        sort_by = self.request.GET.get('sort', 'newest')
+        if sort_by == 'price_low':
+            queryset = queryset.order_by('unit_price')
+        elif sort_by == 'price_high':
+            queryset = queryset.order_by('-unit_price')
+        elif sort_by == 'name':
+            queryset = queryset.order_by('name')
+        elif sort_by == 'popular':
+            # For now, order by stock (higher stock = more popular)
+            queryset = queryset.order_by('-stock')
+        else:  # newest (default)
+            queryset = queryset.order_by('-id')
+            
+        return queryset
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        from portal.models import Category
+        
+        # Get categories that have active products
+        categories = Category.objects.filter(
+            product__is_active=True,
+            product__stock__gt=0
+        ).distinct()
+        
+        # Get price range for filters
+        products = Product.objects.filter(is_active=True, stock__gt=0)
+        price_range = products.aggregate(
+            min_price=Min('unit_price'),
+            max_price=Max('unit_price')
+        )
+        
+        context.update({
+            'categories': categories,
+            'current_category': self.request.GET.get('category', ''),
+            'current_search': self.request.GET.get('q', ''),
+            'current_sort': self.request.GET.get('sort', 'newest'),
+            'current_min_price': self.request.GET.get('min_price', ''),
+            'current_max_price': self.request.GET.get('max_price', ''),
+            'price_range': price_range,
+            'total_products': products.count(),
+            'whatsapp_number': getattr(settings, 'WHATSAPP_BUSINESS_NUMBER', '+97444444444'),  # Default Qatar number
+        })
+        return context
+
+
+class PublicProductDetailView(DetailView):
+    """Public product detail view for e-commerce functionality"""
+    model = Product
+    template_name = 'portal/products/public_product_detail.html'
+    context_object_name = 'product'
+    
+    def get_queryset(self):
+        # Only show active products
+        return Product.objects.filter(is_active=True)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        product = self.get_object()
+        
+        # Get related products from same category
+        related_products = Product.objects.filter(
+            category=product.category,
+            is_active=True,
+            stock__gt=0
+        ).exclude(id=product.id)[:6]
+        
+        # Create product URL for sharing
+        product_url = self.request.build_absolute_uri(
+            reverse('portal:public_product_detail', kwargs={'pk': product.pk})
+        )
+        
+        context.update({
+            'related_products': related_products,
+            'product_url': product_url,
+            'whatsapp_number': getattr(settings, 'WHATSAPP_BUSINESS_NUMBER', '+97444444444'),
+            'whatsapp_message': f"Hi! I'm interested in {product.name} (SKU: {product.sku}). Can you provide more details?",
+        })
+        return context
+
+
+@method_decorator(login_required, name='dispatch')
 class ProductCreateView(CreateView):
     """Frontend product creation view"""
     model = Product
@@ -2611,6 +2767,7 @@ class ProductCreateView(CreateView):
         return context
 
 
+@method_decorator(login_required, name='dispatch')
 class ProductUpdateView(UpdateView):
     """Frontend product update view"""
     model = Product
@@ -2637,6 +2794,7 @@ class ProductUpdateView(UpdateView):
 
 
 @require_http_methods(["POST"])
+@login_required
 def product_delete(request, pk):
     """Delete product via AJAX"""
     try:
@@ -2665,6 +2823,7 @@ def product_delete(request, pk):
 
 
 @require_http_methods(["POST"])
+@login_required
 def product_toggle_active(request, pk):
     """Toggle product active status via AJAX"""
     try:
@@ -2685,6 +2844,7 @@ def product_toggle_active(request, pk):
         })
 
 
+@login_required
 def product_dashboard(request):
     """Product management dashboard"""
     from django.db.models import Sum, Avg, Count

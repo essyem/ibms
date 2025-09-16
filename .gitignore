@@ -47,6 +47,14 @@ logs/
 .env.test
 .env.production
 
+# Virtual environments
+env/
+venv/
+env-ibms/
+.venv/
+ENV/
+env.bak/
+
 # Import directory
 import/
 

@@ -12,8 +12,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     // Function to extract price from option text
     function extractPrice(optionText) {
-        const match = optionText.match(/\$([\d.]+)/);
-        return match ? match[1] : null;
+        const match = optionText.match(/QAR\s+([\d.]+)|QAR([\d.]+)/);
+        return match ? (match[1] || match[2]) : null;
     }
 
     // Handle product selection changes

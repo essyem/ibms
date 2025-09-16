@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load static %}
+{% load math_filters %}
 
 {% block title %}{{ product.name }} - Product Details{% endblock %}
 
@@ -123,11 +124,11 @@
                             <div class="row mb-3">
                                 <div class="col-6">
                                     <label class="form-label text-muted">Cost Price</label>
-                                    <h4 class="text-danger">${{ product.cost_price }}</h4>
+                                    <h4 class="text-danger">QAR {{ product.cost_price }}</h4>
                                 </div>
                                 <div class="col-6">
                                     <label class="form-label text-muted">Unit Price</label>
-                                    <h4 class="text-success">${{ product.unit_price }}</h4>
+                                    <h4 class="text-success">QAR {{ product.unit_price }}</h4>
                                 </div>
                             </div>
                             
@@ -136,7 +137,7 @@
                             <div class="row">
                                 <div class="col-6">
                                     <label class="form-label text-muted">Profit Amount</label>
-                                    <h5 class="text-primary">${{ profit_amount|floatformat:2 }}</h5>
+                                    <h5 class="text-primary">QAR {{ profit_amount|floatformat:2 }}</h5>
                                 </div>
                                 <div class="col-6">
                                     <label class="form-label text-muted">Profit Margin</label>
@@ -182,19 +183,16 @@
                                 </div>
                             </div>
                             
-                            <div class="mb-3">
+                            <div class="col-md-6">
                                 <label class="form-label text-muted">Stock Value</label>
-                                <h5 class="text-primary">${{ product.stock|mul:product.cost_price|floatformat:2 }}</h5>
-                                <small class="text-muted">At cost price</small>
+                                <h5 class="text-primary">QAR {{ product.stock|mul:product.cost_price|floatformat:2 }}</h5>
+                                <small class="text-muted">Stock × Cost Price</small>
                             </div>
-                            
-                            <div class="mb-3">
+                            <div class="col-md-6">
                                 <label class="form-label text-muted">Potential Revenue</label>
-                                <h5 class="text-success">${{ product.stock|mul:product.unit_price|floatformat:2 }}</h5>
-                                <small class="text-muted">If all stock sold</small>
-                            </div>
-                            
-                            {% if product.stock <= 10 %}
+                                <h5 class="text-success">QAR {{ product.stock|mul:product.unit_price|floatformat:2 }}</h5>
+                                <small class="text-muted">Stock × Unit Price</small>
+                            </div>                            {% if product.stock <= 10 %}
                                 <div class="alert alert-warning mb-0">
                                     <i class="fas fa-exclamation-triangle me-2"></i>
                                     {% if product.stock == 0 %}

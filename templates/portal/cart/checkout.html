@@ -1,0 +1,385 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% load static %}
+
+{% block title %}Checkout - TrendzApps{% endblock %}
+
+{% block extra_css %}
+<style>
+.checkout-header {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    color: white;
+    padding: 2rem 0;
+    margin-bottom: 2rem;
+}
+
+.checkout-form {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    padding: 2rem;
+}
+
+.order-summary {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    padding: 2rem;
+    position: sticky;
+    top: 20px;
+}
+
+.order-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 0;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.order-item:last-child {
+    border-bottom: none;
+}
+
+.place-order-btn {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    border: none;
+    color: white;
+    padding: 1rem 2rem;
+    border-radius: 25px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    width: 100%;
+    transition: all 0.3s ease;
+}
+
+.place-order-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(40, 167, 69, 0.3);
+    color: white;
+}
+
+.whatsapp-order-btn {
+    background: #25d366;
+    border: none;
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 25px;
+    font-weight: 600;
+    width: 100%;
+    margin-top: 1rem;
+    transition: all 0.3s ease;
+}
+
+.whatsapp-order-btn:hover {
+    background: #20c75a;
+    color: white;
+}
+
+.form-floating label {
+    font-weight: 500;
+}
+
+.required-field::after {
+    content: " *";
+    color: #dc3545;
+}
+
+.checkout-step {
+    display: flex;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.step-number {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #28a745, #20c997);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    margin-right: 1rem;
+}
+
+.security-badge {
+    background: #e8f5e8;
+    border: 1px solid #28a745;
+    border-radius: 8px;
+    padding: 1rem;
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.back-to-cart-btn {
+    background: #6c757d;
+    border: none;
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 25px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.back-to-cart-btn:hover {
+    background: #5a6268;
+    color: white;
+}
+
+@media (max-width: 768px) {
+    .checkout-form,
+    .order-summary {
+        margin-bottom: 2rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Checkout Header -->
+<div class="checkout-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="mb-2"><i class="fas fa-credit-card me-2"></i>Checkout</h1>
+                <p class="mb-0">Complete your order details below</p>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <div class="h4 mb-0">{{ cart_items|length }} Item{{ cart_items|length|pluralize }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <div class="row">
+        <!-- Checkout Form -->
+        <div class="col-lg-8">
+            <div class="checkout-form">
+                <div class="checkout-step">
+                    <div class="step-number">1</div>
+                    <div>
+                        <h5 class="mb-0">Customer Information</h5>
+                        <p class="text-muted small mb-0">Please provide your contact details</p>
+                    </div>
+                </div>
+                
+                <form method="post" id="checkout-form">
+                    {% csrf_token %}
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="form-floating">
+                                <input type="text" class="form-control" id="customer_name" name="customer_name" 
+                                       placeholder="Your Full Name" required>
+                                <label for="customer_name" class="required-field">Full Name</label>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <div class="form-floating">
+                                <input type="email" class="form-control" id="customer_email" name="customer_email" 
+                                       placeholder="your.email@example.com" required>
+                                <label for="customer_email" class="required-field">Email Address</label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="form-floating">
+                                <input type="tel" class="form-control" id="customer_phone" name="customer_phone" 
+                                       placeholder="+974 xxxx xxxx" required>
+                                <label for="customer_phone" class="required-field">Phone Number</label>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <div class="form-floating">
+                                <select class="form-select" id="preferred_contact" name="preferred_contact">
+                                    <option value="phone">Phone Call</option>
+                                    <option value="whatsapp">WhatsApp</option>
+                                    <option value="email">Email</option>
+                                </select>
+                                <label for="preferred_contact">Preferred Contact Method</label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="checkout-step mt-4">
+                        <div class="step-number">2</div>
+                        <div>
+                            <h5 class="mb-0">Delivery Information</h5>
+                            <p class="text-muted small mb-0">Where should we deliver your order?</p>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-floating">
+                            <textarea class="form-control" id="delivery_address" name="delivery_address" 
+                                     placeholder="Full delivery address including building, street, area, and city" 
+                                     style="height: 100px" required></textarea>
+                            <label for="delivery_address" class="required-field">Delivery Address</label>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-floating">
+                            <textarea class="form-control" id="special_instructions" name="special_instructions" 
+                                     placeholder="Any special instructions for delivery or product preferences" 
+                                     style="height: 80px"></textarea>
+                            <label for="special_instructions">Special Instructions (Optional)</label>
+                        </div>
+                    </div>
+                    
+                    <div class="security-badge">
+                        <i class="fas fa-shield-alt text-success fa-2x mb-2"></i>
+                        <h6>Secure Order Processing</h6>
+                        <p class="mb-0 small">Your information is safe with us. We'll contact you to confirm order details and payment method.</p>
+                    </div>
+                    
+                    <div class="d-flex gap-3">
+                        <a href="{% url 'portal:cart' %}" class="back-to-cart-btn">
+                            <i class="fas fa-arrow-left me-2"></i>Back to Cart
+                        </a>
+                        
+                        <button type="submit" class="place-order-btn flex-fill">
+                            <i class="fas fa-check me-2"></i>Place Order
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Order Summary -->
+        <div class="col-lg-4">
+            <div class="order-summary">
+                <h5 class="mb-4"><i class="fas fa-receipt me-2"></i>Order Summary</h5>
+                
+                <!-- Order Items -->
+                {% for item in cart_items %}
+                <div class="order-item">
+                    <div>
+                        <h6 class="mb-1">{{ item.product.name }}</h6>
+                        <p class="text-muted small mb-0">
+                            SKU: {{ item.product.sku }} | Qty: {{ item.quantity }}
+                        </p>
+                    </div>
+                    <div class="text-end">
+                        <div class="fw-bold">QAR {{ item.quantity|mul:item.product.unit_price|floatformat:2 }}</div>
+                        <div class="small text-muted">QAR {{ item.product.unit_price|floatformat:2 }} each</div>
+                    </div>
+                </div>
+                {% endfor %}
+                
+                <hr>
+                
+                <!-- Totals -->
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Subtotal ({{ cart_items|length }} items)</span>
+                    <span>QAR {{ total_amount|floatformat:2 }}</span>
+                </div>
+                
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Delivery</span>
+                    <span class="text-success">FREE</span>
+                </div>
+                
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Tax</span>
+                    <span>QAR 0.00</span>
+                </div>
+                
+                <hr>
+                
+                <div class="d-flex justify-content-between mb-4">
+                    <strong>Total</strong>
+                    <strong class="text-danger h5">QAR {{ total_amount|floatformat:2 }}</strong>
+                </div>
+                
+                <!-- Alternative Order Methods -->
+                <div class="mt-3">
+                    <p class="small text-muted mb-2">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Prefer to order directly? Contact us via WhatsApp
+                    </p>
+                    
+                    <a href="https://wa.me/{{ whatsapp_number|cut:'+' }}?text=Hi! I would like to place an order with the following items:{% for item in cart_items %}%0A- {{ item.product.name }} ({{ item.quantity }}x){% endfor %}%0A%0ATotal: QAR {{ total_amount|floatformat:2 }}%0A%0APlease confirm availability and payment options." 
+                       target="_blank" class="whatsapp-order-btn">
+                        <i class="fab fa-whatsapp me-2"></i>Order via WhatsApp
+                    </a>
+                </div>
+                
+                <div class="text-center mt-3">
+                    <small class="text-muted">
+                        <i class="fas fa-phone me-1"></i>
+                        Need help? Call us at {{ whatsapp_number }}
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('checkout-form').addEventListener('submit', function(e) {
+    // Basic form validation
+    const requiredFields = ['customer_name', 'customer_email', 'customer_phone', 'delivery_address'];
+    let isValid = true;
+    
+    requiredFields.forEach(fieldId => {
+        const field = document.getElementById(fieldId);
+        if (!field.value.trim()) {
+            field.classList.add('is-invalid');
+            isValid = false;
+        } else {
+            field.classList.remove('is-invalid');
+        }
+    });
+    
+    // Email validation
+    const email = document.getElementById('customer_email');
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (email.value && !emailPattern.test(email.value)) {
+        email.classList.add('is-invalid');
+        isValid = false;
+    }
+    
+    // Phone validation (basic)
+    const phone = document.getElementById('customer_phone');
+    if (phone.value && phone.value.length < 8) {
+        phone.classList.add('is-invalid');
+        isValid = false;
+    }
+    
+    if (!isValid) {
+        e.preventDefault();
+        alert('Please fill in all required fields correctly.');
+    }
+});
+
+// Remove validation classes on input
+document.querySelectorAll('.form-control, .form-select').forEach(input => {
+    input.addEventListener('input', function() {
+        this.classList.remove('is-invalid');
+    });
+});
+
+// Auto-format phone number (Qatar format)
+document.getElementById('customer_phone').addEventListener('input', function(e) {
+    let value = e.target.value.replace(/\D/g, '');
+    
+    if (value.startsWith('974')) {
+        value = '+' + value;
+    } else if (value.length === 8 && !value.startsWith('974')) {
+        value = '+974 ' + value;
+    }
+    
+    e.target.value = value;
+});
+</script>
+{% endblock %}

@@ -1,0 +1,341 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% load static %}
+
+{% block title %}Order Confirmation - TrendzApps{% endblock %}
+
+{% block extra_css %}
+<style>
+.confirmation-header {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    color: white;
+    padding: 3rem 0;
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.confirmation-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    padding: 2rem;
+    margin-bottom: 2rem;
+}
+
+.success-icon {
+    font-size: 4rem;
+    color: #28a745;
+    margin-bottom: 1rem;
+}
+
+.order-number {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #28a745;
+    margin-bottom: 1rem;
+}
+
+.status-badge {
+    background: linear-gradient(135deg, #ffc107, #ff8c00);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-weight: bold;
+    display: inline-block;
+    margin-bottom: 2rem;
+}
+
+.order-details {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.order-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 0;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.order-item:last-child {
+    border-bottom: none;
+}
+
+.next-steps {
+    background: #e3f2fd;
+    border: 1px solid #2196f3;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.whatsapp-btn {
+    background: #25d366;
+    border: none;
+    color: white;
+    padding: 1rem 2rem;
+    border-radius: 25px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.whatsapp-btn:hover {
+    background: #20c75a;
+    color: white;
+    text-decoration: none;
+    transform: translateY(-2px);
+}
+
+.continue-shopping-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    color: white;
+    padding: 1rem 2rem;
+    border-radius: 25px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.continue-shopping-btn:hover {
+    color: white;
+    text-decoration: none;
+    transform: translateY(-2px);
+}
+
+.contact-info {
+    background: #fff3cd;
+    border: 1px solid #ffc107;
+    border-radius: 8px;
+    padding: 1.5rem;
+    text-align: center;
+}
+
+.timeline-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.timeline-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #28a745;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1rem;
+    flex-shrink: 0;
+}
+
+.timeline-icon.pending {
+    background: #ffc107;
+}
+
+.timeline-icon.future {
+    background: #e9ecef;
+    color: #6c757d;
+}
+
+@media (max-width: 768px) {
+    .confirmation-header {
+        padding: 2rem 0;
+    }
+    
+    .order-number {
+        font-size: 1.5rem;
+    }
+    
+    .order-item {
+        flex-direction: column;
+        align-items: flex-start;
+        text-align: left;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Confirmation Header -->
+<div class="confirmation-header">
+    <div class="container">
+        <div class="success-icon">
+            <i class="fas fa-check-circle"></i>
+        </div>
+        <h1 class="mb-3">Order Confirmed!</h1>
+        <p class="lead mb-0">Thank you for your order. We'll be in touch soon.</p>
+    </div>
+</div>
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Order Summary -->
+            <div class="confirmation-card text-center">
+                <div class="order-number">{{ order.order_number }}</div>
+                <div class="status-badge">
+                    <i class="fas fa-clock me-2"></i>{{ order.get_status_display }}
+                </div>
+                
+                <p class="text-muted mb-4">
+                    Order placed on {{ order.created_at|date:"F d, Y \a\\t g:i A" }}
+                </p>
+                
+                <div class="row text-center">
+                    <div class="col-md-4">
+                        <h6 class="text-muted">Items</h6>
+                        <p class="h5">{{ order.total_items }}</p>
+                    </div>
+                    <div class="col-md-4">
+                        <h6 class="text-muted">Total Amount</h6>
+                        <p class="h5 text-danger">QAR {{ order.total_price|floatformat:2 }}</p>
+                    </div>
+                    <div class="col-md-4">
+                        <h6 class="text-muted">Delivery</h6>
+                        <p class="h5 text-success">FREE</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Order Details -->
+            <div class="confirmation-card">
+                <h5 class="mb-4"><i class="fas fa-receipt me-2"></i>Order Details</h5>
+                
+                <div class="order-details">
+                    {% for item in order.items.all %}
+                    <div class="order-item">
+                        <div>
+                            <h6 class="mb-1">{{ item.product.name }}</h6>
+                            <p class="text-muted small mb-0">
+                                SKU: {{ item.product.sku }} | Quantity: {{ item.quantity }}
+                            </p>
+                        </div>
+                        <div class="text-end">
+                            <div class="fw-bold">QAR {{ item.quantity|mul:item.product.unit_price|floatformat:2 }}</div>
+                            <div class="small text-muted">QAR {{ item.product.unit_price|floatformat:2 }} each</div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    
+                    <div class="d-flex justify-content-between mt-3 pt-3 border-top">
+                        <strong>Total</strong>
+                        <strong class="text-danger">QAR {{ order.total_price|floatformat:2 }}</strong>
+                    </div>
+                </div>
+                
+                <div class="row mt-4">
+                    <div class="col-md-6">
+                        <h6>Delivery Address</h6>
+                        <p class="text-muted">{{ order.delivery_address }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Contact Method</h6>
+                        <p class="text-muted">{{ order.preferred_contact|title }}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Next Steps -->
+            <div class="confirmation-card">
+                <div class="next-steps">
+                    <h6><i class="fas fa-info-circle me-2"></i>What Happens Next?</h6>
+                    
+                    <div class="timeline-item">
+                        <div class="timeline-icon">
+                            <i class="fas fa-check"></i>
+                        </div>
+                        <div>
+                            <strong>Order Received</strong>
+                            <p class="mb-0 small text-muted">We've received your order and are reviewing it</p>
+                        </div>
+                    </div>
+                    
+                    <div class="timeline-item">
+                        <div class="timeline-icon pending">
+                            <i class="fas fa-phone"></i>
+                        </div>
+                        <div>
+                            <strong>Confirmation Call</strong>
+                            <p class="mb-0 small text-muted">We'll contact you within 2 hours to confirm details</p>
+                        </div>
+                    </div>
+                    
+                    <div class="timeline-item">
+                        <div class="timeline-icon future">
+                            <i class="fas fa-box"></i>
+                        </div>
+                        <div>
+                            <strong>Order Processing</strong>
+                            <p class="mb-0 small text-muted">We'll prepare your order for delivery</p>
+                        </div>
+                    </div>
+                    
+                    <div class="timeline-item">
+                        <div class="timeline-icon future">
+                            <i class="fas fa-truck"></i>
+                        </div>
+                        <div>
+                            <strong>Delivery</strong>
+                            <p class="mb-0 small text-muted">Your order will be delivered to your address</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Contact Information -->
+            <div class="confirmation-card">
+                <div class="contact-info">
+                    <h6><i class="fas fa-headset me-2"></i>Need Help?</h6>
+                    <p class="mb-3">If you have any questions about your order, don't hesitate to contact us.</p>
+                    
+                    <div class="d-flex gap-3 justify-content-center flex-wrap">
+                        <a href="{{ whatsapp_message|urlencode }}" 
+                           target="_blank" class="whatsapp-btn">
+                            <i class="fab fa-whatsapp me-2"></i>Contact via WhatsApp
+                        </a>
+                        
+                        <a href="{% url 'portal:public_catalog' %}" class="continue-shopping-btn">
+                            <i class="fas fa-store me-2"></i>Continue Shopping
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Important Notes -->
+            <div class="confirmation-card">
+                <h6><i class="fas fa-exclamation-triangle me-2 text-warning"></i>Important Notes</h6>
+                <ul class="mb-0">
+                    <li>Please keep your order number for reference: <strong>{{ order.order_number }}</strong></li>
+                    <li>We'll contact you using your preferred method to confirm payment and delivery details</li>
+                    <li>Delivery is FREE within Qatar for orders above QAR 100</li>
+                    <li>Order cancellation is possible within 1 hour of placing the order</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Auto-redirect to catalog after 30 seconds (optional)
+// setTimeout(function() {
+//     if (confirm('Would you like to continue shopping?')) {
+//         window.location.href = '{% url "portal:public_catalog" %}';
+//     }
+// }, 30000);
+
+// Track order confirmation (you can add analytics here)
+console.log('Order confirmed:', '{{ order.order_number }}');
+</script>
+{% endblock %}
