@@ -4701,3 +4701,34 @@ ERROR 2025-09-13 19:29:36,186 basehttp 26682 139738540697280 You're accessing th
 ERROR 2025-09-13 19:29:36,189 basehttp 26682 139738540697280 You're accessing the development server over HTTPS, but it only supports HTTP.
 ERROR 2025-09-13 19:29:36,304 basehttp 26682 139738540697280 You're accessing the development server over HTTPS, but it only supports HTTP.
 ERROR 2025-09-13 19:29:36,423 basehttp 26682 139738540697280 You're accessing the development server over HTTPS, but it only supports HTTP.
+ERROR 2025-09-16 14:01:41,912 log 49720 136600725247680 Internal Server Error: /finance/transactions/2/edit/
+Traceback (most recent call last):
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/views/generic/base.py", line 105, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/views/generic/base.py", line 144, in dispatch
+    return handler(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/views/generic/edit.py", line 202, in get
+    return super().get(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/views/generic/edit.py", line 142, in get
+    return self.render_to_response(self.get_context_data())
+                                   ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/views/generic/edit.py", line 72, in get_context_data
+    kwargs["form"] = self.get_form()
+                     ^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/tz-dev/lib/python3.12/site-packages/django/views/generic/edit.py", line 37, in get_form
+    return form_class(**self.get_form_kwargs())
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/essyem/tp/trendzportal/finance/forms.py", line 63, in __init__
+    self.fields['category'].queryset = self.instance.type.category_set.order_by('name')
+                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'str' object has no attribute 'category_set'
+ERROR 2025-09-16 14:01:41,915 basehttp 49720 136600725247680 "GET /finance/transactions/2/edit/ HTTP/1.1" 500 97042

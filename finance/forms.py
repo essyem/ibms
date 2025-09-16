@@ -60,7 +60,10 @@ class TransactionForm(forms.ModelForm):
             except (ValueError, TypeError):
                 pass
         elif self.instance.pk:
-            self.fields['category'].queryset = self.instance.type.category_set.order_by('name')
+            # Fix: Use the instance.type (which is a string) to filter categories
+            self.fields['category'].queryset = Category.objects.filter(
+                type=self.instance.type
+            ).order_by('name')
 
     def clean_amount(self):
         amount = self.cleaned_data.get('amount')

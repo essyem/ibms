@@ -63,7 +63,7 @@
                     <div class="card bg-primary text-white">
                         <div class="card-body text-center">
                             <h5 class="card-title">Total Transactions</h5>
-                            <h3>{{ transactions|length }}</h3>
+                            <h3>{{ total_transactions }}</h3>
                         </div>
                     </div>
                 </div>
@@ -71,7 +71,7 @@
                     <div class="card bg-success text-white">
                         <div class="card-body text-center">
                             <h5 class="card-title">Total Income</h5>
-                            <h3>QAR {% for txn in transactions %}{% if txn.type in 'sale,sale_receipt' %}{{ txn.amount|add:0 }}{% endif %}{% endfor %}</h3>
+                            <h3>QAR {{ total_income|floatformat:2|intcomma }}</h3>
                         </div>
                     </div>
                 </div>
@@ -79,7 +79,7 @@
                     <div class="card bg-danger text-white">
                         <div class="card-body text-center">
                             <h5 class="card-title">Total Expenses</h5>
-                            <h3>QAR {% for txn in transactions %}{% if txn.type in 'purchase,expense' %}{{ txn.amount|add:0 }}{% endif %}{% endfor %}</h3>
+                            <h3>QAR {{ total_expenses|floatformat:2|intcomma }}</h3>
                         </div>
                     </div>
                 </div>
@@ -87,7 +87,7 @@
                     <div class="card bg-info text-white">
                         <div class="card-body text-center">
                             <h5 class="card-title">Net Balance</h5>
-                            <h3>QAR 0</h3>
+                            <h3>QAR {{ net_balance|floatformat:2|intcomma }}</h3>
                         </div>
                     </div>
                 </div>

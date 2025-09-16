@@ -105,9 +105,45 @@ class TransactionListView(ListView):
     
     def get_queryset(self):
         queryset = super().get_queryset()
-        if self.request.GET.get('type'):
-            queryset = queryset.filter(type=self.request.GET['type'])
+        
+        # Apply filters
+        transaction_type = self.request.GET.get('type')
+        date_from = self.request.GET.get('date_from')
+        date_to = self.request.GET.get('date_to')
+        
+        if transaction_type:
+            queryset = queryset.filter(type=transaction_type)
+        if date_from:
+            queryset = queryset.filter(date__gte=date_from)
+        if date_to:
+            queryset = queryset.filter(date__lte=date_to)
+            
         return queryset.order_by('-date')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        # Calculate totals for the filtered queryset
+        transactions = self.get_queryset()
+        
+        total_income = transactions.filter(
+            type__in=['sale', 'sale_receipt']
+        ).aggregate(total=Sum('amount'))['total'] or 0
+        
+        total_expenses = transactions.filter(
+            type__in=['purchase', 'expense']
+        ).aggregate(total=Sum('amount'))['total'] or 0
+        
+        net_balance = total_income - total_expenses
+        
+        context.update({
+            'total_transactions': transactions.count(),
+            'total_income': total_income,
+            'total_expenses': total_expenses,
+            'net_balance': net_balance,
+        })
+        
+        return context
 
 
 class TransactionDetailView(DetailView):
