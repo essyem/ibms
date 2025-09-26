@@ -373,8 +373,11 @@ class Category(SiteModel):
 class Product(SiteModel):
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
     name = models.CharField(max_length=200)
+    # Optional Arabic translations for product name and description
+    name_ar = models.CharField(max_length=200, blank=True, null=True, verbose_name=_("Name (Arabic)"))
     sku = models.CharField(max_length=50, unique=True)
     description = models.TextField()
+    description_ar = models.TextField(blank=True, null=True, verbose_name=_("Description (Arabic)"))
     cost_price = models.DecimalField(
         max_digits=10, 
         decimal_places=2,
@@ -462,7 +465,7 @@ class Cart(SiteModel):
     
     @property
     def total_amount(self):
-        return sum(item.quantity * item.product.selling_price for item in self.cartitem_set.all())
+        return sum(item.quantity * item.product.unit_price for item in self.cartitem_set.all())
 
 class CartItem(SiteModel):
     cart = models.ForeignKey(Cart, on_delete=models.CASCADE)

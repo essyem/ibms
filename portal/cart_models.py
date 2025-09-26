@@ -26,7 +26,7 @@ class Cart(models.Model):
     
     @property
     def total_amount(self):
-        return sum(item.quantity * item.product.selling_price for item in self.items.all())
+        return sum(item.quantity * item.product.unit_price for item in self.items.all())
 
 
 class CartItem(models.Model):
@@ -44,7 +44,7 @@ class CartItem(models.Model):
     
     @property
     def total_price(self):
-        return self.quantity * self.product.selling_price
+        return self.quantity * self.product.unit_price
 
 
 class Order(models.Model):

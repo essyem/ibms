@@ -17,6 +17,7 @@ def trendz_settings(request):
         'logo_text': 'TRENDZ',
         'company_address': 'Sofitel Complex, Msheireb Street, Doha, Qatar',
         'company_phone': '+974 30514865',
+        'whatsapp_number': getattr(settings, 'WHATSAPP_BUSINESS_NUMBER', '+97430514865'),
         'company_email': 'info@trendzqtr.com',
         'company_website': 'www.trendzqtr.com',
     }

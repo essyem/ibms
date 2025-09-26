@@ -15,6 +15,7 @@ from .cart_views import (
     CartView, CheckoutView, order_confirmation
 )
 from . import ajax_views
+from .views import set_language
 
 app_name = 'portal'
 
@@ -54,6 +55,8 @@ urlpatterns = [
     path('cart/count/', cart_count, name='cart_count'),
     path('checkout/', CheckoutView.as_view(), name='checkout'),
     path('order-confirmation/<str:order_number>/', order_confirmation, name='order_confirmation'),
+    # Language switcher
+    path('set-language/', set_language, name='set_language'),
     
     # Invoice management
     path('invoices/', InvoiceListView.as_view(), name='invoice_list'),

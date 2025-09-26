@@ -1,12 +1,14 @@
 {% extends 'base.html' %}
 {% load humanize %}
 {% load static %}
+{% load i18n %}
 
-{% block title %}{{ product.name }} - Product Details{% endblock %}
+{% load localized %}
+{% block title %}{{ product|localized:"name" }} - {% trans "Product Details" %}{% endblock %}
 
 {% block meta_tags %}
 <!-- Open Graph Meta Tags for Social Sharing -->
-<meta property="og:title" content="{{ product.name }} - TrendzApps">
+<meta property="og:title" content="{{ product|localized:"name" }} - TrendzApps">
 <meta property="og:description" content="{{ product.description|default:'High quality product available at competitive price' }}">
 <meta property="og:url" content="{{ product_url }}">
 <meta property="og:type" content="product">
@@ -16,12 +18,12 @@
 
 <!-- Twitter Card Meta Tags -->
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="{{ product.name }} - TrendzApps">
+<meta name="twitter:title" content="{{ product|localized:"name" }} - TrendzApps">
 <meta name="twitter:description" content="{{ product.description|default:'High quality product available at competitive price' }}">
 
 <!-- Additional SEO Meta Tags -->
 <meta name="description" content="{{ product.description|default:'High quality product available at competitive price' }}">
-<meta name="keywords" content="{{ product.name }}, {{ product.sku }}, {{ product.category.name }}, TrendzApps">
+<meta name="keywords" content="{{ product|localized:"name" }}, {{ product.sku }}, {{ product.category.name }}, TrendzApps">
 {% endblock %}
 
 {% block extra_css %}
@@ -255,7 +257,7 @@
                     </a>
                 </li>
                 {% endif %}
-                <li class="breadcrumb-item active" aria-current="page">{{ product.name }}</li>
+                <li class="breadcrumb-item active" aria-current="page">{{ product|localized:"name" }}</li>
             </ol>
         </nav>
     </div>
@@ -275,7 +277,7 @@
             <div class="product-info-card">
                 <div class="product-sku">SKU: {{ product.sku }}</div>
                 
-                <h1 class="mb-3">{{ product.name }}</h1>
+                <h1 class="mb-3">{{ product|localized:"name" }}</h1>
                 
                 {% if product.description %}
                 <p class="text-muted mb-3">{{ product.description }}</p>
@@ -305,8 +307,8 @@
                 <div class="action-buttons">
                     {% if product.stock > 0 %}
                     <button class="add-to-cart-btn" 
-                            onclick="addToCart({{ product.id }}, '{{ product.name|addslashes }}')">
-                        <i class="fas fa-shopping-cart me-2"></i>Add to Cart
+                            onclick="addToCart({{ product.id }}, '{{ product|localized:"name"|addslashes }}')">
+                        <i class="fas fa-shopping-cart me-2"></i>{% trans "Add to Cart" %}
                     </button>
                     {% else %}
                     <button class="btn btn-secondary" disabled style="width: 100%; padding: 1rem 2rem; border-radius: 25px; font-size: 1.1rem; margin-bottom: 1rem;">
@@ -316,7 +318,7 @@
                     
                     <a href="https://wa.me/{{ whatsapp_number|cut:'+' }}?text={{ whatsapp_message|urlencode }}" 
                        target="_blank" class="whatsapp-btn">
-                        <i class="fab fa-whatsapp me-2"></i>Inquire via WhatsApp
+                        <i class="fab fa-whatsapp me-2"></i>{% trans "Inquire via WhatsApp" %}
                     </a>
                 </div>
                 
@@ -441,14 +443,14 @@
     <div id="cart-toast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
         <div class="toast-header bg-success text-white">
             <i class="fas fa-shopping-cart me-2"></i>
-            <strong class="me-auto">Added to Cart</strong>
+            <strong class="me-auto">{% trans "Added to Cart" %}</strong>
             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
         </div>
         <div class="toast-body">
-            <span id="cart-message">Product added to cart successfully!</span>
+            <span id="cart-message">{% trans "Product added to cart successfully!" %}</span>
             <div class="mt-2">
-                <a href="#" class="btn btn-sm btn-outline-primary me-2" onclick="viewCart()">View Cart</a>
-                <button class="btn btn-sm btn-success" onclick="continueShoppingToast()">Continue Shopping</button>
+                <a href="#" class="btn btn-sm btn-outline-primary me-2" onclick="viewCart()">{% trans "View Cart" %}</a>
+                <button class="btn btn-sm btn-success" onclick="continueShoppingToast()">{% trans "Continue Shopping" %}</button>
             </div>
         </div>
     </div>
@@ -486,7 +488,7 @@ function updateCartCounter() {
 
 function showCartToast(productName) {
     const toast = new bootstrap.Toast(document.getElementById('cart-toast'));
-    document.getElementById('cart-message').textContent = `"${productName}" added to cart successfully!`;
+    document.getElementById('cart-message').textContent = `"${productName}" ${window.TRANSLATIONS?.product_added_suffix || '{% trans "added to cart successfully!" %}'}`;
     toast.show();
 }
 

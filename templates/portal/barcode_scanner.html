@@ -1,5 +1,6 @@
 <!-- templates/portal/barcode_scanner.html -->
 {% extends 'base.html' %}
+{% load i18n %}
 
 {% block invoice_extra_css %}
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -88,8 +89,8 @@
 <div class="container mt-4">
     <div class="row mb-4">
         <div class="col-12">
-            <h2 class="text-primary"><i class="fas fa-barcode"></i> Barcode Scanner</h2>
-            <p class="text-muted">Scan product barcodes to instantly view detailed product information, pricing, and stock levels.</p>
+            <h2 class="text-primary"><i class="fas fa-barcode"></i> {% trans "Barcode Scanner" %}</h2>
+            <p class="text-muted">{% trans "Scan product barcodes to instantly view detailed product information, pricing, and stock levels." %}</p>
         </div>
     </div>
     
@@ -97,16 +98,16 @@
         <div class="col-md-6">
             <div class="card">
                 <div class="card-body">
-                    <h5 class="card-title mb-3"><i class="fas fa-camera"></i> Camera Scanner</h5>
+                    <h5 class="card-title mb-3"><i class="fas fa-camera"></i> {% trans "Camera Scanner" %}</h5>
                     <div class="scanner-container mb-3">
                         <video id="barcode-scanner"></video>
                     </div>
                     <div class="d-grid gap-2 d-md-flex">
                         <button id="start-scan" class="btn btn-primary">
-                            <i class="fas fa-play"></i> Start Scanner
+                            <i class="fas fa-play"></i> {% trans "Start Scanner" %}
                         </button>
                         <button id="stop-scan" class="btn btn-danger" disabled>
-                            <i class="fas fa-stop"></i> Stop Scanner
+                            <i class="fas fa-stop"></i> {% trans "Stop Scanner" %}
                         </button>
                     </div>
                 </div>
@@ -116,19 +117,19 @@
         <div class="col-md-6">
             <div class="card">
                 <div class="card-body">
-                    <h5 class="card-title mb-3"><i class="fas fa-keyboard"></i> Manual Entry</h5>
+                    <h5 class="card-title mb-3"><i class="fas fa-keyboard"></i> {% trans "Manual Entry" %}</h5>
                     <div class="input-group mb-3">
                         <span class="input-group-text"><i class="fas fa-barcode"></i></span>
-                        <input type="text" id="manual-barcode" class="form-control" placeholder="Enter barcode number">
+                        <input type="text" id="manual-barcode" class="form-control" placeholder="{% trans 'Enter barcode number' %}">
                         <button id="manual-submit" class="btn btn-secondary">
-                            <i class="fas fa-search"></i> Search
+                            <i class="fas fa-search"></i> {% trans "Search" %}
                         </button>
                     </div>
                     
                     <div id="product-result" class="mt-3">
-                        <div class="text-center text-muted">
+                            <div class="text-center text-muted">
                             <i class="fas fa-scan fa-3x mb-3"></i>
-                            <p>Scan a barcode or enter manually to view product details</p>
+                            <p>{% trans "Scan a barcode or enter manually to view product details" %}</p>
                         </div>
                     </div>
                 </div>

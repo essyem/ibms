@@ -1,0 +1,114 @@
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-09-26 18:20+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=6; plural=n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 && n%100<=99 ? 4 : 5;\n"
+
+msgid "Are you sure you want to remove this item?"
+msgstr "هل أنت متأكد أنك تريد إزالة هذا العنصر؟"
+
+msgid "Cart updated successfully!"
+msgstr "تم تحديث السلة بنجاح!"
+
+msgid "Continue Shopping"
+msgstr "متابعة التسوق"
+
+msgid "Dashboard"
+msgstr "لوحة التحكم"
+
+msgid "Delivery"
+msgstr "التوصيل"
+
+msgid "Home"
+msgstr "الرئيسية"
+
+msgid "In Stock"
+msgstr "متوفر"
+
+msgid "Item"
+msgstr "الصنف"
+
+msgid "Items"
+msgstr "الأصناف"
+
+msgid "Looks like you haven't added any items to your cart yet."
+msgstr "يبدو أنك لم تقم بإضافة أي عناصر إلى سلة التسوق بعد."
+
+msgid "Messages"
+msgstr "الرسائل"
+
+msgid "No"
+msgstr "لا"
+
+msgid "Order Summary"
+msgstr "ملخص الطلب"
+
+msgid "Order via WhatsApp"
+msgstr "اطلب عبر واتساب"
+
+msgid "Proceed to Checkout"
+msgstr "الانتقال إلى الدفع"
+
+msgid "Product Catalog"
+msgstr "كتالوج المنتجات"
+
+msgid "Remove"
+msgstr "إزالة"
+
+msgid "Review your selected items and proceed to checkout"
+msgstr "راجع العناصر المختارة ثم أتمم الطلب"
+
+msgid "Shopping Cart"
+msgstr "سلة التسوق"
+
+msgid "Start Shopping"
+msgstr "ابدأ التسوق"
+
+msgid "Static Files"
+msgstr "الملفات الثابتة"
+
+msgid "Success!"
+msgstr "تم بنجاح!"
+
+msgid "Syndication"
+msgstr "النشرات"
+
+msgid "Total"
+msgstr "الإجمالي"
+
+msgid "View Cart"
+msgstr "عرض السلة"
+
+msgid "Yes"
+msgstr "نعم"
+
+msgid "Your cart is empty"
+msgstr "سلة التسوق فارغة"
+
+msgid "added to cart successfully!"
+msgstr "تمت إضافة المنتج إلى السلة بنجاح!"
+
+msgid "available"
+msgstr "متاح"
+
+msgid "each"
+msgstr "لكل"
+
+# Pluralization for item/items displayed with blocktrans
+msgid "%(count)s item"
+msgid_plural "%(count)s items"
+msgstr[0] "%(count)s عنصر"
+msgstr[1] "%(count)s عنصر"
+msgstr[2] "%(count)s عنصران"
+msgstr[3] "%(count)s عناصر"
+msgstr[4] "%(count)s عنصراً"
+msgstr[5] "%(count)s عنصر"

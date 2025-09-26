@@ -1,6 +1,8 @@
 {% extends 'base.html' %}
 {% load humanize %}
 {% load static %}
+{% load i18n %}
+{% load cart_filters %}
 
 {% block title %}Shopping Cart - TrendzApps{% endblock %}
 
@@ -183,11 +185,17 @@
     <div class="container">
         <div class="row align-items-center">
             <div class="col-md-8">
-                <h1 class="mb-2"><i class="fas fa-shopping-cart me-2"></i>Shopping Cart</h1>
-                <p class="mb-0">Review your selected items and proceed to checkout</p>
+                <h1 class="mb-2"><i class="fas fa-shopping-cart me-2"></i>{% trans "Shopping Cart" %}</h1>
+                <p class="mb-0">{% trans "Review your selected items and proceed to checkout" %}</p>
             </div>
             <div class="col-md-4 text-md-end">
-                <div class="h4 mb-0">{{ total_items|intcomma }} Item{{ total_items|pluralize }}</div>
+                <div class="h4 mb-0">
+                    {% blocktrans count total=total_items %}
+                        {{ total|intcomma }} item
+                    {% plural %}
+                        {{ total|intcomma }} items
+                    {% endblocktrans %}
+                </div>
             </div>
         </div>
     </div>
@@ -217,7 +225,7 @@
                             <p class="text-muted small mb-1">Category: {{ item.product.category.name }}</p>
                             {% endif %}
                             <p class="text-success small mb-0">
-                                <i class="fas fa-check-circle me-1"></i>In Stock ({{ item.product.stock }} available)
+                                <i class="fas fa-check-circle me-1"></i>{% trans "In Stock" %} ({{ item.product.stock }} {% trans "available" %})
                             </p>
                         </div>
                         
@@ -238,15 +246,9 @@
                         
                         <!-- Price and Actions -->
                         <div class="col-md-3 col-6 text-center">
-                            <div class="h6 text-danger mb-2" id="item-total-{{ item.id }}">
-                                QAR {{ item.quantity|mul:item.product.unit_price|floatformat:2 }}
-                            </div>
-                            <div class="small text-muted mb-2">
-                                QAR {{ item.product.unit_price|floatformat:2 }} each
-                            </div>
-                            <button class="remove-item-btn" onclick="removeItem({{ item.id }})">
-                                <i class="fas fa-trash me-1"></i>Remove
-                            </button>
+                            <div class="h6 text-danger mb-2" id="item-total-{{ item.id }}">QAR {{ item.quantity|mul:item.product.unit_price|floatformat:2 }}</div>
+                            <div class="small text-muted mb-2">QAR {{ item.product.unit_price|floatformat:2 }} {% trans "each" %}</div>
+                            <button class="remove-item-btn" onclick="removeItem({{ item.id }})"><i class="fas fa-trash me-1"></i>{% trans "Remove" %}</button>
                         </div>
                     </div>
                 </div>
@@ -254,9 +256,9 @@
             {% endfor %}
             
             <!-- Continue Shopping -->
-            <div class="text-center mt-4">
+                <div class="text-center mt-4">
                 <a href="{% url 'portal:public_catalog' %}" class="continue-shopping-btn">
-                    <i class="fas fa-arrow-left me-2"></i>Continue Shopping
+                    <i class="fas fa-arrow-left me-2"></i>{% trans "Continue Shopping" %}
                 </a>
             </div>
         </div>
@@ -264,33 +266,28 @@
         <!-- Cart Summary -->
         <div class="col-lg-4">
             <div class="cart-summary">
-                <h5 class="mb-4"><i class="fas fa-receipt me-2"></i>Order Summary</h5>
+                <h5 class="mb-4"><i class="fas fa-receipt me-2"></i>{% trans "Order Summary" %}</h5>
                 
                 <div class="d-flex justify-content-between mb-3">
-                    <span>Items ({{ total_items }})</span>
+                    <span>{% trans "Items" %} ({{ total_items }})</span>
                     <span id="cart-subtotal">QAR {{ total_amount|floatformat:2 }}</span>
                 </div>
                 
                 <div class="d-flex justify-content-between mb-3">
-                    <span>Delivery</span>
+                    <span>{% trans "Delivery" %}</span>
                     <span class="text-success">FREE</span>
                 </div>
                 
                 <hr>
                 
                 <div class="d-flex justify-content-between mb-4">
-                    <strong>Total</strong>
+                    <strong>{% trans "Total" %}</strong>
                     <strong class="text-danger" id="cart-total">QAR {{ total_amount|floatformat:2 }}</strong>
                 </div>
                 
-                <a href="{% url 'portal:checkout' %}" class="checkout-btn">
-                    <i class="fas fa-credit-card me-2"></i>Proceed to Checkout
-                </a>
+                <a href="{% url 'portal:checkout' %}" class="checkout-btn"><i class="fas fa-credit-card me-2"></i>{% trans "Proceed to Checkout" %}</a>
                 
-                <a href="https://wa.me/{{ whatsapp_number|cut:'+' }}?text=Hi! I have items in my cart and would like to place an order. Can you help me?" 
-                   target="_blank" class="whatsapp-btn">
-                    <i class="fab fa-whatsapp me-2"></i>Order via WhatsApp
-                </a>
+                <a href="https://wa.me/{{ whatsapp_number|cut:'+' }}?text=Hi! I have items in my cart and would like to place an order. Can you help me?" target="_blank" class="whatsapp-btn"><i class="fab fa-whatsapp me-2"></i>{% trans "Order via WhatsApp" %}</a>
                 
                 <div class="text-center mt-3">
                     <small class="text-muted">
@@ -304,13 +301,11 @@
     
     {% else %}
     <!-- Empty Cart -->
-    <div class="empty-cart">
+        <div class="empty-cart">
         <i class="fas fa-shopping-cart"></i>
-        <h3>Your cart is empty</h3>
-        <p>Looks like you haven't added any items to your cart yet.</p>
-        <a href="{% url 'portal:public_catalog' %}" class="btn btn-primary btn-lg">
-            <i class="fas fa-store me-2"></i>Start Shopping
-        </a>
+        <h3>{% trans "Your cart is empty" %}</h3>
+        <p>{% trans "Looks like you haven't added any items to your cart yet." %}</p>
+        <a href="{% url 'portal:public_catalog' %}" class="btn btn-primary btn-lg"><i class="fas fa-store me-2"></i>{% trans "Start Shopping" %}</a>
     </div>
     {% endif %}
 </div>
@@ -320,11 +315,11 @@
     <div id="cart-update-toast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
         <div class="toast-header">
             <i class="fas fa-shopping-cart me-2"></i>
-            <strong class="me-auto">Cart Updated</strong>
+            <strong class="me-auto">{% trans "Cart Updated" %}</strong>
             <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
         </div>
         <div class="toast-body" id="cart-update-message">
-            Cart updated successfully!
+            {% trans "Cart updated successfully!" %}
         </div>
     </div>
 </div>
@@ -334,7 +329,7 @@
 <script>
 function updateQuantity(itemId, newQuantity) {
     if (newQuantity < 1) {
-        if (confirm('Remove this item from cart?')) {
+        if (confirm(window.TRANSLATIONS?.remove_item_confirm || '{% trans "Remove this item from cart?" %}')) {
             removeItem(itemId);
         }
         return;
@@ -379,7 +374,7 @@ function updateQuantity(itemId, newQuantity) {
 }
 
 function removeItem(itemId) {
-    if (!confirm('Are you sure you want to remove this item?')) {
+        if (!confirm(window.TRANSLATIONS?.remove_item_confirm || '{% trans "Are you sure you want to remove this item?" %}')) {
         return;
     }
     

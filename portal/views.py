@@ -42,6 +42,7 @@ from datetime import datetime, timedelta
 from django.core.paginator import Paginator
 import csv
 from django.db.models import ExpressionWrapper, FloatField
+from django.views.decorators.csrf import csrf_exempt
 
 
 logger = logging.getLogger(__name__)
@@ -60,6 +61,33 @@ def process_arabic_text(text):
     except Exception:
         # Return original text if processing fails
         return text
+
+
+@csrf_exempt
+def set_language(request):
+    """Set the preferred site language in session and redirect back.
+
+    Accepts POST or GET with 'lang' param (e.g., 'en' or 'ar'). Stores in
+    session under 'site_language' and also sets Django's LANGUAGE_CODE key.
+    """
+    lang = request.POST.get('lang') or request.GET.get('lang')
+    next_url = request.META.get('HTTP_REFERER') or reverse('portal:index')
+
+    if not lang:
+        return redirect(next_url)
+
+    # Save language in session
+    try:
+        request.session['site_language'] = lang
+        request.session['django_language'] = lang
+    except Exception:
+        # If session not available, fall back to cookie
+        response = redirect(next_url)
+        response.set_cookie('site_language', lang)
+        response.set_cookie('django_language', lang)
+        return response
+
+    return redirect(next_url)
 
 class InvoicePDFView(View):
     @method_decorator(login_required, name='dispatch')
@@ -2747,7 +2775,7 @@ class ProductCreateView(CreateView):
     model = Product
     template_name = 'portal/products/product_form.html'
     fields = [
-        'category', 'name', 'sku', 'description', 'cost_price', 
+        'category', 'name', 'name_ar', 'sku', 'description', 'description_ar', 'cost_price', 
         'unit_price', 'stock', 'image', 'warranty_period', 
         'barcode', 'is_active'
     ]
@@ -2773,7 +2801,7 @@ class ProductUpdateView(UpdateView):
     model = Product
     template_name = 'portal/products/product_form.html'
     fields = [
-        'category', 'name', 'sku', 'description', 'cost_price', 
+        'category', 'name', 'name_ar', 'sku', 'description', 'description_ar', 'cost_price', 
         'unit_price', 'stock', 'image', 'warranty_period', 
         'barcode', 'is_active'
     ]

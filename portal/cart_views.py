@@ -6,6 +6,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.contrib import messages
 from django.urls import reverse
 from django.views.generic import TemplateView
+from django.conf import settings
 from .models import Product, Cart, CartItem, Order
 from django.contrib.auth.models import User
 import json
@@ -188,7 +189,7 @@ class CartView(TemplateView):
                 'cart_items': cart_items,
                 'total_amount': total_amount,
                 'total_items': total_items,
-                'whatsapp_number': '+97444444444',  # You can get this from settings
+                'whatsapp_number': getattr(settings, 'WHATSAPP_BUSINESS_NUMBER', '+97430514865'),
             })
         except Exception as e:
             context.update({
@@ -200,6 +201,18 @@ class CartView(TemplateView):
             })
         
         return context
+
+    def render_to_response(self, context, **response_kwargs):
+        """Render Arabic template if requested via query param or language code."""
+        request = self.request
+        # Preference: explicit query parameter ?lang=ar
+        lang = request.GET.get('lang') or getattr(request, 'LANGUAGE_CODE', '')
+        if lang and str(lang).lower().startswith('ar'):
+            self.template_name = 'portal/cart/cart_ar.html'
+        else:
+            self.template_name = 'portal/cart/cart.html'
+
+        return super().render_to_response(context, **response_kwargs)
 
 
 class CheckoutView(TemplateView):
@@ -285,7 +298,7 @@ def order_confirmation(request, order_number):
     
     context = {
         'order': order,
-        'whatsapp_number': '+97444444444',
+        'whatsapp_number': getattr(settings, 'WHATSAPP_BUSINESS_NUMBER', '+97430514865'),
         'whatsapp_message': f"Hi! I just placed order {order_number} and would like to confirm the details."
     }
     

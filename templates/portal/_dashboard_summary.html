@@ -123,7 +123,8 @@
             <tbody>
                 {% for product in high_value_products %}
                 <tr>
-                    <td>{{ product.name }}</td>
+                    {% load localized %}
+                    <td>{{ product|localized:"name" }}</td>
                     <td>{{ product.category.name|default:"N/A" }}</td>
                     <td>QAR {{ product.cost_price|floatformat:2|intcomma }}</td>
                     <td>QAR {{ product.unit_price|floatformat:2|intcomma }}</td>
