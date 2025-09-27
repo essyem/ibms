@@ -2626,6 +2626,10 @@ class ProductDetailView(DetailView):
     template_name = 'portal/products/product_detail.html'
     context_object_name = 'product'
     
+    def get_template_names(self):
+        """Always use the public product detail template (storefront) for all users."""
+        return ['portal/products/public_product_detail.html']
+    
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         product = self.get_object()
@@ -2636,11 +2640,42 @@ class ProductDetailView(DetailView):
             is_active=True
         ).exclude(id=product.id)[:6]
         
+        # Base context used by admin/internal template
         context.update({
             'related_products': related_products,
             'profit_margin': product.profit_margin(),
             'profit_amount': product.profit_amount(),
         })
+
+        # If this view is rendering the public template for a regular user,
+        # provide the additional context keys the public template expects.
+        try:
+            template_names = self.get_template_names()
+            if 'portal/products/public_product_detail.html' in template_names:
+                from django.utils.translation import get_language
+                lang_param = self.request.GET.get('lang')
+                lang = lang_param or get_language()
+                use_ar = bool(lang and str(lang).lower().startswith('ar'))
+                display_name = product.name_ar if use_ar and getattr(product, 'name_ar', None) else product.name
+                display_description = product.description_ar if use_ar and getattr(product, 'description_ar', None) else product.description
+
+                product_url = self.request.build_absolute_uri(
+                    reverse('portal:public_product_detail', kwargs={'pk': product.pk})
+                )
+                if lang_param:
+                    sep = '&' if '?' in product_url else '?'
+                    product_url = f"{product_url}{sep}lang={lang_param}"
+
+                context.update({
+                    'product_url': product_url,
+                    'whatsapp_number': getattr(settings, 'WHATSAPP_BUSINESS_NUMBER', '+97444444444'),
+                    'whatsapp_message': f"Hi! I'm interested in {display_name} (SKU: {product.sku}). Can you provide more details?",
+                    'product_display_name': display_name,
+                    'product_display_description': display_description,
+                })
+        except Exception:
+            # If anything goes wrong adding public context, leave base context as-is
+            pass
         return context
 
 
@@ -2780,7 +2815,10 @@ class PublicProductDetailView(DetailView):
             'whatsapp_message': f"Hi! I'm interested in {display_name} (SKU: {product.sku}). Can you provide more details?",
             'product_display_name': display_name,
             'product_display_description': display_description,
+            # Note: attachments are not provided by default
         })
+        # Attachments/discovery removed in revert - no additional context changes
+
         return context
 
 

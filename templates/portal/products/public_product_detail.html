@@ -411,6 +411,8 @@
         </div>
     </div>
     
+    <!-- Attachments removed (reverted) -->
+    
     <!-- Related Products -->
     {% if related_products %}
     <div class="related-products">
@@ -508,8 +510,9 @@ function showCartToast(productName) {
 }
 
 function viewCart() {
-    // This will be implemented when we create the cart page
-    alert('Cart functionality will be implemented in the next step!');
+    // Placeholder view cart behavior (legacy)
+    // This was a simple placeholder alert introduced previously; restore to original
+    alert('{% trans "Cart functionality will be implemented in the next step!" %}');
 }
 
 function continueShoppingToast() {
