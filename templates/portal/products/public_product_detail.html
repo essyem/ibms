@@ -9,7 +9,7 @@
 {% block meta_tags %}
 <!-- Open Graph Meta Tags for Social Sharing -->
 <meta property="og:title" content="{{ product|localized:"name" }} - TrendzApps">
-<meta property="og:description" content="{{ product.description|default:'High quality product available at competitive price' }}">
+<meta property="og:description" content="{{ product|localized:'description'|default:'High quality product available at competitive price' }}">
 <meta property="og:url" content="{{ product_url }}">
 <meta property="og:type" content="product">
 <meta property="og:site_name" content="TrendzApps">
@@ -19,10 +19,10 @@
 <!-- Twitter Card Meta Tags -->
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="{{ product|localized:"name" }} - TrendzApps">
-<meta name="twitter:description" content="{{ product.description|default:'High quality product available at competitive price' }}">
+<meta name="twitter:description" content="{{ product|localized:'description'|default:'High quality product available at competitive price' }}">
 
 <!-- Additional SEO Meta Tags -->
-<meta name="description" content="{{ product.description|default:'High quality product available at competitive price' }}">
+<meta name="description" content="{{ product|localized:'description'|default:'High quality product available at competitive price' }}">
 <meta name="keywords" content="{{ product|localized:"name" }}, {{ product.sku }}, {{ product.category.name }}, TrendzApps">
 {% endblock %}
 
@@ -257,7 +257,7 @@
                     </a>
                 </li>
                 {% endif %}
-                <li class="breadcrumb-item active" aria-current="page">{{ product|localized:"name" }}</li>
+                <li class="breadcrumb-item active" aria-current="page">{{ product_display_name|default:product|localized:"name" }}</li>
             </ol>
         </nav>
     </div>
@@ -277,10 +277,10 @@
             <div class="product-info-card">
                 <div class="product-sku">SKU: {{ product.sku }}</div>
                 
-                <h1 class="mb-3">{{ product|localized:"name" }}</h1>
+                <h1 class="mb-3">{{ product_display_name|default:product|localized:"name" }}</h1>
                 
-                {% if product.description %}
-                <p class="text-muted mb-3">{{ product.description }}</p>
+                {% if product.description or product_display_description %}
+                <p class="text-muted mb-3">{{ product_display_description|default:product|localized:"description" }}</p>
                 {% endif %}
                 
                 <div class="product-price">QAR {{ product.unit_price|floatformat:2 }}</div>
@@ -328,7 +328,7 @@
                        target="_blank" class="social-btn facebook">
                         <i class="fab fa-facebook-f me-1"></i>Share
                     </a>
-                    <a href="https://twitter.com/intent/tweet?url={{ product_url|urlencode }}&text={{ product.name|urlencode }}" 
+                          <a href="https://twitter.com/intent/tweet?url={{ product_url|urlencode }}&text={{ product|localized:'name'|urlencode }}" 
                        target="_blank" class="social-btn twitter">
                         <i class="fab fa-twitter me-1"></i>Tweet
                     </a>
@@ -352,13 +352,13 @@
                 <div class="card-header">
                     <h4 class="mb-0"><i class="fas fa-info-circle me-2"></i>Product Specifications</h4>
                 </div>
-                <div class="card-body">
+                    <div class="card-body">
                     <div class="table-responsive">
                         <table class="table specification-table">
                             <tbody>
                                 <tr>
                                     <th width="200">Product Name</th>
-                                    <td>{{ product.name }}</td>
+                                    <td>{{ product|localized:"name" }}</td>
                                 </tr>
                                 <tr>
                                     <th>SKU</th>
@@ -423,7 +423,7 @@
                         <i class="fas fa-box"></i>
                     </div>
                     <div class="card-body text-center p-3">
-                        <h6 class="card-title small">{{ related_product.name|truncatewords:3 }}</h6>
+                        <h6 class="card-title small">{{ related_product|localized:"name"|truncatewords:3 }}</h6>
                         <p class="text-danger fw-bold mb-2">QAR {{ related_product.unit_price|floatformat:2 }}</p>
                         <a href="{% url 'portal:public_product_detail' related_product.pk %}" 
                            class="btn btn-outline-primary btn-sm">

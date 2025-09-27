@@ -2755,16 +2755,31 @@ class PublicProductDetailView(DetailView):
             stock__gt=0
         ).exclude(id=product.id)[:6]
         
-        # Create product URL for sharing
+        # Determine preferred language from ?lang= or from Django's active language
+        from django.utils.translation import get_language
+        lang_param = self.request.GET.get('lang')
+        lang = lang_param or get_language()
+
+        # Choose localized product fields when Arabic requested and translation exists
+        use_ar = bool(lang and str(lang).lower().startswith('ar'))
+        display_name = product.name_ar if use_ar and getattr(product, 'name_ar', None) else product.name
+        display_description = product.description_ar if use_ar and getattr(product, 'description_ar', None) else product.description
+
+        # Create product URL for sharing (preserve ?lang param if present)
         product_url = self.request.build_absolute_uri(
             reverse('portal:public_product_detail', kwargs={'pk': product.pk})
         )
-        
+        if lang_param:
+            sep = '&' if '?' in product_url else '?'
+            product_url = f"{product_url}{sep}lang={lang_param}"
+
         context.update({
             'related_products': related_products,
             'product_url': product_url,
             'whatsapp_number': getattr(settings, 'WHATSAPP_BUSINESS_NUMBER', '+97444444444'),
-            'whatsapp_message': f"Hi! I'm interested in {product.name} (SKU: {product.sku}). Can you provide more details?",
+            'whatsapp_message': f"Hi! I'm interested in {display_name} (SKU: {product.sku}). Can you provide more details?",
+            'product_display_name': display_name,
+            'product_display_description': display_description,
         })
         return context
 
