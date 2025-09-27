@@ -12,6 +12,8 @@ from django.utils import timezone
 import random   
 import string
 from django.utils.text import gettext_lazy as _
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.crypto import get_random_string
 
 # Multi-tenant manager for site-based filtering
 class SiteManager(models.Manager):
@@ -37,6 +39,107 @@ class SiteModel(models.Model):
     
     class Meta:
         abstract = True
+
+
+# User Profile extension
+class UserProfile(SiteModel):
+    """Extended user profile with additional fields"""
+    
+    CONTACT_METHODS = [
+        ('email', 'Email'),
+        ('phone', 'Phone'),
+        ('whatsapp', 'WhatsApp'),
+    ]
+    
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
+    phone = models.CharField(max_length=20, blank=True, null=True)
+    company_name = models.CharField(max_length=100, blank=True, null=True)
+    address = models.TextField(blank=True, null=True)
+    preferred_contact_method = models.CharField(
+        max_length=10,
+        choices=CONTACT_METHODS,
+        default='email'
+    )
+    
+    # Email verification fields
+    email_verified = models.BooleanField(default=False)
+    email_verification_token = models.CharField(max_length=100, blank=True, null=True)
+    email_verification_sent_at = models.DateTimeField(null=True, blank=True)
+    
+    # TOTP fields
+    totp_secret = models.CharField(max_length=32, blank=True, null=True)
+    totp_enabled = models.BooleanField(default=False)
+    backup_codes = models.JSONField(default=list, blank=True)
+    
+    # Account settings
+    receive_marketing_emails = models.BooleanField(default=True)
+    receive_order_updates = models.BooleanField(default=True)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    def __str__(self):
+        return f"{self.user.get_full_name() or self.user.username}'s Profile"
+    
+    def generate_verification_token(self):
+        """Generate a new email verification token"""
+        self.email_verification_token = get_random_string(64)
+        self.email_verification_sent_at = timezone.now()
+        self.save()
+        return self.email_verification_token
+    
+    def is_verification_token_valid(self, token, max_age_hours=24):
+        """Check if verification token is valid and not expired"""
+        if not self.email_verification_token or self.email_verification_token != token:
+            return False
+        
+        if not self.email_verification_sent_at:
+            return False
+        
+        # Check if token is expired (24 hours by default)
+        expiry_time = self.email_verification_sent_at + timezone.timedelta(hours=max_age_hours)
+        return timezone.now() <= expiry_time
+    
+    def verify_email(self):
+        """Mark email as verified and clear verification token"""
+        self.email_verified = True
+        self.email_verification_token = None
+        self.email_verification_sent_at = None
+        self.save()
+        
+        # Activate the user account
+        if not self.user.is_active:
+            self.user.is_active = True
+            self.user.save()
+    
+    def generate_backup_codes(self, count=10):
+        """Generate TOTP backup codes"""
+        codes = []
+        for _ in range(count):
+            code = get_random_string(8, allowed_chars='0123456789')
+            codes.append(code)
+        
+        self.backup_codes = codes
+        self.save()
+        return codes
+
+
+# Email verification model for tracking verification attempts
+class UserEmailVerification(models.Model):
+    """Track email verification attempts for portal users"""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='portal_email_verifications')
+    email = models.EmailField()
+    token = models.CharField(max_length=100)
+    created_at = models.DateTimeField(auto_now_add=True)
+    verified_at = models.DateTimeField(null=True, blank=True)
+    is_used = models.BooleanField(default=False)
+    
+    class Meta:
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"Portal verification for {self.email} at {self.created_at}"
+
 
 class Customer(SiteModel):
     customer_id = models.CharField(
@@ -482,6 +585,11 @@ class Order(SiteModel):
         ('delivered', 'Delivered'),
         ('cancelled', 'Cancelled'),
     ]
+    
+    PAYMENT_METHODS = [
+        ('cod', 'Cash on Delivery'),
+        ('bank_transfer', 'Bank Transfer/Fawran Method'),
+    ]
 
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     order_number = models.CharField(max_length=20, unique=True)
@@ -490,8 +598,45 @@ class Order(SiteModel):
     order_date = models.DateTimeField(auto_now_add=True)
     status = models.CharField(max_length=20, choices=ORDER_STATUS, default='pending')
     payment_status = models.BooleanField(default=False)
-    delivery_address = models.TextField()
-    preferred_contact = models.CharField(max_length=100)
+    
+    # Payment Information
+    payment_method = models.CharField(max_length=20, choices=PAYMENT_METHODS, default='cod')
+    transfer_receipt = models.FileField(upload_to='transfer_receipts/', null=True, blank=True, 
+                                       help_text='Upload transfer receipt for Bank Transfer/Fawran payments')
+    
+    # Customer Information
+    customer_name = models.CharField(max_length=200)
+    customer_email = models.EmailField()
+    customer_phone = models.CharField(max_length=20)
+    
+    # Detailed Delivery Address
+    delivery_zone = models.CharField(max_length=100, help_text='Zone or Area')
+    delivery_street = models.CharField(max_length=200, help_text='Street name or number')
+    delivery_building = models.CharField(max_length=100, help_text='Building name or number')
+    delivery_flat = models.CharField(max_length=50, blank=True, help_text='Flat/Apartment number (optional)')
+    delivery_additional_info = models.TextField(blank=True, help_text='Additional delivery instructions')
+    
+    # Legacy fields for backward compatibility
+    delivery_address = models.TextField(blank=True, help_text='Legacy address field')
+    preferred_contact = models.CharField(max_length=100, blank=True, help_text='Legacy contact field')
+    
+    def get_full_delivery_address(self):
+        """Return formatted full delivery address"""
+        address_parts = [
+            f"Zone: {self.delivery_zone}" if self.delivery_zone else "",
+            f"Street: {self.delivery_street}" if self.delivery_street else "",
+            f"Building: {self.delivery_building}" if self.delivery_building else "",
+            f"Flat: {self.delivery_flat}" if self.delivery_flat else "",
+        ]
+        formatted_address = ", ".join(filter(None, address_parts))
+        
+        if self.delivery_additional_info:
+            formatted_address += f"\nAdditional Info: {self.delivery_additional_info}"
+        
+        return formatted_address or self.delivery_address
+    
+    def __str__(self):
+        return f"Order {self.order_number} - {self.customer_name} ({self.get_payment_method_display()})"
 
 class ProductEnquiry(SiteModel):
     PRODUCT_CHOICES = [

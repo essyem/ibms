@@ -410,9 +410,47 @@ class CartItemAdmin(admin.ModelAdmin):
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
-    list_display = ('order_number', 'user', 'total_price', 'status', 'order_date')
-    search_fields = ('order_number', 'user__username')
+    list_display = ('order_number', 'customer_name', 'payment_method', 'total_price', 'status', 'order_date', 'delivery_zone')
+    search_fields = ('order_number', 'customer_name', 'customer_email', 'customer_phone', 'user__username')
+    list_filter = ('payment_method', 'status', 'order_date', 'delivery_zone')
     exclude = ('site',)  # Hide site field for simplicity
+    
+    fieldsets = (
+        ('Order Information', {
+            'fields': ('order_number', 'user', 'status', 'total_price', 'order_date')
+        }),
+        ('Customer Details', {
+            'fields': ('customer_name', 'customer_email', 'customer_phone')
+        }),
+        ('Payment Information', {
+            'fields': ('payment_method', 'transfer_receipt'),
+            'description': 'Bank transfer receipt is required for Bank Transfer payments.'
+        }),
+        ('Delivery Address', {
+            'fields': ('delivery_zone', 'delivery_street', 'delivery_building', 'delivery_flat', 'delivery_additional_info'),
+            'description': 'Detailed delivery address information for accurate delivery.'
+        }),
+        ('Legacy Fields', {
+            'fields': ('delivery_address', 'preferred_contact'),
+            'classes': ('collapse',),
+            'description': 'Legacy fields maintained for backward compatibility.'
+        }),
+    )
+    
+    readonly_fields = ('order_date', 'order_number')
+    
+    def has_delete_permission(self, request, obj=None):
+        """Prevent deletion of orders with payment receipts"""
+        if obj and obj.transfer_receipt:
+            return False
+        return super().has_delete_permission(request, obj)
+    
+    def get_form(self, request, obj=None, **kwargs):
+        """Customize form based on payment method"""
+        form = super().get_form(request, obj, **kwargs)
+        if obj and obj.payment_method == 'cod' and 'transfer_receipt' in form.base_fields:
+            form.base_fields['transfer_receipt'].help_text = 'Not applicable for Cash on Delivery orders.'
+        return form
 
 
 @admin.register(ProductEnquiry)

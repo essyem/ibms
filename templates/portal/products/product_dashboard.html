@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load static %}
+{% load localized %}
 
 {% block title %}Product Dashboard - Trendz Portal{% endblock %}
 
@@ -105,8 +106,7 @@
                     {% for product in recent_products %}
                     <div class="d-flex align-items-center mb-3 {% if not forloop.last %}border-bottom pb-3{% endif %}">
                         {% if product.image %}
-                            {% load localized %}
-                            <img src="{{ product.image.url }}" alt="{{ product|localized:\"name\" }}" 
+                            <img src="{{ product.image.url }}" alt="{{ product|localized:"name" }}" 
                                  class="rounded me-3" style="width: 50px; height: 50px; object-fit: cover;">
                         {% else %}
                             <div class="d-flex align-items-center justify-content-center rounded bg-light me-3" 
@@ -115,7 +115,7 @@
                             </div>
                         {% endif %}
                         <div class="flex-grow-1">
-                                <h6 class="mb-1">{{ product|localized:"name"|truncatechars:30 }}</h6>
+                            <h6 class="mb-1">{{ product|localized:"name"|truncatechars:30 }}</h6>
                             <small class="text-muted">{{ product.sku }} • {{ product.category.name }}</small>
                             <div class="mt-1">
                                 <span class="badge bg-primary">QAR {{ product.unit_price }}</span>

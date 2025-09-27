@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}Registration Successful - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card text-center">
+                <div class="card-body py-5">
+                    <div class="mb-4">
+                        <i class="fas fa-envelope-circle-check fa-5x text-success"></i>
+                    </div>
+                    
+                    <h2 class="card-title text-success mb-4">Account Created Successfully!</h2>
+                    
+                    <div class="alert alert-info">
+                        <h5><i class="fas fa-info-circle"></i> Almost Done!</h5>
+                        <p class="mb-0">
+                            We've sent a verification email to your registered email address. 
+                            Please check your inbox and click the verification link to activate your account.
+                        </p>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <h6>What's next?</h6>
+                        <ol class="list-unstyled text-start">
+                            <li class="mb-2">
+                                <i class="fas fa-1 text-primary me-2"></i>
+                                Check your email inbox (and spam folder)
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-2 text-primary me-2"></i>
+                                Click the verification link in the email
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-3 text-primary me-2"></i>
+                                Your account will be activated automatically
+                            </li>
+                            <li>
+                                <i class="fas fa-4 text-primary me-2"></i>
+                                Start shopping on our platform!
+                            </li>
+                        </ol>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <p class="text-muted">
+                            <small>
+                                Didn't receive the email? Check your spam folder or 
+                                <a href="{% url 'portal:login' %}" class="text-decoration-none">
+                                    try logging in
+                                </a> to resend verification.
+                            </small>
+                        </p>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <a href="{% url 'portal:index' %}" class="btn btn-primary">
+                            <i class="fas fa-home"></i> Back to Home
+                        </a>
+                        <a href="{% url 'portal:login' %}" class="btn btn-outline-primary ms-2">
+                            <i class="fas fa-sign-in-alt"></i> Go to Login
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

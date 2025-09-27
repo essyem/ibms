@@ -225,18 +225,26 @@ class CheckoutView(TemplateView):
         cart = get_or_create_cart(self.request)
         cart_items = cart.cartitem_set.select_related('product').all()
         
-        if not cart_items:
-            # Redirect to cart if empty
-            return redirect('portal:cart')
-        
         total_amount = sum(item.quantity * item.product.unit_price for item in cart_items)
         
         context.update({
             'cart': cart,
             'cart_items': cart_items,
             'total_amount': total_amount,
+            'cart_is_empty': not cart_items,
         })
         return context
+    
+    def get(self, request, *args, **kwargs):
+        """Handle GET request - redirect to cart if empty"""
+        cart = get_or_create_cart(request)
+        cart_items = cart.cartitem_set.all()
+        
+        if not cart_items:
+            messages.info(request, 'Your cart is empty. Add some items before checkout.')
+            return redirect('portal:cart')
+        
+        return super().get(request, *args, **kwargs)
     
     def post(self, request):
         """Process checkout form"""
@@ -249,15 +257,37 @@ class CheckoutView(TemplateView):
                 return redirect('portal:cart')
             
             # Get form data
-            customer_name = request.POST.get('customer_name')
-            customer_email = request.POST.get('customer_email')
-            customer_phone = request.POST.get('customer_phone')
-            delivery_address = request.POST.get('delivery_address')
-            special_instructions = request.POST.get('special_instructions', '')
+            customer_name = request.POST.get('customer_name', '').strip()
+            customer_email = request.POST.get('customer_email', '').strip()
+            customer_phone = request.POST.get('customer_phone', '').strip()
+            
+            # Payment information
+            payment_method = request.POST.get('payment_method', 'cod')
+            transfer_receipt = request.FILES.get('transfer_receipt')
+            
+            # Detailed delivery address
+            delivery_zone = request.POST.get('delivery_zone', '').strip()
+            delivery_street = request.POST.get('delivery_street', '').strip()
+            delivery_building = request.POST.get('delivery_building', '').strip()
+            delivery_flat = request.POST.get('delivery_flat', '').strip()
+            delivery_additional_info = request.POST.get('delivery_additional_info', '').strip()
             
             # Basic validation
-            if not all([customer_name, customer_email, customer_phone, delivery_address]):
+            required_fields = [customer_name, customer_email, customer_phone, delivery_zone, delivery_street, delivery_building]
+            if not all(required_fields):
                 messages.error(request, 'Please fill in all required fields.')
+                return render(request, self.template_name, self.get_context_data())
+            
+            # Validate payment method specific requirements
+            if payment_method == 'bank_transfer' and not transfer_receipt:
+                messages.error(request, 'Please upload your bank transfer receipt.')
+                return render(request, self.template_name, self.get_context_data())
+            
+            # Email validation
+            import re
+            email_pattern = r'^[^\s@]+@[^\s@]+\.[^\s@]+$'
+            if not re.match(email_pattern, customer_email):
+                messages.error(request, 'Please enter a valid email address.')
                 return render(request, self.template_name, self.get_context_data())
             
             # Calculate total
@@ -267,19 +297,51 @@ class CheckoutView(TemplateView):
             import uuid
             order_number = f"ORD-{uuid.uuid4().hex[:8].upper()}"
             
-            # Create order
+            # Create order with enhanced fields
             order = Order.objects.create(
                 user=request.user if request.user.is_authenticated else None,
                 order_number=order_number,
                 total_price=total_amount,
-                delivery_address=delivery_address,
+                
+                # Customer information
+                customer_name=customer_name,
+                customer_email=customer_email,
+                customer_phone=customer_phone,
+                
+                # Payment information
+                payment_method=payment_method,
+                transfer_receipt=transfer_receipt,
+                
+                # Detailed delivery address
+                delivery_zone=delivery_zone,
+                delivery_street=delivery_street,
+                delivery_building=delivery_building,
+                delivery_flat=delivery_flat,
+                delivery_additional_info=delivery_additional_info,
+                
+                # Legacy fields for backward compatibility
+                delivery_address=f"{delivery_zone}, {delivery_street}, {delivery_building}" + (f", {delivery_flat}" if delivery_flat else ""),
                 preferred_contact=customer_phone,
-                # Add custom fields for customer info
             )
             
-            # Copy cart items to order (you might need to adjust this based on your Order model)
+            # Copy cart items to order
             for cart_item in cart_items:
                 order.items.add(cart_item)
+            
+            # Clear the cart
+            cart_items.delete()
+            
+            # Success message with payment method info
+            if payment_method == 'bank_transfer':
+                messages.success(request, f'Order {order_number} placed successfully! We will verify your bank transfer and contact you soon.')
+            else:
+                messages.success(request, f'Order {order_number} placed successfully! We will contact you to confirm delivery details.')
+            
+            return redirect('portal:order_confirmation', order_number=order_number)
+            
+        except Exception as e:
+            messages.error(request, f'Error processing order: {str(e)}')
+            return render(request, self.template_name, self.get_context_data())
             
             # Clear the cart
             cart_items.delete()

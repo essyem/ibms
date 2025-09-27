@@ -462,44 +462,57 @@
 {% block extra_js %}
 <script>
 // Shopping cart functionality
-let cart = JSON.parse(localStorage.getItem('shopping_cart') || '{}');
+// Cart functionality - using Django backend
 
 function addToCart(productId, productName) {
-    // If user is not authenticated, redirect them to the registration page with a next param
-    if (typeof window.IS_AUTHENTICATED !== 'undefined' && !window.IS_AUTHENTICATED) {
-        try {
-            const current = window.location.href;
-            const signup = window.SIGNUP_URL || '{% url "rbac:register" %}';
-            const url = new URL(signup, window.location.origin);
-            url.searchParams.set('next', current);
-            window.location.href = url.toString();
-            return;
-        } catch (err) {
-            window.location.href = (window.SIGNUP_URL || '{% url "rbac:register" %}') + '?next=' + encodeURIComponent(window.location.href);
-            return;
-        }
-    }
-
-    if (cart[productId]) {
-        cart[productId].quantity += 1;
-    } else {
-        cart[productId] = {
-            name: productName,
+    // Send AJAX request to Django backend
+    fetch('{% url "portal:add_to_cart" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify({
+            product_id: productId,
             quantity: 1
-        };
-    }
-    
-    localStorage.setItem('shopping_cart', JSON.stringify(cart));
-    updateCartCounter();
-    showCartToast(productName);
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            updateCartCounter(data.cart_total_items);
+            showCartToast(productName);
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error adding to cart:', error);
+        alert('Error adding item to cart. Please try again.');
+    });
 }
 
-function updateCartCounter() {
-    const totalItems = Object.values(cart).reduce((sum, item) => sum + item.quantity, 0);
-    const cartCounter = document.getElementById('cart-counter');
-    if (cartCounter) {
-        cartCounter.textContent = totalItems;
-        cartCounter.style.display = totalItems > 0 ? 'block' : 'none';
+function updateCartCounter(totalItems = null) {
+    if (totalItems !== null) {
+        const cartCounter = document.getElementById('cart-counter');
+        if (cartCounter) {
+            cartCounter.textContent = totalItems;
+            cartCounter.style.display = totalItems > 0 ? 'block' : 'none';
+        }
+    } else {
+        // Fetch cart count from server
+        fetch('{% url "portal:cart_count" %}')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const cartCounter = document.getElementById('cart-counter');
+                if (cartCounter) {
+                    cartCounter.textContent = data.cart_total_items;
+                    cartCounter.style.display = data.cart_total_items > 0 ? 'block' : 'none';
+                }
+            }
+        })
+        .catch(error => console.error('Error fetching cart count:', error));
     }
 }
 
@@ -510,9 +523,8 @@ function showCartToast(productName) {
 }
 
 function viewCart() {
-    // Placeholder view cart behavior (legacy)
-    // This was a simple placeholder alert introduced previously; restore to original
-    alert('{% trans "Cart functionality will be implemented in the next step!" %}');
+    // Redirect to cart page
+    window.location.href = '{% url "portal:cart" %}';
 }
 
 function continueShoppingToast() {

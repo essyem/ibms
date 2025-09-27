@@ -1,63 +1,329 @@
 {% extends "base.html" %}
+{% load widget_tweaks %}
+{% load crispy_forms_tags %}
 
-{% block title %}Register | Trendz Portal{% endblock %}
+{% block title %}Register - {{ block.super }}{% endblock %}
+
+{% block extra_head %}
+<style>
+    .registration-container {
+        max-width: 500px;
+        margin: 2rem auto;
+        padding: 2rem;
+        background: #fff;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .password-requirements {
+        font-size: 0.875rem;
+        color: #6c757d;
+        margin-top: 0.5rem;
+    }
+    
+    .availability-check {
+        font-size: 0.875rem;
+        margin-top: 0.25rem;
+    }
+    
+    .available { color: #28a745; }
+    .unavailable { color: #dc3545; }
+    .checking { color: #17a2b8; }
+    
+    .terms-section {
+        background-color: #f8f9fa;
+        padding: 1rem;
+        border-radius: 5px;
+        margin: 1rem 0;
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="container py-5">
-    <div class="row justify-content-center">
-        <div class="col-md-8 col-lg-6">
-            <div class="card border-0 shadow-lg">
-                <div class="card-header bg-info text-white text-center py-4">
-                    <h3><i class="fas fa-user-plus me-2"></i>Create Account</h3>
+<div class="container">
+    <div class="registration-container">
+        <div class="text-center mb-4">
+            <h2><i class="fas fa-user-plus"></i> Create Account</h2>
+            <p class="text-muted">Join TRENDZ Trading & Services</p>
+        </div>
+
+        <form method="post" id="registrationForm" novalidate>
+            {% csrf_token %}
+            
+            <!-- Username Field -->
+            <div class="form-group">
+                <label for="{{ form.username.id_for_label }}" class="form-label">
+                    {{ form.username.label }} <span class="text-danger">*</span>
+                </label>
+                {{ form.username|add_class:"form-control" }}
+                <div id="username-availability" class="availability-check"></div>
+                {% if form.username.help_text %}
+                    <div class="form-text">{{ form.username.help_text }}</div>
+                {% endif %}
+                {% if form.username.errors %}
+                    <div class="invalid-feedback d-block">
+                        {% for error in form.username.errors %}{{ error }}{% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Name Fields -->
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="{{ form.first_name.id_for_label }}" class="form-label">
+                            {{ form.first_name.label }} <span class="text-danger">*</span>
+                        </label>
+                        {{ form.first_name|add_class:"form-control" }}
+                        {% if form.first_name.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.first_name.errors %}{{ error }}{% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
                 </div>
-                <div class="card-body p-5">
-                    <form method="post">
-                        {% csrf_token %}
-                        
-                        <div class="row mb-3">
-                            <div class="col-md-6 mb-3 mb-md-0">
-                                <label for="id_first_name" class="form-label">First Name</label>
-                                <input type="text" name="first_name" class="form-control" id="id_first_name" required>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="{{ form.last_name.id_for_label }}" class="form-label">
+                            {{ form.last_name.label }} <span class="text-danger">*</span>
+                        </label>
+                        {{ form.last_name|add_class:"form-control" }}
+                        {% if form.last_name.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.last_name.errors %}{{ error }}{% endfor %}
                             </div>
-                            <div class="col-md-6">
-                                <label for="id_last_name" class="form-label">Last Name</label>
-                                <input type="text" name="last_name" class="form-control" id="id_last_name" required>
-                            </div>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="id_username" class="form-label">Username</label>
-                            <input type="text" name="username" class="form-control" id="id_username" required>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="id_email" class="form-label">Email</label>
-                            <input type="email" name="email" class="form-control" id="id_email" required>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="id_password1" class="form-label">Password</label>
-                            <input type="password" name="password1" class="form-control" id="id_password1" required>
-                        </div>
-                        
-                        <div class="mb-4">
-                            <label for="id_password2" class="form-label">Confirm Password</label>
-                            <input type="password" name="password2" class="form-control" id="id_password2" required>
-                        </div>
-                        
-                        <div class="d-grid">
-                            <button type="submit" class="btn btn-info btn-lg text-white">
-                                <i class="fas fa-user-plus me-2"></i>Register
-                            </button>
-                        </div>
-                    </form>
-                    
-                    <div class="text-center mt-4">
-                        <p>Already have an account? <a href="{% url 'login' %}" class="text-decoration-none">Login here</a></p>
+                        {% endif %}
                     </div>
                 </div>
             </div>
+
+            <!-- Email Field -->
+            <div class="form-group">
+                <label for="{{ form.email.id_for_label }}" class="form-label">
+                    {{ form.email.label }} <span class="text-danger">*</span>
+                </label>
+                {{ form.email|add_class:"form-control" }}
+                <div id="email-availability" class="availability-check"></div>
+                {% if form.email.help_text %}
+                    <div class="form-text">{{ form.email.help_text }}</div>
+                {% endif %}
+                {% if form.email.errors %}
+                    <div class="invalid-feedback d-block">
+                        {% for error in form.email.errors %}{{ error }}{% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Phone Field -->
+            <div class="form-group">
+                <label for="{{ form.phone.id_for_label }}" class="form-label">
+                    {{ form.phone.label }}
+                </label>
+                {{ form.phone|add_class:"form-control" }}
+                {% if form.phone.help_text %}
+                    <div class="form-text">{{ form.phone.help_text }}</div>
+                {% endif %}
+                {% if form.phone.errors %}
+                    <div class="invalid-feedback d-block">
+                        {% for error in form.phone.errors %}{{ error }}{% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Password Fields -->
+            <div class="form-group">
+                <label for="{{ form.password1.id_for_label }}" class="form-label">
+                    {{ form.password1.label }} <span class="text-danger">*</span>
+                </label>
+                {{ form.password1|add_class:"form-control" }}
+                {% if form.password1.help_text %}
+                    <div class="password-requirements">{{ form.password1.help_text }}</div>
+                {% endif %}
+                {% if form.password1.errors %}
+                    <div class="invalid-feedback d-block">
+                        {% for error in form.password1.errors %}{{ error }}{% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="{{ form.password2.id_for_label }}" class="form-label">
+                    {{ form.password2.label }} <span class="text-danger">*</span>
+                </label>
+                {{ form.password2|add_class:"form-control" }}
+                {% if form.password2.errors %}
+                    <div class="invalid-feedback d-block">
+                        {% for error in form.password2.errors %}{{ error }}{% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Terms and Conditions -->
+            <div class="terms-section">
+                <div class="form-check">
+                    {{ form.terms_accepted|add_class:"form-check-input" }}
+                    <label class="form-check-label" for="{{ form.terms_accepted.id_for_label }}">
+                        {{ form.terms_accepted.label }}
+                    </label>
+                    {% if form.terms_accepted.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.terms_accepted.errors %}{{ error }}{% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="mt-2">
+                    <small class="text-muted">
+                        By creating an account, you agree to our 
+                        <a href="{% url 'portal:terms' %}" target="_blank">Terms of Service</a> 
+                        and <a href="#" target="_blank">Privacy Policy</a>.
+                    </small>
+                </div>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="d-grid">
+                <button type="submit" class="btn btn-primary btn-lg">
+                    <i class="fas fa-user-plus"></i> Create Account
+                </button>
+            </div>
+        </form>
+
+        <!-- Login Link -->
+        <div class="text-center mt-4">
+            <p class="text-muted">
+                Already have an account? 
+                <a href="{% url 'portal:login' %}" class="text-decoration-none">Sign in here</a>
+            </p>
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const usernameField = document.getElementById('{{ form.username.id_for_label }}');
+    const emailField = document.getElementById('{{ form.email.id_for_label }}');
+    
+    let usernameTimeout, emailTimeout;
+    
+    // Username availability check
+    if (usernameField) {
+        usernameField.addEventListener('input', function() {
+            clearTimeout(usernameTimeout);
+            const username = this.value.trim();
+            const statusDiv = document.getElementById('username-availability');
+            
+            if (username.length < 3) {
+                statusDiv.innerHTML = '';
+                return;
+            }
+            
+            statusDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Checking...';
+            statusDiv.className = 'availability-check checking';
+            
+            usernameTimeout = setTimeout(() => {
+                fetch('{% url "portal:check_username" %}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    },
+                    body: JSON.stringify({username: username})
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.available) {
+                        statusDiv.innerHTML = '<i class="fas fa-check"></i> ' + data.message;
+                        statusDiv.className = 'availability-check available';
+                    } else {
+                        statusDiv.innerHTML = '<i class="fas fa-times"></i> ' + data.message;
+                        statusDiv.className = 'availability-check unavailable';
+                    }
+                })
+                .catch(error => {
+                    statusDiv.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Check failed';
+                    statusDiv.className = 'availability-check unavailable';
+                });
+            }, 500);
+        });
+    }
+    
+    // Email availability check
+    if (emailField) {
+        emailField.addEventListener('input', function() {
+            clearTimeout(emailTimeout);
+            const email = this.value.trim();
+            const statusDiv = document.getElementById('email-availability');
+            
+            if (!email || !email.includes('@')) {
+                statusDiv.innerHTML = '';
+                return;
+            }
+            
+            statusDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Checking...';
+            statusDiv.className = 'availability-check checking';
+            
+            emailTimeout = setTimeout(() => {
+                fetch('{% url "portal:check_email" %}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    },
+                    body: JSON.stringify({email: email})
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.available) {
+                        statusDiv.innerHTML = '<i class="fas fa-check"></i> ' + data.message;
+                        statusDiv.className = 'availability-check available';
+                    } else {
+                        statusDiv.innerHTML = '<i class="fas fa-times"></i> ' + data.message;
+                        statusDiv.className = 'availability-check unavailable';
+                    }
+                })
+                .catch(error => {
+                    statusDiv.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Check failed';
+                    statusDiv.className = 'availability-check unavailable';
+                });
+            }, 500);
+        });
+    }
+    
+    // Form validation
+    document.getElementById('registrationForm').addEventListener('submit', function(e) {
+        let isValid = true;
+        
+        // Check required fields
+        const requiredFields = [usernameField, emailField];
+        requiredFields.forEach(field => {
+            if (field && !field.value.trim()) {
+                isValid = false;
+                field.classList.add('is-invalid');
+            } else if (field) {
+                field.classList.remove('is-invalid');
+            }
+        });
+        
+        // Check terms acceptance
+        const termsField = document.getElementById('{{ form.terms_accepted.id_for_label }}');
+        if (termsField && !termsField.checked) {
+            isValid = false;
+            termsField.classList.add('is-invalid');
+        } else if (termsField) {
+            termsField.classList.remove('is-invalid');
+        }
+        
+        if (!isValid) {
+            e.preventDefault();
+            alert('Please fill in all required fields and accept the terms.');
+        }
+    });
+});
+</script>
 {% endblock %}

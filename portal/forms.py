@@ -1,4 +1,7 @@
 from django import forms
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Layout, Submit, Row, Column, Field, Div, HTML
+from crispy_forms.bootstrap import FormActions
 from .models import(ProductEnquiry, Invoice, InvoiceItem, 
     Product, Customer)
 
@@ -149,6 +152,36 @@ class ProductEnquiryForm(forms.ModelForm):
         label='I agree to Trendz\'s Terms & Conditions',
         widget=forms.CheckboxInput(attrs={'class': 'form-check-input'})
     )
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.layout = Layout(
+            Row(
+                Column('name', css_class='form-group col-md-6 mb-3'),
+                Column('company', css_class='form-group col-md-6 mb-3'),
+                css_class='form-row'
+            ),
+            Row(
+                Column('email', css_class='form-group col-md-6 mb-3'),
+                Column('phone', css_class='form-group col-md-6 mb-3'),
+                css_class='form-row'
+            ),
+            Row(
+                Column('product_interest', css_class='form-group col-md-6 mb-3'),
+                Column('subject', css_class='form-group col-md-6 mb-3'),
+                css_class='form-row'
+            ),
+            Field('message', css_class='form-group mb-3'),
+            Div(
+                Field('terms_agreed', css_class='form-check-input'),
+                css_class='form-check mb-3'
+            ),
+            FormActions(
+                Submit('submit', 'Send Enquiry', css_class='btn btn-primary btn-lg'),
+                css_class='text-center'
+            )
+        )
 
 
 class CustomerForm(forms.ModelForm):
@@ -194,3 +227,27 @@ class CustomerForm(forms.ModelForm):
         self.fields['address'].required = False
         self.fields['tax_number'].required = False
         self.fields['preferred_contact_method'].required = False
+        
+        # Add crispy forms helper
+        self.helper = FormHelper()
+        self.helper.layout = Layout(
+            Row(
+                Column('full_name', css_class='form-group col-md-6 mb-3'),
+                Column('phone', css_class='form-group col-md-6 mb-3'),
+                css_class='form-row'
+            ),
+            Row(
+                Column('company_name', css_class='form-group col-md-6 mb-3'),
+                Column('tax_number', css_class='form-group col-md-6 mb-3'),
+                css_class='form-row'
+            ),
+            Row(
+                Column('preferred_contact_method', css_class='form-group col-md-6 mb-3'),
+                css_class='form-row'
+            ),
+            Field('address', css_class='form-group mb-3'),
+            FormActions(
+                Submit('submit', 'Save Customer', css_class='btn btn-success'),
+                css_class='text-end'
+            )
+        )

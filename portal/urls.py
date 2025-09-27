@@ -17,6 +17,19 @@ from .cart_views import (
 from . import ajax_views
 from .views import set_language
 
+# Import authentication views
+from .auth_views import (
+    register_view, login_view, logout_view, verify_email, resend_verification,
+    registration_success, password_reset_request, profile_view, change_email_view,
+    check_username_availability, check_email_availability
+)
+
+# Import TOTP views
+from .totp_views import (
+    totp_setup, totp_disable, totp_backup_codes, totp_login_view, 
+    totp_enhanced_login_view, ajax_verify_totp
+)
+
 app_name = 'portal'
 
 urlpatterns = [
@@ -30,6 +43,28 @@ urlpatterns = [
     path('profile/', views.profile, name='profile'),
     path('enquiry/', views.enquiry, name='enquiry'),
     path('terms/', views.terms, name='terms'),
+    
+    # Authentication URLs
+    path('register/', register_view, name='register'),
+    path('login/', totp_enhanced_login_view, name='login'),  # Use TOTP-enhanced login
+    path('logout/', logout_view, name='logout'),
+    path('registration-success/', registration_success, name='registration_success'),
+    path('verify-email/<int:user_id>/<str:token>/', verify_email, name='verify_email'),
+    path('resend-verification/<int:user_id>/', resend_verification, name='resend_verification'),
+    path('password-reset/', password_reset_request, name='password_reset'),
+    path('profile/edit/', profile_view, name='profile_edit'),
+    path('profile/change-email/', change_email_view, name='change_email'),
+    
+    # TOTP URLs
+    path('totp/setup/', totp_setup, name='totp_setup'),
+    path('totp/verify/', totp_login_view, name='totp_verify'),
+    path('totp/disable/', totp_disable, name='totp_disable'),
+    path('totp/backup-codes/', totp_backup_codes, name='totp_backup_codes'),
+    
+    # AJAX authentication endpoints
+    path('ajax/check-username/', check_username_availability, name='check_username'),
+    path('ajax/check-email/', check_email_availability, name='check_email'),
+    path('ajax/verify-totp/', ajax_verify_totp, name='ajax_verify_totp'),
     
     # Product search and management
     path('products/search/', ProductSearchView.as_view(), name='product-search'),

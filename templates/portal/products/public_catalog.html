@@ -400,10 +400,94 @@
 
 {% block extra_js %}
 <script>
+// Cart functionality - using Django backend
+function addToCart(productId, productName) {
+    // Send AJAX request to Django backend
+    fetch('{% url "portal:add_to_cart" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify({
+            product_id: productId,
+            quantity: 1
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            updateCartCounter(data.cart_total_items);
+            showCartToast(productName);
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error adding to cart:', error);
+        alert('Error adding item to cart. Please try again.');
+    });
+}
+
+function updateCartCounter(totalItems = null) {
+    if (totalItems !== null) {
+        const cartCounter = document.getElementById('cart-counter');
+        if (cartCounter) {
+            cartCounter.textContent = totalItems;
+            cartCounter.style.display = totalItems > 0 ? 'block' : 'none';
+        }
+    } else {
+        // Fetch cart count from server
+        fetch('{% url "portal:cart_count" %}')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const cartCounter = document.getElementById('cart-counter');
+                if (cartCounter) {
+                    cartCounter.textContent = data.cart_total_items;
+                    cartCounter.style.display = data.cart_total_items > 0 ? 'block' : 'none';
+                }
+            }
+        })
+        .catch(error => console.error('Error fetching cart count:', error));
+    }
+}
+
+function showCartToast(productName) {
+    // Create and show a toast notification
+    const toastHtml = `
+        <div class="toast" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="3000" style="position: fixed; top: 20px; right: 20px; z-index: 1050;">
+            <div class="toast-header bg-success text-white">
+                <i class="fas fa-shopping-cart me-2"></i>
+                <strong class="me-auto">Added to Cart</strong>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+            </div>
+            <div class="toast-body">
+                "${productName}" has been added to your cart!
+                <div class="mt-2">
+                    <a href="{% url 'portal:cart' %}" class="btn btn-sm btn-success">View Cart</a>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Add toast to page
+    document.body.insertAdjacentHTML('beforeend', toastHtml);
+    const toastElement = document.body.lastElementChild;
+    const toast = new bootstrap.Toast(toastElement);
+    
+    // Remove toast element after it's hidden
+    toastElement.addEventListener('hidden.bs.toast', function() {
+        toastElement.remove();
+    });
+    
+    toast.show();
+}
+
 // Initialize cart counter on page load
 document.addEventListener('DOMContentLoaded', function() {
     updateCartCounter();
-    // Page ready - cart counter initialized
+});
 
 // Share functionality
 function shareOnSocial(platform, url, title) {
@@ -419,11 +503,9 @@ function shareOnSocial(platform, url, title) {
             shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`;
             break;
         default:
-            // Unknown platform: do nothing
             return;
     }
     window.open(shareUrl, '_blank', 'width=600,height=400');
-    }
 }
 </script>
 {% endblock %}

@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Your Email Address</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-align: center;
+            padding: 30px 20px;
+            border-radius: 10px 10px 0 0;
+        }
+        .content {
+            background: #f8f9fa;
+            padding: 30px;
+            border: 1px solid #dee2e6;
+        }
+        .footer {
+            background: #343a40;
+            color: #adb5bd;
+            text-align: center;
+            padding: 20px;
+            border-radius: 0 0 10px 10px;
+        }
+        .btn {
+            display: inline-block;
+            padding: 15px 30px;
+            background: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+        .btn:hover {
+            background: #0056b3;
+        }
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .alert {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">TRENDZ Trading & Services</div>
+        <h2>Welcome to {{ site_name }}!</h2>
+    </div>
+    
+    <div class="content">
+        <h3>Hi {{ user.get_full_name|default:user.username }},</h3>
+        
+        <p>Thank you for registering with {{ site_name }}! We're excited to have you join our community.</p>
+        
+        <p>To complete your registration and activate your account, please verify your email address by clicking the button below:</p>
+        
+        <div style="text-align: center;">
+            <a href="{{ verification_url }}" class="btn">Verify Email Address</a>
+        </div>
+        
+        <div class="alert">
+            <strong>Important:</strong> This verification link will expire in 24 hours for security reasons.
+        </div>
+        
+        <p>If the button doesn't work, you can copy and paste this link into your browser:</p>
+        <p style="word-break: break-all; background: #e9ecef; padding: 10px; border-radius: 3px; font-family: monospace;">
+            {{ verification_url }}
+        </p>
+        
+        <h4>What you can do once verified:</h4>
+        <ul>
+            <li>Browse our extensive product catalog</li>
+            <li>Add items to your shopping cart</li>
+            <li>Place orders and track delivery</li>
+            <li>Access exclusive member benefits</li>
+            <li>Manage your account and preferences</li>
+        </ul>
+        
+        <p>If you didn't create an account with us, please ignore this email or <a href="mailto:support@trendzqtr.com">contact our support team</a>.</p>
+        
+        <p>
+            Best regards,<br>
+            The {{ site_name }} Team
+        </p>
+    </div>
+    
+    <div class="footer">
+        <p>
+            <strong>TRENDZ Trading & Services</strong><br>
+            Qatar | +974 3051 4865<br>
+            <a href="mailto:info@trendzqtr.com" style="color: #adb5bd;">info@trendzqtr.com</a>
+        </p>
+        <p style="font-size: 12px; margin-top: 15px;">
+            This email was sent to {{ user.email }}. If you no longer wish to receive these emails, 
+            you can <a href="#" style="color: #adb5bd;">unsubscribe here</a>.
+        </p>
+    </div>
+</body>
+</html>
