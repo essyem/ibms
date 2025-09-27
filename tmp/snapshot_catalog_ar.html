@@ -1,0 +1,1978 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>كتالوج المنتجات - TrendzApps</title>
+    
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- Favicon and icons -->
+    <link rel="icon" type="image/x-icon" href="/static/favicon/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/favicon/favicon.png">
+    <link rel="shortcut icon" href="/static/favicon/favicon.ico">>
+    <style>
+        :root {
+            --primary-color: #336699;
+            --secondary-color: #50b3a2;
+            --accent-color: #ff6b35;
+            --dark-color: #2c3e50;
+            --light-color: #f8f9fa;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+        }
+        
+        .navbar-custom {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .brand-logo {
+            max-height: 40px;
+        }
+        
+        /* Header styles */
+        .trendz-header {
+            background: linear-gradient(135deg, #336699 0%, #50b3a2 100%);
+            color: white;
+            padding: 1rem 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+        }
+        
+        .trendz-header h1 {
+            font-weight: 700;
+            font-size: 1.8rem;
+            margin: 0;
+        }
+        
+        .trendz-header a {
+            color: rgba(255,255,255,0.9);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        
+        .trendz-header a:hover {
+            color: white;
+        }
+        
+        /* Navigation styles */
+        .navbar-nav .nav-link {
+            font-weight: 500;
+            padding: 0.8rem 1.2rem !important;
+            transition: all 0.3s ease;
+            border-radius: 25px;
+            margin: 0 0.2rem;
+        }
+        
+        .navbar-nav .nav-link:hover {
+            background: rgba(255,255,255,0.15);
+            transform: translateY(-2px);
+        }
+        
+        /* Footer styles */
+        .footer {
+            background: linear-gradient(135deg, var(--dark-color) 0%, var(--primary-color) 100%);
+            color: white;
+            margin-top: auto;
+        }
+        
+        .footer a {
+            color: rgba(255,255,255,0.8);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        
+        .footer a:hover {
+            color: white;
+        }
+        
+        /* Smooth scrolling */
+        html {
+            scroll-behavior: smooth;
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: var(--primary-color);
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--secondary-color);
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .trendz-header h1 {
+                font-size: 1.4rem;
+            }
+            
+            .trendz-header .col-md-6:last-child {
+                text-align: center !important;
+                margin-top: 10px;
+            }
+            
+            .navbar-brand {
+                font-size: 1.1rem !important;
+            }
+            
+            .navbar-nav .nav-link {
+                padding: 0.6rem 1rem !important;
+                margin: 0.1rem 0;
+            }
+            
+            .dropdown-menu {
+                border: none;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            }
+            
+            .footer {
+                text-align: center !important;
+            }
+            
+            .footer .col-md-6:last-child {
+                margin-top: 1rem;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .navbar-brand {
+                font-size: 1rem !important;
+            }
+            
+            .container {
+                padding-left: 15px;
+                padding-right: 15px;
+            }
+            
+            .navbar-nav .nav-link {
+                padding: 0.5rem 0.8rem !important;
+                font-size: 0.9rem;
+            }
+            
+            .dropdown-item {
+                padding: 0.5rem 1rem;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+
+    
+<style>
+.catalog-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 2rem 0;
+    margin-bottom: 2rem;
+}
+
+.product-card {
+    border: none;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    height: 100%;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.product-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.product-image {
+    height: 250px;
+    background: linear-gradient(45deg, #f8f9fa, #e9ecef);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.product-image i {
+    font-size: 4rem;
+    color: #6c757d;
+}
+
+.product-info {
+    padding: 1.5rem;
+}
+
+.product-name {
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+    font-size: 1.1rem;
+    line-height: 1.3;
+}
+
+.product-price {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #e74c3c;
+    margin-bottom: 1rem;
+}
+
+.product-sku {
+    font-size: 0.85rem;
+    color: #6c757d;
+    margin-bottom: 0.5rem;
+}
+
+.stock-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font-size: 0.75rem;
+}
+
+.add-to-cart-btn {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    border: none;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 25px;
+    transition: all 0.3s ease;
+    width: 100%;
+}
+
+.add-to-cart-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+    color: white;
+}
+
+.filters-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    margin-bottom: 2rem;
+}
+
+.social-share {
+    position: fixed;
+    top: 50%;
+    right: 20px;
+    transform: translateY(-50%);
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.social-btn {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+.social-btn:hover {
+    transform: scale(1.1);
+    color: white;
+}
+
+.social-btn.facebook { background: #3b5998; }
+.social-btn.twitter { background: #1da1f2; }
+.social-btn.whatsapp { background: #25d366; }
+
+.whatsapp-float {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
+}
+
+.whatsapp-btn {
+    background: #25d366;
+    color: white;
+    border-radius: 50px;
+    padding: 15px 25px;
+    text-decoration: none;
+    box-shadow: 0 4px 15px rgba(37, 211, 102, 0.3);
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.whatsapp-btn:hover {
+    background: #20c75a;
+    transform: translateY(-2px);
+    color: white;
+}
+
+.price-range-slider {
+    margin: 1rem 0;
+}
+
+@media (max-width: 768px) {
+    .social-share { display: none; }
+    
+    .product-card {
+        margin-bottom: 1rem;
+    }
+}
+</style>
+
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-business-time me-2"></i>
+                <span class="d-none d-sm-inline"><strong>TrendzApps - IBMS</strong></span>
+                <span class="d-inline d-sm-none"><strong>TrendzApps</strong></span>
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link fw-bold text-primary" href="/catalog/">
+                            <i class="fas fa-store me-1"></i>Product Catalog
+                        </a>
+                    </li>
+                    
+                    
+                </ul>
+                
+                <ul class="navbar-nav">
+                    <!-- Language switcher -->
+                    <li class="nav-item dropdown me-3">
+                        <a class="nav-link dropdown-toggle" href="#" id="langDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-language me-1"></i>
+                            <span id="current-lang">EN</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="langDropdown">
+                            <li><a class="dropdown-item lang-select" href="#" data-lang="en">English</a></li>
+                            <li><a class="dropdown-item lang-select" href="#" data-lang="ar">العربية</a></li>
+                        </ul>
+                    </li>
+                    <!-- Shopping Cart -->
+                    <li class="nav-item me-3">
+                        <a class="nav-link position-relative" href="/cart/" title="Shopping Cart">
+                            <i class="fas fa-shopping-cart fa-lg"></i>
+                            <span id="cart-counter" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="display: none;">0</span>
+                        </a>
+                    </li>
+                    
+                    
+                    <li class="nav-item">
+                        <a class="nav-link" href="/accounts/login/">Login</a>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Messages -->
+    
+
+    <!-- Main Content -->
+    <main class="py-4">
+        
+<!-- Catalog Header -->
+<div class="catalog-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="mb-2"><i class="fas fa-store me-2"></i>Product Catalog</h1>
+                <p class="mb-0">Discover our amazing range of products with competitive prices</p>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <div class="h3 mb-0">1189 Products Available</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <!-- Filters Section -->
+    <div class="filters-card">
+        <div class="card-body">
+            <form method="get" class="row align-items-end">
+                <div class="col-md-3 mb-3">
+                    <label class="form-label"><i class="fas fa-search me-1"></i>Search Products</label>
+                    <input type="text" name="q" class="form-control" 
+                           placeholder="Search by name, SKU, or description..." 
+                           value="">
+                </div>
+                
+                <div class="col-md-2 mb-3">
+                    <label class="form-label"><i class="fas fa-tags me-1"></i>Category</label>
+                    <select name="category" class="form-select">
+                        <option value="">All Categories</option>
+                        
+                            <option value="1" 
+                                    >
+                                Services - Computer
+                            </option>
+                        
+                            <option value="2" 
+                                    >
+                                Accessories - Computer
+                            </option>
+                        
+                            <option value="3" 
+                                    >
+                                Accessories - Printer
+                            </option>
+                        
+                            <option value="4" 
+                                    >
+                                Accessories - Network
+                            </option>
+                        
+                            <option value="5" 
+                                    >
+                                Accessories - Mobile
+                            </option>
+                        
+                            <option value="6" 
+                                    >
+                                Desktop
+                            </option>
+                        
+                            <option value="7" 
+                                    >
+                                Laptop
+                            </option>
+                        
+                            <option value="8" 
+                                    >
+                                Printer
+                            </option>
+                        
+                            <option value="10" 
+                                    >
+                                Electronics
+                            </option>
+                        
+                            <option value="11" 
+                                    >
+                                Accessories
+                            </option>
+                        
+                            <option value="23" 
+                                    >
+                                Accessories - Electrical
+                            </option>
+                        
+                            <option value="24" 
+                                    >
+                                Stationary
+                            </option>
+                        
+                            <option value="27" 
+                                    >
+                                Services - Printer
+                            </option>
+                        
+                            <option value="28" 
+                                    >
+                                Software
+                            </option>
+                        
+                            <option value="29" 
+                                    >
+                                Frame
+                            </option>
+                        
+                            <option value="30" 
+                                    >
+                                Lens
+                            </option>
+                        
+                            <option value="31" 
+                                    >
+                                Test Category
+                            </option>
+                        
+                    </select>
+                </div>
+                
+                <div class="col-md-2 mb-3">
+                    <label class="form-label"><i class="fas fa-sort me-1"></i>Sort By</label>
+                    <select name="sort" class="form-select">
+                        <option value="newest" selected>Newest First</option>
+                        <option value="price_low" >Price: Low to High</option>
+                        <option value="price_high" >Price: High to Low</option>
+                        <option value="name" >Name A-Z</option>
+                        <option value="popular" >Most Popular</option>
+                    </select>
+                </div>
+                
+                <div class="col-md-2 mb-3">
+                    <label class="form-label"><i class="fas fa-money-bill me-1"></i>Min Price (QAR)</label>
+                    <input type="number" name="min_price" class="form-control" 
+                           placeholder="0" value="" min="0" step="0.01">
+                </div>
+                
+                <div class="col-md-2 mb-3">
+                    <label class="form-label">Max Price (QAR)</label>
+                    <input type="number" name="max_price" class="form-control" 
+                           placeholder="1000" value="" min="0" step="0.01">
+                </div>
+                
+                <div class="col-md-1 mb-3">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-filter"></i>
+                    </button>
+                </div>
+            </form>
+            
+            
+        </div>
+    </div>
+
+    <!-- Products Grid -->
+    <div class="row">
+        <div class="col-12 mb-3">
+            <h1 class="mb-2"><i class="fas fa-store me-2"></i>كتالوج المنتجات</h1>
+            <p class="mb-0">Discover our amazing range of products with competitive prices</p>
+        </div>
+
+        
+        <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+            <div class="card product-card">
+                <div class="product-image">
+                    <i class="fas fa-box"></i>
+                    
+                </div>
+
+                <div class="product-info">
+                    <div class="product-sku">SKU: TESTSKU002</div>
+                    
+                    <h5 class="product-name">منتج اختبار</h5>
+
+                    
+                    <p class="text-muted small mb-2">
+                        Fallback English description
+                    </p>
+                    
+
+                    <div class="product-price">QAR 30,00</div>
+
+                    <div class="d-flex gap-2">
+                        <a href="/catalog/1329/" 
+                           class="btn btn-outline-primary flex-fill">
+                            <i class="fas fa-eye me-1"></i>View Details
+                        </a>
+
+                        
+                        <button class="btn add-to-cart-btn flex-fill" 
+                                onclick="addToCart(1329, 'منتج اختبار')">
+                            <i class="fas fa-shopping-cart me-1"></i>Add to Cart
+                        </button>
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+            <div class="card product-card">
+                <div class="product-image">
+                    <i class="fas fa-box"></i>
+                    
+                </div>
+
+                <div class="product-info">
+                    <div class="product-sku">SKU: TESTSKU001</div>
+                    
+                    <h5 class="product-name">Test Product EN</h5>
+
+                    
+                    <p class="text-muted small mb-2">
+                        English description for test product.
+                    </p>
+                    
+
+                    <div class="product-price">QAR 15,00</div>
+
+                    <div class="d-flex gap-2">
+                        <a href="/catalog/1328/" 
+                           class="btn btn-outline-primary flex-fill">
+                            <i class="fas fa-eye me-1"></i>View Details
+                        </a>
+
+                        
+                        <button class="btn add-to-cart-btn flex-fill" 
+                                onclick="addToCart(1328, 'Test Product EN')">
+                            <i class="fas fa-shopping-cart me-1"></i>Add to Cart
+                        </button>
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+            <div class="card product-card">
+                <div class="product-image">
+                    <i class="fas fa-box"></i>
+                    
+                    <span class="badge bg-warning stock-badge">
+                        
+                            Low Stock
+                        
+                    </span>
+                    
+                </div>
+
+                <div class="product-info">
+                    <div class="product-sku">SKU: 123456-01</div>
+                    
+                    <h5 class="product-name">Test Frame 01</h5>
+
+                    
+                    <p class="text-muted small mb-2">
+                        Test Frame
+                    </p>
+                    
+
+                    <div class="product-price">QAR 700,00</div>
+
+                    <div class="d-flex gap-2">
+                        <a href="/catalog/1327/" 
+                           class="btn btn-outline-primary flex-fill">
+                            <i class="fas fa-eye me-1"></i>View Details
+                        </a>
+
+                        
+                        <button class="btn add-to-cart-btn flex-fill" 
+                                onclick="addToCart(1327, 'Test Frame 01')">
+                            <i class="fas fa-shopping-cart me-1"></i>Add to Cart
+                        </button>
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+            <div class="card product-card">
+                <div class="product-image">
+                    <i class="fas fa-box"></i>
+                    
+                    <span class="badge bg-warning stock-badge">
+                        
+                            Low Stock
+                        
+                    </span>
+                    
+                </div>
+
+                <div class="product-info">
+                    <div class="product-sku">SKU: 12345-01</div>
+                    
+                    <h5 class="product-name">test1</h5>
+
+                    
+                    <p class="text-muted small mb-2">
+                        Test Lens
+                    </p>
+                    
+
+                    <div class="product-price">QAR 350,00</div>
+
+                    <div class="d-flex gap-2">
+                        <a href="/catalog/1326/" 
+                           class="btn btn-outline-primary flex-fill">
+                            <i class="fas fa-eye me-1"></i>View Details
+                        </a>
+
+                        
+                        <button class="btn add-to-cart-btn flex-fill" 
+                                onclick="addToCart(1326, 'test1')">
+                            <i class="fas fa-shopping-cart me-1"></i>Add to Cart
+                        </button>
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+            <div class="card product-card">
+                <div class="product-image">
+                    <i class="fas fa-box"></i>
+                    
+                    <span class="badge bg-warning stock-badge">
+                        
+                            Low Stock
+                        
+                    </span>
+                    
+                </div>
+
+                <div class="product-info">
+                    <div class="product-sku">SKU: 85274963852</div>
+                    
+                    <h5 class="product-name">HP HTO3XL BATTERY</h5>
+
+                    
+                    <p class="text-muted small mb-2">
+                        HP HTO3XL BATTERY
+                    </p>
+                    
+
+                    <div class="product-price">QAR 200,00</div>
+
+                    <div class="d-flex gap-2">
+                        <a href="/catalog/1325/" 
+                           class="btn btn-outline-primary flex-fill">
+                            <i class="fas fa-eye me-1"></i>View Details
+                        </a>
+
+                        
+                        <button class="btn add-to-cart-btn flex-fill" 
+                                onclick="addToCart(1325, 'HP HTO3XL BATTERY')">
+                            <i class="fas fa-shopping-cart me-1"></i>Add to Cart
+                        </button>
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+            <div class="card product-card">
+                <div class="product-image">
+                    <i class="fas fa-box"></i>
+                    
+                    <span class="badge bg-warning stock-badge">
+                        
+                            Low Stock
+                        
+                    </span>
+                    
+                </div>
+
+                <div class="product-info">
+                    <div class="product-sku">SKU: ZT86</div>
+                    
+                    <h5 class="product-name">HEATZ 16 IN 1 DOCKING STATIOB ZT86</h5>
+
+                    
+                    <p class="text-muted small mb-2">
+                        HEATZ 16 IN 1 DOCKING STATIOB ZT86
+                    </p>
+                    
+
+                    <div class="product-price">QAR 200,00</div>
+
+                    <div class="d-flex gap-2">
+                        <a href="/catalog/1324/" 
+                           class="btn btn-outline-primary flex-fill">
+                            <i class="fas fa-eye me-1"></i>View Details
+                        </a>
+
+                        
+                        <button class="btn add-to-cart-btn flex-fill" 
+                                onclick="addToCart(1324, 'HEATZ 16 IN 1 DOCKING STATIOB ZT86')">
+                            <i class="fas fa-shopping-cart me-1"></i>Add to Cart
+                        </button>
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+            <div class="card product-card">
+                <div class="product-image">
+                    <i class="fas fa-box"></i>
+                    
+                    <span class="badge bg-warning stock-badge">
+                        
+                            Low Stock
+                        
+                    </span>
+                    
+                </div>
+
+                <div class="product-info">
+                    <div class="product-sku">SKU: 96385274165245285</div>
+                    
+                    <h5 class="product-name">Hp 59A tonner OG</h5>
+
+                    
+                    <p class="text-muted small mb-2">
+                        Hp 59A tonner OG
+                    </p>
+                    
+
+                    <div class="product-price">QAR 400,00</div>
+
+                    <div class="d-flex gap-2">
+                        <a href="/catalog/1323/" 
+                           class="btn btn-outline-primary flex-fill">
+                            <i class="fas fa-eye me-1"></i>View Details
+                        </a>
+
+                        
+                        <button class="btn add-to-cart-btn flex-fill" 
+                                onclick="addToCart(1323, 'Hp 59A tonner OG')">
+                            <i class="fas fa-shopping-cart me-1"></i>Add to Cart
+                        </button>
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+            <div class="card product-card">
+                <div class="product-image">
+                    <i class="fas fa-box"></i>
+                    
+                    <span class="badge bg-warning stock-badge">
+                        
+                            Low Stock
+                        
+                    </span>
+                    
+                </div>
+
+                <div class="product-info">
+                    <div class="product-sku">SKU: 2568989746565213</div>
+                    
+                    <h5 class="product-name">TN 2405 BLACK TONNER</h5>
+
+                    
+                    <p class="text-muted small mb-2">
+                        TN 2405 BLACK TONNER
+                    </p>
+                    
+
+                    <div class="product-price">QAR 60,00</div>
+
+                    <div class="d-flex gap-2">
+                        <a href="/catalog/1322/" 
+                           class="btn btn-outline-primary flex-fill">
+                            <i class="fas fa-eye me-1"></i>View Details
+                        </a>
+
+                        
+                        <button class="btn add-to-cart-btn flex-fill" 
+                                onclick="addToCart(1322, 'TN 2405 BLACK TONNER')">
+                            <i class="fas fa-shopping-cart me-1"></i>Add to Cart
+                        </button>
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+            <div class="card product-card">
+                <div class="product-image">
+                    <i class="fas fa-box"></i>
+                    
+                </div>
+
+                <div class="product-info">
+                    <div class="product-sku">SKU: 4895058402540</div>
+                    
+                    <h5 class="product-name">TERMINATOR TMA 313 ADAPTER</h5>
+
+                    
+                    <p class="text-muted small mb-2">
+                        TERMINATOR TMA 313 ADAPTER
+                    </p>
+                    
+
+                    <div class="product-price">QAR 25,00</div>
+
+                    <div class="d-flex gap-2">
+                        <a href="/catalog/1321/" 
+                           class="btn btn-outline-primary flex-fill">
+                            <i class="fas fa-eye me-1"></i>View Details
+                        </a>
+
+                        
+                        <button class="btn add-to-cart-btn flex-fill" 
+                                onclick="addToCart(1321, 'TERMINATOR TMA 313 ADAPTER')">
+                            <i class="fas fa-shopping-cart me-1"></i>Add to Cart
+                        </button>
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+            <div class="card product-card">
+                <div class="product-image">
+                    <i class="fas fa-box"></i>
+                    
+                    <span class="badge bg-warning stock-badge">
+                        
+                            Low Stock
+                        
+                    </span>
+                    
+                </div>
+
+                <div class="product-info">
+                    <div class="product-sku">SKU: 98526352632875698545867</div>
+                    
+                    <h5 class="product-name">Dell Optiplex 7060 core i5 8th gen 8Gb ram 256gb ssd/500hdd</h5>
+
+                    
+                    <p class="text-muted small mb-2">
+                        Dell Optiplex 7060 core i5 8th gen 8Gb ram 256gb …
+                    </p>
+                    
+
+                    <div class="product-price">QAR 500,00</div>
+
+                    <div class="d-flex gap-2">
+                        <a href="/catalog/1320/" 
+                           class="btn btn-outline-primary flex-fill">
+                            <i class="fas fa-eye me-1"></i>View Details
+                        </a>
+
+                        
+                        <button class="btn add-to-cart-btn flex-fill" 
+                                onclick="addToCart(1320, 'Dell Optiplex 7060 core i5 8th gen 8Gb ram 256gb ssd/500hdd')">
+                            <i class="fas fa-shopping-cart me-1"></i>Add to Cart
+                        </button>
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+            <div class="card product-card">
+                <div class="product-image">
+                    <i class="fas fa-box"></i>
+                    
+                    <span class="badge bg-warning stock-badge">
+                        
+                            Low Stock
+                        
+                    </span>
+                    
+                </div>
+
+                <div class="product-info">
+                    <div class="product-sku">SKU: 968527465</div>
+                    
+                    <h5 class="product-name">Light X 5 Way 3 Meter</h5>
+
+                    
+                    <p class="text-muted small mb-2">
+                        Light X 5 Way 3 Meter
+                    </p>
+                    
+
+                    <div class="product-price">QAR 60,00</div>
+
+                    <div class="d-flex gap-2">
+                        <a href="/catalog/1319/" 
+                           class="btn btn-outline-primary flex-fill">
+                            <i class="fas fa-eye me-1"></i>View Details
+                        </a>
+
+                        
+                        <button class="btn add-to-cart-btn flex-fill" 
+                                onclick="addToCart(1319, 'Light X 5 Way 3 Meter')">
+                            <i class="fas fa-shopping-cart me-1"></i>Add to Cart
+                        </button>
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+            <div class="card product-card">
+                <div class="product-image">
+                    <i class="fas fa-box"></i>
+                    
+                    <span class="badge bg-warning stock-badge">
+                        
+                            Low Stock
+                        
+                    </span>
+                    
+                </div>
+
+                <div class="product-info">
+                    <div class="product-sku">SKU: 619659179489</div>
+                    
+                    <h5 class="product-name">SANDISK 512GB USB 3.0</h5>
+
+                    
+                    <p class="text-muted small mb-2">
+                        SANDISK 512GB USB 3.0
+                    </p>
+                    
+
+                    <div class="product-price">QAR 150,00</div>
+
+                    <div class="d-flex gap-2">
+                        <a href="/catalog/1318/" 
+                           class="btn btn-outline-primary flex-fill">
+                            <i class="fas fa-eye me-1"></i>View Details
+                        </a>
+
+                        
+                        <button class="btn add-to-cart-btn flex-fill" 
+                                onclick="addToCart(1318, 'SANDISK 512GB USB 3.0')">
+                            <i class="fas fa-shopping-cart me-1"></i>Add to Cart
+                        </button>
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+            <div class="card product-card">
+                <div class="product-image">
+                    <i class="fas fa-box"></i>
+                    
+                    <span class="badge bg-warning stock-badge">
+                        
+                            Low Stock
+                        
+                    </span>
+                    
+                </div>
+
+                <div class="product-info">
+                    <div class="product-sku">SKU: 619659177638</div>
+                    
+                    <h5 class="product-name">SANDISK 256GB DUAL DRIVE</h5>
+
+                    
+                    <p class="text-muted small mb-2">
+                        SANDISK 256GB DUAL DRIVE
+                    </p>
+                    
+
+                    <div class="product-price">QAR 95,00</div>
+
+                    <div class="d-flex gap-2">
+                        <a href="/catalog/1316/" 
+                           class="btn btn-outline-primary flex-fill">
+                            <i class="fas fa-eye me-1"></i>View Details
+                        </a>
+
+                        
+                        <button class="btn add-to-cart-btn flex-fill" 
+                                onclick="addToCart(1316, 'SANDISK 256GB DUAL DRIVE')">
+                            <i class="fas fa-shopping-cart me-1"></i>Add to Cart
+                        </button>
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+            <div class="card product-card">
+                <div class="product-image">
+                    <i class="fas fa-box"></i>
+                    
+                    <span class="badge bg-warning stock-badge">
+                        
+                            Low Stock
+                        
+                    </span>
+                    
+                </div>
+
+                <div class="product-info">
+                    <div class="product-sku">SKU: 194644133870</div>
+                    
+                    <h5 class="product-name">ANKER MAGNETIC FOLDABLE STAND</h5>
+
+                    
+                    <p class="text-muted small mb-2">
+                        ANKER MAGNETIC FOLDABLE STAND
+                    </p>
+                    
+
+                    <div class="product-price">QAR 180,00</div>
+
+                    <div class="d-flex gap-2">
+                        <a href="/catalog/1315/" 
+                           class="btn btn-outline-primary flex-fill">
+                            <i class="fas fa-eye me-1"></i>View Details
+                        </a>
+
+                        
+                        <button class="btn add-to-cart-btn flex-fill" 
+                                onclick="addToCart(1315, 'ANKER MAGNETIC FOLDABLE STAND')">
+                            <i class="fas fa-shopping-cart me-1"></i>Add to Cart
+                        </button>
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+            <div class="card product-card">
+                <div class="product-image">
+                    <i class="fas fa-box"></i>
+                    
+                    <span class="badge bg-warning stock-badge">
+                        
+                            Low Stock
+                        
+                    </span>
+                    
+                </div>
+
+                <div class="product-info">
+                    <div class="product-sku">SKU: 050036395007</div>
+                    
+                    <h5 class="product-name">JBL TUNE 520BT</h5>
+
+                    
+                    <p class="text-muted small mb-2">
+                        JBL TUNE 520BT
+                    </p>
+                    
+
+                    <div class="product-price">QAR 190,00</div>
+
+                    <div class="d-flex gap-2">
+                        <a href="/catalog/1314/" 
+                           class="btn btn-outline-primary flex-fill">
+                            <i class="fas fa-eye me-1"></i>View Details
+                        </a>
+
+                        
+                        <button class="btn add-to-cart-btn flex-fill" 
+                                onclick="addToCart(1314, 'JBL TUNE 520BT')">
+                            <i class="fas fa-shopping-cart me-1"></i>Add to Cart
+                        </button>
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+            <div class="card product-card">
+                <div class="product-image">
+                    <i class="fas fa-box"></i>
+                    
+                    <span class="badge bg-warning stock-badge">
+                        
+                            Low Stock
+                        
+                    </span>
+                    
+                </div>
+
+                <div class="product-info">
+                    <div class="product-sku">SKU: 6976859384865</div>
+                    
+                    <h5 class="product-name">OTEETO SMART AUDIO GLASS</h5>
+
+                    
+                    <p class="text-muted small mb-2">
+                        OTEETO SMART AUDIO GLASS
+                    </p>
+                    
+
+                    <div class="product-price">QAR 95,00</div>
+
+                    <div class="d-flex gap-2">
+                        <a href="/catalog/1313/" 
+                           class="btn btn-outline-primary flex-fill">
+                            <i class="fas fa-eye me-1"></i>View Details
+                        </a>
+
+                        
+                        <button class="btn add-to-cart-btn flex-fill" 
+                                onclick="addToCart(1313, 'OTEETO SMART AUDIO GLASS')">
+                            <i class="fas fa-shopping-cart me-1"></i>Add to Cart
+                        </button>
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+            <div class="card product-card">
+                <div class="product-image">
+                    <i class="fas fa-box"></i>
+                    
+                    <span class="badge bg-warning stock-badge">
+                        
+                            Low Stock
+                        
+                    </span>
+                    
+                </div>
+
+                <div class="product-info">
+                    <div class="product-sku">SKU: 2545645864</div>
+                    
+                    <h5 class="product-name">CABLE TIE</h5>
+
+                    
+                    <p class="text-muted small mb-2">
+                        CABLE TIE
+                    </p>
+                    
+
+                    <div class="product-price">QAR 15,00</div>
+
+                    <div class="d-flex gap-2">
+                        <a href="/catalog/1312/" 
+                           class="btn btn-outline-primary flex-fill">
+                            <i class="fas fa-eye me-1"></i>View Details
+                        </a>
+
+                        
+                        <button class="btn add-to-cart-btn flex-fill" 
+                                onclick="addToCart(1312, 'CABLE TIE')">
+                            <i class="fas fa-shopping-cart me-1"></i>Add to Cart
+                        </button>
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+            <div class="card product-card">
+                <div class="product-image">
+                    <i class="fas fa-box"></i>
+                    
+                </div>
+
+                <div class="product-info">
+                    <div class="product-sku">SKU: lxcat63m</div>
+                    
+                    <h5 class="product-name">LIGHTX 3M CAT 6 CABLE</h5>
+
+                    
+                    <p class="text-muted small mb-2">
+                        LIGHTX 3M CAT 6 CABLE
+                    </p>
+                    
+
+                    <div class="product-price">QAR 25,00</div>
+
+                    <div class="d-flex gap-2">
+                        <a href="/catalog/1311/" 
+                           class="btn btn-outline-primary flex-fill">
+                            <i class="fas fa-eye me-1"></i>View Details
+                        </a>
+
+                        
+                        <button class="btn add-to-cart-btn flex-fill" 
+                                onclick="addToCart(1311, 'LIGHTX 3M CAT 6 CABLE')">
+                            <i class="fas fa-shopping-cart me-1"></i>Add to Cart
+                        </button>
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+            <div class="card product-card">
+                <div class="product-image">
+                    <i class="fas fa-box"></i>
+                    
+                    <span class="badge bg-warning stock-badge">
+                        
+                            Low Stock
+                        
+                    </span>
+                    
+                </div>
+
+                <div class="product-info">
+                    <div class="product-sku">SKU: 050036390934</div>
+                    
+                    <h5 class="product-name">JBL WAVEBEAM TWS</h5>
+
+                    
+                    <p class="text-muted small mb-2">
+                        JBL WAVEBEAM TWS
+                    </p>
+                    
+
+                    <div class="product-price">QAR 180,00</div>
+
+                    <div class="d-flex gap-2">
+                        <a href="/catalog/1310/" 
+                           class="btn btn-outline-primary flex-fill">
+                            <i class="fas fa-eye me-1"></i>View Details
+                        </a>
+
+                        
+                        <button class="btn add-to-cart-btn flex-fill" 
+                                onclick="addToCart(1310, 'JBL WAVEBEAM TWS')">
+                            <i class="fas fa-shopping-cart me-1"></i>Add to Cart
+                        </button>
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+            <div class="card product-card">
+                <div class="product-image">
+                    <i class="fas fa-box"></i>
+                    
+                    <span class="badge bg-warning stock-badge">
+                        
+                            Low Stock
+                        
+                    </span>
+                    
+                </div>
+
+                <div class="product-info">
+                    <div class="product-sku">SKU: 050036382946</div>
+                    
+                    <h5 class="product-name">JBL WAVE E200 EARPODS</h5>
+
+                    
+                    <p class="text-muted small mb-2">
+                        JBL WAVE E200 EARPODS
+                    </p>
+                    
+
+                    <div class="product-price">QAR 170,00</div>
+
+                    <div class="d-flex gap-2">
+                        <a href="/catalog/1309/" 
+                           class="btn btn-outline-primary flex-fill">
+                            <i class="fas fa-eye me-1"></i>View Details
+                        </a>
+
+                        
+                        <button class="btn add-to-cart-btn flex-fill" 
+                                onclick="addToCart(1309, 'JBL WAVE E200 EARPODS')">
+                            <i class="fas fa-shopping-cart me-1"></i>Add to Cart
+                        </button>
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+            <div class="card product-card">
+                <div class="product-image">
+                    <i class="fas fa-box"></i>
+                    
+                    <span class="badge bg-warning stock-badge">
+                        
+                            Low Stock
+                        
+                    </span>
+                    
+                </div>
+
+                <div class="product-info">
+                    <div class="product-sku">SKU: 194644038854</div>
+                    
+                    <h5 class="product-name">ANKER U2I WIRLESS HEADSET</h5>
+
+                    
+                    <p class="text-muted small mb-2">
+                        ANKER U2I WIRLESS HEADSET
+                    </p>
+                    
+
+                    <div class="product-price">QAR 85,00</div>
+
+                    <div class="d-flex gap-2">
+                        <a href="/catalog/1308/" 
+                           class="btn btn-outline-primary flex-fill">
+                            <i class="fas fa-eye me-1"></i>View Details
+                        </a>
+
+                        
+                        <button class="btn add-to-cart-btn flex-fill" 
+                                onclick="addToCart(1308, 'ANKER U2I WIRLESS HEADSET')">
+                            <i class="fas fa-shopping-cart me-1"></i>Add to Cart
+                        </button>
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+            <div class="card product-card">
+                <div class="product-image">
+                    <i class="fas fa-box"></i>
+                    
+                    <span class="badge bg-warning stock-badge">
+                        
+                            Low Stock
+                        
+                    </span>
+                    
+                </div>
+
+                <div class="product-info">
+                    <div class="product-sku">SKU: 194644200930</div>
+                    
+                    <h5 class="product-name">ANKER V20I EAR</h5>
+
+                    
+                    <p class="text-muted small mb-2">
+                        ANKER V20I EAR
+                    </p>
+                    
+
+                    <div class="product-price">QAR 150,00</div>
+
+                    <div class="d-flex gap-2">
+                        <a href="/catalog/1307/" 
+                           class="btn btn-outline-primary flex-fill">
+                            <i class="fas fa-eye me-1"></i>View Details
+                        </a>
+
+                        
+                        <button class="btn add-to-cart-btn flex-fill" 
+                                onclick="addToCart(1307, 'ANKER V20I EAR')">
+                            <i class="fas fa-shopping-cart me-1"></i>Add to Cart
+                        </button>
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+            <div class="card product-card">
+                <div class="product-image">
+                    <i class="fas fa-box"></i>
+                    
+                    <span class="badge bg-warning stock-badge">
+                        
+                            Low Stock
+                        
+                    </span>
+                    
+                </div>
+
+                <div class="product-info">
+                    <div class="product-sku">SKU: 194644199562</div>
+                    
+                    <h5 class="product-name">ANKER R50I WIRLESS EARBUDS</h5>
+
+                    
+                    <p class="text-muted small mb-2">
+                        ANKER R50I WIRLESS EARBUDS
+                    </p>
+                    
+
+                    <div class="product-price">QAR 95,00</div>
+
+                    <div class="d-flex gap-2">
+                        <a href="/catalog/1306/" 
+                           class="btn btn-outline-primary flex-fill">
+                            <i class="fas fa-eye me-1"></i>View Details
+                        </a>
+
+                        
+                        <button class="btn add-to-cart-btn flex-fill" 
+                                onclick="addToCart(1306, 'ANKER R50I WIRLESS EARBUDS')">
+                            <i class="fas fa-shopping-cart me-1"></i>Add to Cart
+                        </button>
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+            <div class="card product-card">
+                <div class="product-image">
+                    <i class="fas fa-box"></i>
+                    
+                    <span class="badge bg-warning stock-badge">
+                        
+                            Low Stock
+                        
+                    </span>
+                    
+                </div>
+
+                <div class="product-info">
+                    <div class="product-sku">SKU: 194253494829</div>
+                    
+                    <h5 class="product-name">USB-C TO C 60W CHARGE CABLE 1M</h5>
+
+                    
+                    <p class="text-muted small mb-2">
+                        USB-C TO C 60W CHARGE CABLE 1M
+                    </p>
+                    
+
+                    <div class="product-price">QAR 95,00</div>
+
+                    <div class="d-flex gap-2">
+                        <a href="/catalog/1305/" 
+                           class="btn btn-outline-primary flex-fill">
+                            <i class="fas fa-eye me-1"></i>View Details
+                        </a>
+
+                        
+                        <button class="btn add-to-cart-btn flex-fill" 
+                                onclick="addToCart(1305, 'USB-C TO C 60W CHARGE CABLE 1M')">
+                            <i class="fas fa-shopping-cart me-1"></i>Add to Cart
+                        </button>
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+    </div>
+
+    <!-- Pagination -->
+    
+    <div class="row mt-4">
+        <div class="col-12">
+            <nav aria-label="Product pagination">
+                <ul class="pagination justify-content-center">
+                    
+                    
+                    
+                        
+                            <li class="page-item active">
+                                <span class="page-link">1</span>
+                            </li>
+                        
+                    
+                        
+                            <li class="page-item">
+                                <a class="page-link" href="?page=2">2</a>
+                            </li>
+                        
+                    
+                        
+                            <li class="page-item">
+                                <a class="page-link" href="?page=3">3</a>
+                            </li>
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                    
+                    
+                        <li class="page-item">
+                            <a class="page-link" href="?page=2">
+                                <i class="fas fa-angle-right"></i>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page=50">
+                                <i class="fas fa-angle-double-right"></i>
+                            </a>
+                        </li>
+                    
+                </ul>
+            </nav>
+        </div>
+    </div>
+    
+</div>
+
+<!-- Social Share Sidebar -->
+<div class="social-share">
+    <a href="https://www.facebook.com/sharer/sharer.php?u=http://testserver/catalog/" 
+       target="_blank" class="social-btn facebook" title="Share on Facebook">
+        <i class="fab fa-facebook-f"></i>
+    </a>
+    <a href="https://twitter.com/intent/tweet?url=http://testserver/catalog/&text=Check out our amazing product catalog!" 
+       target="_blank" class="social-btn twitter" title="Share on Twitter">
+        <i class="fab fa-twitter"></i>
+    </a>
+    <a href="https://wa.me/97430514865?text=Hi! I'm browsing your product catalog and would like to know more about your products." 
+       target="_blank" class="social-btn whatsapp" title="Contact via WhatsApp">
+        <i class="fab fa-whatsapp"></i>
+    </a>
+</div>
+
+<!-- WhatsApp Float Button -->
+<div class="whatsapp-float">
+    <a href="https://wa.me/97430514865?text=Hi! I'm interested in your products. Can you help me with more information?" 
+       target="_blank" class="whatsapp-btn">
+        <i class="fab fa-whatsapp fa-lg"></i>
+        <span class="d-none d-md-inline">Chat with us!</span>
+    </a>
+</div>
+
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer py-4">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6 mb-3 mb-md-0">
+                    <h5><i class="fas fa-business-time me-2"></i>TrendzApps - IBMS</h5>
+                    <p class="mb-2">Integrated Business Management System</p>
+                    <p class="mb-0">
+                        <i class="fas fa-envelope me-2"></i>hello@trendzapps.com<br>
+                        <i class="fas fa-phone me-2"></i>+974 3051 4865
+                    </p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p class="mb-0">&copy; 2025 TrendzApps All rights reserved.</p>
+                    <p class="mb-0">Affiliated with Trendz T&C and Infinify D&S</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- jQuery (loaded first for compatibility) -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
+    <!-- Custom JavaScript -->
+    <script>
+        // Auto-hide alerts after 5 seconds
+        setTimeout(function() {
+            document.querySelectorAll('.alert').forEach(function(alert) {
+                new bootstrap.Alert(alert).close();
+            });
+        }, 5000);
+        
+        // Add loading state to forms
+        document.addEventListener('DOMContentLoaded', function() {
+            const forms = document.querySelectorAll('form');
+            forms.forEach(function(form) {
+                form.addEventListener('submit', function() {
+                    const submitBtn = form.querySelector('button[type="submit"]');
+                    if (submitBtn) {
+                        submitBtn.disabled = true;
+                        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
+                    }
+                });
+            });
+            
+            // Initialize cart counter
+            updateCartCounter();
+        });
+        
+        // Cart functionality
+        function updateCartCounter() {
+            fetch('/cart/count/')
+            .then(response => response.json())
+            .then(data => {
+                const cartCounter = document.getElementById('cart-counter');
+                if (cartCounter) {
+                    cartCounter.textContent = data.cart_total_items || 0;
+                    cartCounter.style.display = (data.cart_total_items || 0) > 0 ? 'block' : 'none';
+                }
+            })
+            .catch(error => console.log('Cart counter update failed:', error));
+        }
+        
+        // Add to cart function for global use
+                        <a class="nav-link" href="/">الرئيسية</a>
+            fetch('/cart/add/', {
+                method: 'POST',
+                        <a class="nav-link fw-bold text-primary" href="/catalog/">كتالوج المنتجات</a>
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || getCookie('csrftoken'),
+                },
+                body: JSON.stringify({
+                    product_id: productId,
+                    quantity: 1
+                        <a class="nav-link" href="/dashboard/">لوحة التحكم</a>
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    updateCartCounter();
+                    showCartToast(productName || (window.TRANSLATIONS?.product_generic_name || 'Product'));
+                } else {
+                    alert(data.message || (window.TRANSLATIONS?.error_adding_to_cart || 'Error adding to cart'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert(window.TRANSLATIONS?.error_adding_to_cart || 'Error adding product to cart');
+            });
+        }
+        
+        function showCartToast(productName) {
+            // Create modal if it doesn't exist
+            let modal = document.getElementById('cart-success-modal');
+            if (!modal) {
+                modal = document.createElement('div');
+                modal.id = 'cart-success-modal';
+                modal.className = 'modal fade';
+                modal.tabIndex = -1;
+                modal.innerHTML = `
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                                        <div class="modal-header bg-success text-white">
+                                            <h5 class="modal-title">
+                                                <i class="fas fa-check-circle me-2"></i>
+                                                <span id="cart-modal-title">${window.TRANSLATIONS?.added_to_cart_title || 'تم بنجاح!'}</span>
+                                            </h5>
+                                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                        </div>
+                            <div class="modal-body text-center">
+                                <i class="fas fa-shopping-cart text-success mb-3" style="font-size: 3rem;"></i>
+                                <h4 class="text-success mb-3">${window.TRANSLATIONS?.added_to_cart_title || 'تم بنجاح!'}</h4>
+                                <p id="cart-modal-message" class="mb-4">${productName} ${window.TRANSLATIONS?.product_added_suffix || 'تمت إضافة المنتج إلى السلة بنجاح!'}</p>
+                            </div>
+                            <div class="modal-footer justify-content-center">
+                                <a href="/cart/" class="btn btn-primary btn-lg me-3">
+                                    <i class="fas fa-shopping-cart me-2"></i><span>${window.TRANSLATIONS?.view_cart || 'عرض السلة'}</span>
+                                </a>
+                                <button type="button" class="btn btn-success btn-lg" data-bs-dismiss="modal">
+                                    <i class="fas fa-shopping-bag me-2"></i><span>${window.TRANSLATIONS?.continue_shopping || 'متابعة التسوق'}</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+            } else {
+                document.getElementById('cart-modal-message').textContent = `${productName} added to cart successfully!`;
+            }
+            
+            const bsModal = new bootstrap.Modal(modal);
+            bsModal.show();
+        }
+        
+        // Get CSRF token from cookies
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    </script>
+    <script>
+        // Expose a small set of translated strings for JS
+        window.TRANSLATIONS = {
+            added_to_cart_title: `تم بنجاح!`,
+            product_added_suffix: `تمت إضافة المنتج إلى السلة بنجاح!`,
+            product_generic_name: `Product`,
+            error_adding_to_cart: `Error adding to cart`,
+            cart_updated: `تم تحديث السلة بنجاح!`,
+            remove_item_confirm: `هل أنت متأكد أنك تريد إزالة هذا العنصر؟`,
+            remove_confirm_yes: `نعم`,
+            remove_confirm_no: `لا`,
+            continue_shopping: `متابعة التسوق`,
+            view_cart: `عرض السلة`
+        };
+    </script>
+    <script>
+        // Language switcher handler
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize current language display from session cookie if available
+            const lang = (function() {
+                const match = document.cookie.match(new RegExp('(?:^|; )' + 'site_language' + '=([^;]*)'));
+                return match ? decodeURIComponent(match[1]) : (window.navigator.language || 'en').slice(0,2);
+            })();
+            const currentLangEl = document.getElementById('current-lang');
+            if (currentLangEl) currentLangEl.textContent = (lang && lang.startsWith('ar')) ? 'AR' : 'EN';
+
+            document.querySelectorAll('.lang-select').forEach(function(el) {
+                el.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const selected = this.dataset.lang;
+                    // Set cookies client-side so language preference persists across ports
+                    document.cookie = `site_language=${selected}; path=/`;
+                    document.cookie = `django_language=${selected}; path=/`;
+
+                    if (currentLangEl) currentLangEl.textContent = (selected === 'ar') ? 'AR' : 'EN';
+
+                    // Update URL query param ?lang=selected while preserving other params
+                    try {
+                        const url = new URL(window.location.href);
+                        url.searchParams.set('lang', selected);
+                        window.location.href = url.toString();
+                    } catch (err) {
+                        // Fallback: simple navigation
+                        window.location.pathname = window.location.pathname + `?lang=${selected}`;
+                    }
+                });
+            });
+        });
+    </script>
+    
+    
+<script>
+// Initialize cart counter on page load
+document.addEventListener('DOMContentLoaded', function() {
+    updateCartCounter();
+    // Page ready - cart counter initialized
+
+// Share functionality
+function shareOnSocial(platform, url, title) {
+    let shareUrl;
+    switch(platform) {
+        case 'facebook':
+            shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
+            break;
+        case 'twitter':
+            shareUrl = `https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title)}`;
+            break;
+        case 'linkedin':
+            shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`;
+            break;
+        default:
+            // Unknown platform: do nothing
+            return;
+    }
+    window.open(shareUrl, '_blank', 'width=600,height=400');
+    }
+}
+</script>
+
+</body>
+</html>
