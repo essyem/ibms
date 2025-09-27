@@ -378,17 +378,38 @@
             .catch(error => console.log('Cart counter update failed:', error));
         }
         
+        // Expose minimal auth and registration URL to client-side JS
+        window.IS_AUTHENTICATED = {% if user.is_authenticated %}true{% else %}false{% endif %};
+        window.SIGNUP_URL = "{% url 'rbac:register' %}";
+
         // Add to cart function for global use
-                        <a class="nav-link" href="{% url 'portal:index' %}">{% trans "Home" %}</a>
+        function addToCart(productId, productName) {
+            // If user is not authenticated, redirect to registration (with next param)
+            if (!window.IS_AUTHENTICATED) {
+                try {
+                    const current = window.location.href;
+                    const signup = window.SIGNUP_URL || '{% url "rbac:register" %}';
+                    const url = new URL(signup, window.location.origin);
+                    url.searchParams.set('next', current);
+                    window.location.href = url.toString();
+                    return;
+                } catch (err) {
+                    // Fallback: simple redirect
+                    window.location.href = (window.SIGNUP_URL || '{% url "rbac:register" %}') + '?next=' + encodeURIComponent(window.location.href);
+                    return;
+                }
+            }
+
             fetch('{% url "portal:add_to_cart" %}', {
                 method: 'POST',
-                        <a class="nav-link fw-bold text-primary" href="{% url 'portal:public_catalog' %}">{% trans "Product Catalog" %}</a>
+                headers: {
+                    'Content-Type': 'application/json',
                     'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || getCookie('csrftoken'),
                 },
                 body: JSON.stringify({
                     product_id: productId,
                     quantity: 1
-                        <a class="nav-link" href="{% url 'portal:dashboard' %}">{% trans "Dashboard" %}</a>
+                }),
             })
             .then(response => response.json())
             .then(data => {
@@ -399,6 +420,11 @@
                     alert(data.message || (window.TRANSLATIONS?.error_adding_to_cart || '{% trans "Error adding to cart" %}'));
                 }
             })
+            .catch(error => {
+                console.error('Error:', error);
+                alert(window.TRANSLATIONS?.error_adding_to_cart || '{% trans "Error adding product to cart" %}');
+            });
+        }
             .catch(error => {
                 console.error('Error:', error);
                 alert(window.TRANSLATIONS?.error_adding_to_cart || '{% trans "Error adding product to cart" %}');

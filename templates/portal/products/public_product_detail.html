@@ -463,6 +463,21 @@
 let cart = JSON.parse(localStorage.getItem('shopping_cart') || '{}');
 
 function addToCart(productId, productName) {
+    // If user is not authenticated, redirect them to the registration page with a next param
+    if (typeof window.IS_AUTHENTICATED !== 'undefined' && !window.IS_AUTHENTICATED) {
+        try {
+            const current = window.location.href;
+            const signup = window.SIGNUP_URL || '{% url "rbac:register" %}';
+            const url = new URL(signup, window.location.origin);
+            url.searchParams.set('next', current);
+            window.location.href = url.toString();
+            return;
+        } catch (err) {
+            window.location.href = (window.SIGNUP_URL || '{% url "rbac:register" %}') + '?next=' + encodeURIComponent(window.location.href);
+            return;
+        }
+    }
+
     if (cart[productId]) {
         cart[productId].quantity += 1;
     } else {
