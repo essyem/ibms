@@ -13,7 +13,7 @@
     <!-- Favicon and icons -->
     <link rel="icon" type="image/x-icon" href="{% static 'favicon/favicon.ico' %}">
     <link rel="icon" type="image/png" sizes="32x32" href="{% static 'favicon/favicon.png' %}">
-    <link rel="shortcut icon" href="{% static 'favicon/favicon.ico' %}">>
+    <link rel="shortcut icon" href="{% static 'favicon/favicon.ico' %}">
     <style>
         :root {
             --primary-color: #336699;
@@ -80,14 +80,16 @@
             background: linear-gradient(135deg, var(--dark-color) 0%, var(--primary-color) 100%);
             color: white;
             margin-top: auto;
+            padding: 0.5rem 0; /* smaller vertical padding */
+            font-size: 0.85rem; /* slightly smaller text */
         }
-        
+
         .footer a {
             color: rgba(255,255,255,0.8);
             text-decoration: none;
             transition: color 0.3s ease;
         }
-        
+
         .footer a:hover {
             color: white;
         }
@@ -313,20 +315,16 @@
     </main>
 
     <!-- Footer -->
-    <footer class="footer py-4">
+    <footer class="footer">
         <div class="container">
-            <div class="row">
-                <div class="col-md-6 mb-3 mb-md-0">
-                    <h5><i class="fas fa-business-time me-2"></i>TrendzApps - IBMS</h5>
-                    <p class="mb-2">Integrated Business Management System</p>
-                    <p class="mb-0">
-                        <i class="fas fa-envelope me-2"></i>hello@trendzapps.com<br>
-                        <i class="fas fa-phone me-2"></i>+974 3051 4865
-                    </p>
+            <div class="row align-items-center">
+                <div class="col-12 col-md-6 text-start text-md-start">
+                    <span class="d-block small mb-0"><i class="fas fa-business-time me-2"></i>TrendzApps - IBMS — Integrated Business Management System</span>
+                    <span class="d-block small mb-0"><i class="fas fa-envelope me-2"></i>hello@trendzapps.com <span class="mx-2">|</span> <i class="fas fa-phone me-2"></i>+974 3051 4865</span>
                 </div>
-                <div class="col-md-6 text-md-end">
-                    <p class="mb-0">&copy; 2025 TrendzApps All rights reserved.</p>
-                    <p class="mb-0">Affiliated with Trendz T&C and Infinify D&S</p>
+                <div class="col-12 col-md-6 text-start text-md-end mt-2 mt-md-0">
+                    <span class="d-block small mb-0">&copy; 2025 TrendzApps. All rights reserved.</span>
+                    <span class="d-block small mb-0">Affiliated with Trendz T&C and Infinify D&S</span>
                 </div>
             </div>
         </div>
