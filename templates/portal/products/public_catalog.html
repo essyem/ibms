@@ -296,7 +296,7 @@
 
                         {% if product.stock > 0 %}
                         <button class="btn add-to-cart-btn flex-fill" 
-                                onclick="addToCart({{ product.id }}, '{{ product|localized:"name"|addslashes }}')">
+                                onclick="ensureAddToCart({{ product.id }}, '{{ product|localized:"name"|addslashes }}')">
                             <i class="fas fa-shopping-cart me-1"></i>{% trans "Add to Cart" %}
                         </button>
                         {% else %}
@@ -506,6 +506,45 @@ function shareOnSocial(platform, url, title) {
             return;
     }
     window.open(shareUrl, '_blank', 'width=600,height=400');
+}
+</script>
+<script>
+// Ensure add to cart redirects anonymous users to signup
+function ensureAddToCart(productId, productName) {
+    if (typeof window.IS_AUTHENTICATED !== 'undefined' && !window.IS_AUTHENTICATED) {
+        try {
+            const current = window.location.href;
+            const signup = window.SIGNUP_URL || '/rbac/register/';
+            const url = new URL(signup, window.location.origin);
+            url.searchParams.set('next', current);
+            window.location.href = url.toString();
+            return;
+        } catch (err) {
+            window.location.href = (window.SIGNUP_URL || '/rbac/register/') + '?next=' + encodeURIComponent(window.location.href);
+            return;
+        }
+    }
+    // Authenticated - call global addToCart
+    if (typeof addToCart === 'function') {
+        addToCart(productId, productName);
+    } else {
+        // Fallback: try posting directly to add_to_cart endpoint
+        fetch('/cart/add/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({ product_id: productId, quantity: 1 })
+        }).then(r => r.json()).then(data => {
+            if (data.success) {
+                updateCartCounter();
+                showCartToast(productName);
+            } else {
+                alert(data.message || 'Error adding to cart');
+            }
+        }).catch(e => console.error(e));
+    }
 }
 </script>
 {% endblock %}

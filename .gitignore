@@ -71,3 +71,26 @@ import/
 # OS
 .DS_Store
 Thumbs.db
+# Runtime files
+runserver.pid
+logs/*.log
+# Editor / VSCode server
+.vscode-server/
+.vscode/
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+env-*/
+*/env-*/
+# Virtualenvs
+venv/
+ENV/
+env/
+.env
+.venv
+# Distribution
+*.egg-info/
+dist/
+build/
