@@ -1,0 +1,254 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Payment Receipts - Trendz Portal{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-lg" style="background: rgba(255,255,255,0.95); border: none; border-radius: 15px;">
+                
+                <!-- Header -->
+                <div class="card-header" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; border-radius: 15px 15px 0 0;">
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <h2 class="mb-0">
+                                <i class="fas fa-receipt me-2"></i>Payment Receipts
+                            </h2>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <a href="{% url 'portal:receipt_create' %}" class="btn btn-light">
+                                <i class="fas fa-plus me-2"></i>New Receipt
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Filters and Search -->
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <form method="get" class="d-flex">
+                                <input type="text" name="q" class="form-control me-2" 
+                                       placeholder="Search by receipt number, customer, or reference..."
+                                       value="{{ search_query }}">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </form>
+                        </div>
+                        <div class="col-md-3">
+                            <form method="get">
+                                <select name="payment_method" class="form-control" onchange="this.form.submit()">
+                                    <option value="">All Payment Methods</option>
+                                    {% for method_code, method_name in payment_methods %}
+                                        <option value="{{ method_code }}" {% if current_payment_method == method_code %}selected{% endif %}>
+                                            {{ method_name }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                                {% if search_query %}<input type="hidden" name="q" value="{{ search_query }}">{% endif %}
+                                {% if current_status %}<input type="hidden" name="status" value="{{ current_status }}">{% endif %}
+                            </form>
+                        </div>
+                        <div class="col-md-3">
+                            <form method="get">
+                                <select name="status" class="form-control" onchange="this.form.submit()">
+                                    <option value="">All Status</option>
+                                    {% for status_code, status_name in status_choices %}
+                                        <option value="{{ status_code }}" {% if current_status == status_code %}selected{% endif %}>
+                                            {{ status_name }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                                {% if search_query %}<input type="hidden" name="q" value="{{ search_query }}">{% endif %}
+                                {% if current_payment_method %}<input type="hidden" name="payment_method" value="{{ current_payment_method }}">{% endif %}
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <!-- Stats Cards -->
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="card bg-success text-white">
+                                <div class="card-body text-center">
+                                    <h4>{{ receipts|length }}</h4>
+                                    <small>Total Receipts</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-primary text-white">
+                                <div class="card-body text-center">
+                                    <h4>QAR {{ receipt_stats.total_amount|default:0|floatformat:0 }}</h4>
+                                    <small>Total Collected</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-info text-white">
+                                <div class="card-body text-center">
+                                    <h4>{{ receipt_stats.this_month|default:0 }}</h4>
+                                    <small>This Month</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-warning text-white">
+                                <div class="card-body text-center">
+                                    <h4>{{ receipt_stats.active|default:0 }}</h4>
+                                    <small>Active</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Receipts Table -->
+                    {% if receipts %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-success">
+                                    <tr>
+                                        <th>Receipt #</th>
+                                        <th>Customer</th>
+                                        <th>Invoice</th>
+                                        <th>Payment Date</th>
+                                        <th>Method</th>
+                                        <th>Amount</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for receipt in receipts %}
+                                    <tr>
+                                        <td>
+                                            <strong>{{ receipt.receipt_number }}</strong>
+                                        </td>
+                                        <td>
+                                            {% if receipt.customer %}
+                                                <div>
+                                                    <strong>{{ receipt.customer.full_name }}</strong><br>
+                                                    <small class="text-muted">{{ receipt.customer.phone }}</small>
+                                                </div>
+                                            {% else %}
+                                                <span class="text-muted">Walk-in Customer</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if receipt.invoice %}
+                                                <a href="{% url 'portal:invoice_detail' receipt.invoice.pk %}" class="text-decoration-none">
+                                                    {{ receipt.invoice.invoice_number }}
+                                                </a>
+                                            {% else %}
+                                                <span class="text-muted">Standalone</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ receipt.payment_date|date:"M d, Y H:i" }}</td>
+                                        <td>
+                                            <span class="badge 
+                                                {% if receipt.payment_method == 'cash' %}bg-success
+                                                {% elif receipt.payment_method == 'credit_card' %}bg-primary
+                                                {% elif receipt.payment_method == 'pos' %}bg-info
+                                                {% elif receipt.payment_method == 'bank_transfer' %}bg-secondary
+                                                {% else %}bg-dark
+                                                {% endif %}">
+                                                {{ receipt.get_payment_method_display }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <strong>QAR {{ receipt.amount_received|floatformat:2 }}</strong>
+                                            {% if receipt.change_given > 0 %}
+                                                <br><small class="text-muted">Change: QAR {{ receipt.change_given|floatformat:2 }}</small>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <span class="badge 
+                                                {% if receipt.status == 'issued' %}bg-success
+                                                {% elif receipt.status == 'cancelled' %}bg-danger
+                                                {% elif receipt.status == 'refunded' %}bg-warning
+                                                {% endif %}">
+                                                {{ receipt.get_status_display }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group" role="group">
+                                                <a href="{% url 'portal:receipt_detail' receipt.pk %}" 
+                                                   class="btn btn-sm btn-outline-primary" title="View">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                <a href="{% url 'portal:receipt_pdf' receipt.pk %}" 
+                                                   class="btn btn-sm btn-outline-success" title="PDF" target="_blank">
+                                                    <i class="fas fa-file-pdf"></i>
+                                                </a>
+                                                {% if receipt.status == 'issued' %}
+                                                <button class="btn btn-sm btn-outline-danger" title="Cancel"
+                                                        onclick="cancelReceipt({{ receipt.pk }})">
+                                                    <i class="fas fa-ban"></i>
+                                                </button>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <!-- Pagination -->
+                        {% if is_paginated %}
+                            <nav aria-label="Receipts pagination">
+                                <ul class="pagination justify-content-center">
+                                    {% if page_obj.has_previous %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page=1{% if search_query %}&q={{ search_query }}{% endif %}{% if current_payment_method %}&payment_method={{ current_payment_method }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}">First</a>
+                                        </li>
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if current_payment_method %}&payment_method={{ current_payment_method }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}">Previous</a>
+                                        </li>
+                                    {% endif %}
+                                    
+                                    <li class="page-item active">
+                                        <span class="page-link">{{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+                                    </li>
+                                    
+                                    {% if page_obj.has_next %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if current_payment_method %}&payment_method={{ current_payment_method }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}">Next</a>
+                                        </li>
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&q={{ search_query }}{% endif %}{% if current_payment_method %}&payment_method={{ current_payment_method }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}">Last</a>
+                                        </li>
+                                    {% endif %}
+                                </ul>
+                            </nav>
+                        {% endif %}
+                        
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-receipt fa-3x text-muted mb-3"></i>
+                            <h4 class="text-muted">No receipts found</h4>
+                            <p class="text-muted">Start by creating your first payment receipt.</p>
+                            <a href="{% url 'portal:receipt_create' %}" class="btn btn-success">
+                                <i class="fas fa-plus me-2"></i>Create Receipt
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function cancelReceipt(receiptId) {
+        if (confirm('Are you sure you want to cancel this receipt? This action cannot be undone.')) {
+            // This would need to be implemented as a separate view/AJAX endpoint
+            alert('Cancel receipt functionality needs to be implemented.');
+        }
+    }
+</script>
+{% endblock %}

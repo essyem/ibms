@@ -605,14 +605,14 @@ class Order(SiteModel):
                                        help_text='Upload transfer receipt for Bank Transfer/Fawran payments')
     
     # Customer Information
-    customer_name = models.CharField(max_length=200)
-    customer_email = models.EmailField()
-    customer_phone = models.CharField(max_length=20)
+    customer_name = models.CharField(max_length=200, default='Walk-in Customer')
+    customer_email = models.EmailField(default='walk-in@example.com')
+    customer_phone = models.CharField(max_length=20, default='0000000000')
     
     # Detailed Delivery Address
-    delivery_zone = models.CharField(max_length=100, help_text='Zone or Area')
-    delivery_street = models.CharField(max_length=200, help_text='Street name or number')
-    delivery_building = models.CharField(max_length=100, help_text='Building name or number')
+    delivery_zone = models.CharField(max_length=100, help_text='Zone or Area', default='')
+    delivery_street = models.CharField(max_length=200, help_text='Street name or number', default='')
+    delivery_building = models.CharField(max_length=100, help_text='Building name or number', default='')
     delivery_flat = models.CharField(max_length=50, blank=True, help_text='Flat/Apartment number (optional)')
     delivery_additional_info = models.TextField(blank=True, help_text='Additional delivery instructions')
     
@@ -677,4 +677,220 @@ class ProductEnquiry(SiteModel):
                 fail_silently=True,
             )
 
+
+# =============================================================================
+# QUOTATION SYSTEM
+# =============================================================================
+
+class Quotation(SiteModel):
+    QUOTATION_STATUS = [
+        ('draft', 'Draft'),
+        ('sent', 'Sent'),
+        ('accepted', 'Accepted'),
+        ('rejected', 'Rejected'),
+        ('expired', 'Expired'),
+        ('converted', 'Converted to Invoice'),
+    ]
+    
+    customer = models.ForeignKey(
+        'Customer',
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        verbose_name='Customer'
+    )
+    
+    quotation_number = models.CharField(
+        max_length=50,
+        unique=True,
+        blank=True,
+        null=True
+    )
+    date = models.DateField(auto_now_add=True, editable=False)
+    valid_until = models.DateField(help_text="Quotation validity date")
+    status = models.CharField(max_length=20, choices=QUOTATION_STATUS, default='draft')
+    notes = models.TextField(blank=True)
+    terms_conditions = models.TextField(blank=True, help_text="Terms and conditions for this quotation")
+    subtotal = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    tax = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    total = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    discount_type = models.CharField(
+        max_length=10,
+        choices=[('percent', 'Percentage'), ('amount', 'Fixed Amount')],
+        default='percent'
+    )
+    discount_value = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+    tax_rate = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+    
+    # Reference to converted invoice (if applicable)
+    converted_invoice = models.ForeignKey(
+        'Invoice',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        help_text="Invoice created from this quotation"
+    )
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    def save(self, *args, **kwargs):
+        if not self.quotation_number:
+            self.quotation_number = self.generate_quotation_number()
+        super().save(*args, **kwargs)
+
+    @classmethod
+    def generate_quotation_number(cls):
+        """Generate quotation number in format: QT-YYYYMMDDNN"""
+        from django.utils import timezone
+        now = timezone.now()
+        date_part = now.strftime('%Y%m%d')
+        
+        # Find the highest number for today
+        today_quotes = cls.objects.filter(
+            quotation_number__startswith=f'QT-{date_part}'
+        ).order_by('-quotation_number')
+        
+        if today_quotes.exists():
+            last_number = today_quotes.first().quotation_number
+            sequence = int(last_number.split('-')[1][-2:]) + 1
+        else:
+            sequence = 1
+            
+        return f'QT-{date_part}{sequence:02d}'
+    
+    def __str__(self):
+        customer_name = self.customer.full_name if self.customer else "Walk-in Customer"
+        return f"{self.quotation_number} - {customer_name}"
+    
+    class Meta:
+        ordering = ['-date']
+
+
+class QuotationItem(SiteModel):
+    quotation = models.ForeignKey(Quotation, on_delete=models.CASCADE, related_name='items')
+    product = models.ForeignKey('Product', on_delete=models.CASCADE)
+    quantity = models.PositiveIntegerField(default=1)
+    unit_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    use_product_price = models.BooleanField(default=True, 
+                                          help_text="If True, uses product's unit price. If False, allows custom price.")
+    
+    def save(self, *args, **kwargs):
+        # Auto-set unit_price from product only if use_product_price is True and no custom price provided
+        if self.product and self.use_product_price and not self.unit_price:
+            self.unit_price = self.product.unit_price
+        super().save(*args, **kwargs)
+    
+    def subtotal(self):
+        from decimal import Decimal
+        if self.unit_price is None:
+            return Decimal('0.00')
+        return Decimal(str(self.quantity)) * self.unit_price
+    
+    def __str__(self):
+        return f"{self.product.name} ({self.quantity} x {self.unit_price})"
+
+
+# =============================================================================
+# PAYMENT RECEIPT SYSTEM
+# =============================================================================
+
+class PaymentReceipt(SiteModel):
+    PAYMENT_METHODS = [
+        ('cash', 'Cash'),
+        ('credit_card', 'Credit Card'),
+        ('debit_card', 'Debit Card'),
+        ('pos', 'POS'),
+        ('bank_transfer', 'Bank Transfer'),
+        ('cheque', 'Cheque'),
+        ('mobile_payment', 'Mobile Payment'),
+        ('other', 'Other'),
+    ]
+    
+    RECEIPT_STATUS = [
+        ('issued', 'Issued'),
+        ('cancelled', 'Cancelled'),
+        ('refunded', 'Refunded'),
+    ]
+    
+    receipt_number = models.CharField(
+        max_length=50,
+        unique=True,
+        blank=True,
+        null=True
+    )
+    
+    # Link to invoice (optional - can be standalone receipt)
+    invoice = models.ForeignKey(
+        'Invoice',
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        help_text="Invoice this payment is for (optional)"
+    )
+    
+    customer = models.ForeignKey(
+        'Customer',
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        verbose_name='Customer'
+    )
+    
+    payment_date = models.DateTimeField(auto_now_add=True)
+    payment_method = models.CharField(max_length=20, choices=PAYMENT_METHODS, default='cash')
+    amount_received = models.DecimalField(max_digits=12, decimal_places=2)
+    amount_due = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    change_given = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    
+    # Additional payment details
+    reference_number = models.CharField(max_length=100, blank=True, help_text="Transaction/Reference number")
+    notes = models.TextField(blank=True)
+    status = models.CharField(max_length=20, choices=RECEIPT_STATUS, default='issued')
+    
+    # Audit fields
+    issued_by = models.ForeignKey(
+        'auth.User',
+        on_delete=models.PROTECT,
+        help_text="User who issued this receipt"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    def save(self, *args, **kwargs):
+        if not self.receipt_number:
+            self.receipt_number = self.generate_receipt_number()
+        
+        # Calculate change given
+        if self.amount_received and self.amount_due:
+            self.change_given = max(0, self.amount_received - self.amount_due)
+        
+        super().save(*args, **kwargs)
+
+    @classmethod
+    def generate_receipt_number(cls):
+        """Generate receipt number in format: RC-YYYYMMDDNN"""
+        from django.utils import timezone
+        now = timezone.now()
+        date_part = now.strftime('%Y%m%d')
+        
+        # Find the highest number for today
+        today_receipts = cls.objects.filter(
+            receipt_number__startswith=f'RC-{date_part}'
+        ).order_by('-receipt_number')
+        
+        if today_receipts.exists():
+            last_number = today_receipts.first().receipt_number
+            sequence = int(last_number.split('-')[1][-2:]) + 1
+        else:
+            sequence = 1
+            
+        return f'RC-{date_part}{sequence:02d}'
+    
+    def __str__(self):
+        customer_name = self.customer.full_name if self.customer else "Walk-in Customer"
+        return f"{self.receipt_number} - {customer_name} - ${self.amount_received}"
+    
+    class Meta:
+        ordering = ['-payment_date']
 

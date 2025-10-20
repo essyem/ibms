@@ -1,0 +1,417 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Create Payment Receipt - Trendz Portal{% endblock %}
+
+{% block extra_head %}
+<meta name="csrf-token" content="{{ csrf_token }}">
+<style>
+.invoice-search-container {
+    position: relative;
+}
+
+.invoice-search-results {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    max-height: 400px;
+    overflow-y: auto;
+    z-index: 1000;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.invoice-search-result-item {
+    padding: 12px;
+    border-bottom: 1px solid #eee;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.invoice-search-result-item:hover {
+    background-color: #f8f9fa;
+}
+
+.invoice-search-result-item:last-child {
+    border-bottom: none;
+}
+
+.no-results {
+    padding: 10px;
+    text-align: center;
+    color: #6c757d;
+    font-style: italic;
+}
+
+.invoice-item {
+    font-size: 14px;
+}
+
+.invoice-number {
+    font-weight: bold;
+    color: #007bff;
+}
+
+.invoice-amount {
+    font-weight: bold;
+    color: #28a745;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-lg" style="background: rgba(255,255,255,0.95); border: none; border-radius: 15px;">
+                <div class="card-header" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; border-radius: 15px 15px 0 0;">
+                    <h2 class="mb-0">
+                        <i class="fas fa-receipt me-2"></i>Create Payment Receipt
+                    </h2>
+                </div>
+                <div class="card-body p-4">
+                    
+                    <form method="post" id="receipt-form">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <label for="invoice-search" class="form-label fw-bold">
+                                    <i class="fas fa-file-invoice me-1"></i>Invoice Search
+                                </label>
+                                <div class="invoice-search-container position-relative">
+                                    <div class="input-group">
+                                        <input type="text" 
+                                               class="form-control invoice-search-input" 
+                                               id="invoice-search"
+                                               placeholder="Type invoice number, customer name, or phone to search..."
+                                               autocomplete="off">
+                                        {{ form.invoice }}
+                                        <button type="button" class="btn btn-outline-secondary" id="clear-invoice-btn" title="Clear Selection">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                    <div class="invoice-search-results" style="display: none;"></div>
+                                </div>
+                                {% if form.invoice.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.invoice.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <small class="form-text text-muted">Search and select an invoice to auto-populate customer and amount due</small>
+                            </div>
+                        </div>
+                        
+                        <!-- Selected Invoice Info (Hidden initially) -->
+                        <div class="row" id="selected-invoice-info" style="display: none;">
+                            <div class="col-md-12 mb-3">
+                                <div class="alert alert-info">
+                                    <h6><i class="fas fa-info-circle me-2"></i>Selected Invoice</h6>
+                                    <div id="invoice-details"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.payment_method.id_for_label }}" class="form-label fw-bold">
+                                    <i class="fas fa-credit-card me-1"></i>Payment Method <span class="text-danger">*</span>
+                                </label>
+                                {{ form.payment_method }}
+                                {% if form.payment_method.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.payment_method.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.amount_due.id_for_label }}" class="form-label fw-bold">
+                                    <i class="fas fa-dollar-sign me-1"></i>Amount Due <span class="text-danger">*</span>
+                                </label>
+                                {{ form.amount_due }}
+                                {% if form.amount_due.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.amount_due.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.amount_received.id_for_label }}" class="form-label fw-bold">
+                                    <i class="fas fa-money-bill-wave me-1"></i>Amount Received <span class="text-danger">*</span>
+                                </label>
+                                {{ form.amount_received }}
+                                {% if form.amount_received.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.amount_received.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <!-- Change Given (auto-calculated) -->
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.reference_number.id_for_label }}" class="form-label fw-bold">
+                                    <i class="fas fa-hashtag me-1"></i>Reference Number
+                                </label>
+                                {{ form.reference_number }}
+                                {% if form.reference_number.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.reference_number.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <small class="form-text text-muted">Transaction or reference number</small>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">
+                                    <i class="fas fa-exchange-alt me-1"></i>Change Given
+                                </label>
+                                <div class="form-control bg-light" id="change-display">QAR 0.00</div>
+                                <small class="form-text text-muted">Automatically calculated</small>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <label for="{{ form.notes.id_for_label }}" class="form-label fw-bold">
+                                    <i class="fas fa-sticky-note me-1"></i>Notes
+                                </label>
+                                {{ form.notes }}
+                                {% if form.notes.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.notes.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <!-- Summary Box -->
+                        <div class="border rounded p-3 bg-light mb-4" id="payment-summary" style="display: none;">
+                            <h5 class="mb-3"><i class="fas fa-calculator me-2"></i>Payment Summary</h5>
+                            <div class="row">
+                                <div class="col-6"><strong>Amount Due:</strong></div>
+                                <div class="col-6 text-end" id="summary-due">QAR 0.00</div>
+                            </div>
+                            <div class="row">
+                                <div class="col-6"><strong>Amount Received:</strong></div>
+                                <div class="col-6 text-end" id="summary-received">QAR 0.00</div>
+                            </div>
+                            <hr>
+                            <div class="row">
+                                <div class="col-6"><strong>Change Given:</strong></div>
+                                <div class="col-6 text-end" id="summary-change">QAR 0.00</div>
+                            </div>
+                            <div class="row">
+                                <div class="col-6"><strong>Payment Status:</strong></div>
+                                <div class="col-6 text-end">
+                                    <span id="payment-status" class="badge bg-success">Full Payment</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between pt-3 border-top">
+                            <a href="{% url 'portal:receipt_list' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-1"></i>Back to Receipts
+                            </a>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-save me-1"></i>Issue Receipt
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        
+        // Invoice Search Functionality
+        function handleInvoiceSearch($input) {
+            const query = $input.val().trim();
+            const $results = $input.closest('.invoice-search-container').find('.invoice-search-results');
+            
+            if (query.length < 2) {
+                $results.hide();
+                return;
+            }
+
+            $.ajax({
+                url: '/ajax/invoice-search/',
+                method: 'GET',
+                data: { q: query },
+                success: (response) => {
+                    displayInvoiceSearchResults(response.invoices, $results);
+                },
+                error: (xhr) => {
+                    console.error('❌ Invoice search error:', xhr);
+                    $results.html('<div class="no-results">Error searching invoices</div>').show();
+                }
+            });
+        }
+
+        function displayInvoiceSearchResults(invoices, $results) {
+            $results.empty();
+
+            if (!invoices || invoices.length === 0) {
+                $results.html('<div class="no-results">No unpaid invoices found</div>').show();
+                return;
+            }
+
+            invoices.forEach((invoice) => {
+                const $item = $('<div class="invoice-search-result-item invoice-item">')
+                    .html(`
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <div class="invoice-number">#${invoice.invoice_number}</div>
+                                <div><strong>${invoice.customer_name}</strong></div>
+                                <small style="color: #6c757d;">${invoice.customer_phone || 'No phone'} • ${invoice.date}</small>
+                            </div>
+                            <div class="text-end">
+                                <div class="invoice-amount">QAR ${invoice.total.toFixed(2)}</div>
+                                <small class="badge bg-warning">${invoice.status}</small>
+                            </div>
+                        </div>
+                    `)
+                    .data('invoice', invoice)
+                    .on('click', (e) => {
+                        e.preventDefault();
+                        selectInvoice($(e.currentTarget));
+                        $results.hide();
+                    });
+                $results.append($item);
+            });
+
+            $results.show();
+        }
+
+        function selectInvoice($item) {
+            const invoice = $item.data('invoice');
+            console.log('✅ Invoice selected:', invoice.invoice_number);
+
+            // Update hidden invoice ID field
+            $('#id_invoice').val(invoice.id);
+
+            // Update search input
+            $('.invoice-search-input').val(`#${invoice.invoice_number} - ${invoice.customer_name}`);
+
+            // Auto-populate amount due
+            $('#id_amount_due').val(invoice.total.toFixed(2));
+            
+            // Show selected invoice info
+            $('#invoice-details').html(`
+                <div class="row">
+                    <div class="col-md-6">
+                        <strong>Invoice:</strong> #${invoice.invoice_number}<br>
+                        <strong>Customer:</strong> ${invoice.customer_name}<br>
+                        <strong>Phone:</strong> ${invoice.customer_phone || 'N/A'}
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <strong>Amount Due:</strong> <span class="text-success">QAR ${invoice.total.toFixed(2)}</span><br>
+                        <strong>Status:</strong> <span class="badge bg-warning">${invoice.status}</span><br>
+                        <strong>Date:</strong> ${invoice.date}
+                    </div>
+                </div>
+            `);
+            $('#selected-invoice-info').show();
+            
+            // Calculate change
+            calculateChange();
+        }
+
+        function clearInvoiceSelection() {
+            $('#id_invoice').val('');
+            $('.invoice-search-input').val('');
+            $('#selected-invoice-info').hide();
+            $('#id_amount_due').val('');
+            calculateChange();
+        }
+
+        // Bind invoice search events
+        $(document).on('input', '.invoice-search-input', function(e) {
+            handleInvoiceSearch($(e.target));
+        });
+
+        // Invoice Selection
+        $(document).on('click', '.invoice-search-result-item', function(e) {
+            e.preventDefault();
+            selectInvoice($(this));
+        });
+
+        // Clear invoice selection
+        $(document).on('click', '#clear-invoice-btn', function(e) {
+            e.preventDefault();
+            clearInvoiceSelection();
+        });
+
+        // Hide invoice search results when clicking outside
+        $(document).on('click', function(e) {
+            if (!$(e.target).closest('.invoice-search-container').length) {
+                $('.invoice-search-results').hide();
+            }
+        });
+
+        
+        // Calculate change given
+        function calculateChange() {
+            const amountDue = parseFloat($('#id_amount_due').val()) || 0;
+            const amountReceived = parseFloat($('#id_amount_received').val()) || 0;
+            const change = Math.max(0, amountReceived - amountDue);
+            
+            $('#change-display').text('QAR ' + change.toFixed(2));
+            
+            // Update summary
+            if (amountDue > 0 || amountReceived > 0) {
+                $('#payment-summary').show();
+                $('#summary-due').text('QAR ' + amountDue.toFixed(2));
+                $('#summary-received').text('QAR ' + amountReceived.toFixed(2));
+                $('#summary-change').text('QAR ' + change.toFixed(2));
+                
+                // Update payment status
+                let status = 'Partial Payment';
+                let statusClass = 'bg-warning';
+                
+                if (amountReceived >= amountDue && amountDue > 0) {
+                    status = 'Full Payment';
+                    statusClass = 'bg-success';
+                } else if (amountReceived > amountDue) {
+                    status = 'Overpayment';
+                    statusClass = 'bg-info';
+                } else if (amountReceived < amountDue) {
+                    status = 'Partial Payment';
+                    statusClass = 'bg-warning';
+                }
+                
+                $('#payment-status').removeClass('bg-success bg-warning bg-info bg-danger').addClass(statusClass).text(status);
+            }
+        }
+        
+        // Bind calculation to amount fields
+        $('#id_amount_due, #id_amount_received').on('input', calculateChange);
+        
+        // Initial calculation
+        calculateChange();
+    });
+</script>
+{% endblock %}

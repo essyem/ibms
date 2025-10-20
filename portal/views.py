@@ -2,7 +2,7 @@
 from django.views import View
 from django.views.generic import (CreateView, UpdateView, DeleteView,
 ListView, DetailView, View)
-from portal.models import Invoice, InvoiceItem, Product, Customer
+from portal.models import Invoice, InvoiceItem, Product, Customer, Quotation, QuotationItem, PaymentReceipt
 from procurement.models import Supplier, PurchaseOrder
 from django.db.models import Sum, Q, Avg, Count, F, Case, When, DecimalField, Min, Max
 from django.db.models.functions import Cast
@@ -11,7 +11,7 @@ from django.utils.decorators import method_decorator
 from django.db.models.functions import TruncDate, TruncMonth
 from django.db import transaction
 from django.shortcuts import render, redirect, get_object_or_404
-from portal.forms import ProductEnquiryForm, InvoiceForm, InvoiceItemForm, CustomerForm
+from portal.forms import ProductEnquiryForm, InvoiceForm, InvoiceItemForm, CustomerForm, QuotationForm, PaymentReceiptForm
 from django.contrib import messages
 import decimal
 from decimal import Decimal
@@ -2984,3 +2984,471 @@ def product_dashboard(request):
     }
     
     return render(request, 'portal/products/product_dashboard.html', context)
+
+
+# =============================================================================
+# QUOTATION MANAGEMENT VIEWS
+# =============================================================================
+
+@method_decorator(ensure_csrf_cookie, name='dispatch')
+@method_decorator(login_required, name='dispatch')
+class QuotationCreateView(CreateView):
+    model = Quotation
+    form_class = QuotationForm
+    template_name = 'portal/quotation_create.html'
+    
+    def get_context_data(self, **kwargs):
+        """Add products and customers to template context"""
+        context = super().get_context_data(**kwargs)
+        context.update({
+            'products': Product.objects.filter(is_active=True),
+            'customers': Customer.objects.all()[:100],
+        })
+        return context
+    
+    def form_valid(self, form):
+        try:
+            with transaction.atomic():
+                quotation = form.save(commit=False)
+                
+                # Handle customer
+                customer_id = self.request.POST.get('customer', '').strip()
+                if customer_id and customer_id != '':
+                    try:
+                        quotation.customer_id = int(customer_id)
+                    except (ValueError, TypeError):
+                        # Create or get walk-in customer
+                        walk_in_customer, created = Customer.objects.get_or_create(
+                            full_name='Walk-in Customer',
+                            defaults={'phone': '', 'address': ''}
+                        )
+                        quotation.customer = walk_in_customer
+                else:
+                    # Create or get walk-in customer
+                    walk_in_customer, created = Customer.objects.get_or_create(
+                        full_name='Walk-in Customer',
+                        defaults={'phone': '', 'address': ''}
+                    )
+                    quotation.customer = walk_in_customer
+
+                # Generate quotation number if needed
+                if not quotation.quotation_number:
+                    quotation.quotation_number = self._generate_quotation_number()
+
+                quotation.save()
+                
+                # Create quotation items
+                self._create_quotation_items(quotation)
+                self._update_quotation_totals(quotation)
+
+                return self._handle_response(quotation)
+
+        except Exception as e:
+            logger.error(f"Quotation creation error: {str(e)}")
+            return self._handle_error(e, form)
+    
+    def _generate_quotation_number(self):
+        """Generate quotation number in QT-YYYYMMDDNN format"""
+        date_part = timezone.now().strftime('%Y%m%d')
+        prefix = f"QT-{date_part}"
+        
+        try:
+            with transaction.atomic():
+                last_quotation = Quotation.objects.filter(
+                    quotation_number__startswith=prefix
+                ).order_by('-quotation_number').first()
+                
+                if last_quotation:
+                    last_num = int(last_quotation.quotation_number[-2:])
+                    next_num = last_num + 1
+                else:
+                    next_num = 1
+                
+                if next_num > 99:
+                    raise ValueError("Maximum daily quotation limit (99) reached")
+                
+                return f"{prefix}{next_num:02d}"
+        except Exception as e:
+            fallback_num = random.randint(1, 99)
+            return f"{prefix}{fallback_num:02d}F"
+
+    def _create_quotation_items(self, quotation):
+        """Create all associated quotation items"""
+        items_data = json.loads(self.request.POST.get('items', '[]'))
+        
+        for item in items_data:
+            try:
+                product_id = item.get('product', '').strip()
+                
+                if not product_id or product_id == '':
+                    continue
+                
+                try:
+                    product = Product.objects.get(id=int(product_id))
+                except (ValueError, Product.DoesNotExist):
+                    continue
+                
+                QuotationItem.objects.create(
+                    quotation=quotation,
+                    product=product,
+                    quantity=int(item.get('quantity', 1)),
+                    unit_price=Decimal(str(item.get('unit_price', '0')))
+                )
+                
+            except Exception as e:
+                logger.error(f"Error creating quotation item: {str(e)}")
+                continue
+
+    def _update_quotation_totals(self, quotation):
+        """Update quotation totals based on items"""
+        items = quotation.items.all()
+        subtotal = sum(item.quantity * item.unit_price for item in items)
+        
+        # Apply discount
+        discount_amount = Decimal('0')
+        if quotation.discount_type == 'percentage':
+            discount_amount = subtotal * (quotation.discount_value / 100)
+        else:
+            discount_amount = quotation.discount_value
+        
+        # Apply tax
+        tax_amount = subtotal * (quotation.tax_rate / 100)
+        
+        total = subtotal + tax_amount - discount_amount
+        
+        quotation.subtotal = subtotal
+        quotation.tax_amount = tax_amount
+        quotation.discount_amount = discount_amount
+        quotation.total = total
+        quotation.save()
+
+    def _handle_response(self, quotation):
+        """Return appropriate response based on request type"""
+        if self.request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({
+                'success': True,
+                'redirect_url': reverse('portal:quotation_detail', kwargs={'pk': quotation.pk}),
+                'quotation_number': quotation.quotation_number,
+                'total_amount': str(quotation.total),
+                'quotation_id': quotation.pk
+            })
+        self.object = quotation
+        return HttpResponseRedirect(reverse('portal:quotation_detail', kwargs={'pk': quotation.pk}))
+
+    def _handle_error(self, error, form=None):
+        """Handle errors appropriately based on request type"""
+        if self.request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({
+                'success': False,
+                'message': str(error)
+            }, status=400)
+        if form is None:
+            form = self.get_form()
+        return super().form_invalid(form)
+
+
+@method_decorator(login_required, name='dispatch')
+class QuotationListView(ListView):
+    model = Quotation
+    template_name = 'portal/quotation_list.html'
+    context_object_name = 'quotations'
+    paginate_by = 20
+    
+    def get_queryset(self):
+        queryset = Quotation.objects.select_related('customer').order_by('-date')
+        
+        # Filter by status if provided
+        status = self.request.GET.get('status')
+        if status:
+            queryset = queryset.filter(status=status)
+            
+        # Search functionality
+        search_query = self.request.GET.get('q', '')
+        if search_query:
+            queryset = queryset.filter(
+                Q(quotation_number__icontains=search_query) |
+                Q(customer__full_name__icontains=search_query) |
+                Q(customer__phone__icontains=search_query)
+            )
+        
+        return queryset
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['status_choices'] = Quotation.QUOTATION_STATUS
+        context['current_status'] = self.request.GET.get('status', '')
+        context['search_query'] = self.request.GET.get('q', '')
+        
+        # Calculate stats
+        all_quotations = Quotation.objects.all()
+        context['quotation_stats'] = {
+            'active': all_quotations.filter(status__in=['sent', 'accepted']).count(),
+            'pending': all_quotations.filter(status='draft').count(),
+            'total_value': all_quotations.aggregate(
+                total=Sum('total')
+            )['total'] or 0
+        }
+        
+        return context
+
+
+@method_decorator(login_required, name='dispatch')
+class QuotationDetailView(DetailView):
+    model = Quotation
+    template_name = 'portal/quotation_detail.html'
+    context_object_name = 'quotation'
+
+
+@method_decorator(login_required, name='dispatch')
+class QuotationUpdateView(UpdateView):
+    model = Quotation
+    form_class = QuotationForm
+    template_name = 'portal/quotation_create.html'
+    
+    def get_success_url(self):
+        return reverse('portal:quotation_detail', kwargs={'pk': self.object.pk})
+    
+    def form_valid(self, form):
+        messages.success(
+            self.request, 
+            f'Quotation "{form.instance.quotation_number}" updated successfully!'
+        )
+        return super().form_valid(form)
+
+
+@method_decorator(login_required, name='dispatch')
+class QuotationDeleteView(DeleteView):
+    model = Quotation
+    template_name = 'portal/quotation_confirm_delete.html'
+    
+    def get_success_url(self):
+        return reverse('portal:quotation_list')
+    
+    def delete(self, request, *args, **kwargs):
+        quotation = self.get_object()
+        messages.success(
+            request, 
+            f'Quotation "{quotation.quotation_number}" deleted successfully!'
+        )
+        return super().delete(request, *args, **kwargs)
+
+
+class QuotationPDFView(View):
+    @method_decorator(login_required, name='dispatch')
+    def get(self, request, pk, *args, **kwargs):
+        """Handle PDF generation with Arabic support using WeasyPrint"""
+        quotation = get_object_or_404(Quotation, pk=pk)
+        
+        context = {
+            'quotation': quotation,
+            'STATIC_URL': settings.STATIC_URL,
+        }
+        
+        try:
+            # Load and encode logo - try production paths first
+            logo_paths = [
+                # Production paths (staticfiles) - tried first
+                os.path.join(settings.BASE_DIR, 'staticfiles', 'images', 'logo.png'),
+                # Development paths (static)
+                os.path.join(settings.BASE_DIR, 'static', 'images', 'logo.png'),
+                # Media fallback
+                os.path.join(settings.BASE_DIR, 'media', 'logo.png'),
+            ]
+            
+            logo_base64 = None
+            for logo_path in logo_paths:
+                if os.path.exists(logo_path):
+                    try:
+                        with open(logo_path, 'rb') as logo_file:
+                            logo_data = base64.b64encode(logo_file.read()).decode()
+                            logo_base64 = f"data:image/png;base64,{logo_data}"
+                            logger.info(f"Logo loaded successfully from: {logo_path}")
+                            break
+                    except Exception as e:
+                        logger.error(f"Error reading logo from {logo_path}: {e}")
+                        continue
+            
+            if not logo_base64:
+                logger.warning("Logo could not be loaded from any path")
+                    
+            context['logo_base64'] = logo_base64
+            
+            # Render template with Arabic support
+            template = get_template('portal/quotation_pdf.html')
+            html_string = template.render(context)
+            
+            # Create PDF with WeasyPrint
+            html_doc = HTML(string=html_string, base_url=request.build_absolute_uri())
+            pdf_file = html_doc.write_pdf()
+            
+            # Return PDF response
+            response = HttpResponse(pdf_file, content_type='application/pdf')
+            response['Content-Disposition'] = f'inline; filename="quotation_{quotation.quotation_number}.pdf"'
+            return response
+            
+        except Exception as e:
+            logger.error(f"Error generating PDF for Quotation {quotation.quotation_number}: {e}")
+            messages.error(request, "Error generating PDF. Please try again.")
+            return redirect('portal:quotation_detail', pk=quotation.pk)
+
+
+# =============================================================================
+# PAYMENT RECEIPT MANAGEMENT VIEWS
+# =============================================================================
+
+@method_decorator(login_required, name='dispatch')
+class PaymentReceiptCreateView(CreateView):
+    model = PaymentReceipt
+    form_class = PaymentReceiptForm
+    template_name = 'portal/receipt_create.html'
+    
+    def form_valid(self, form):
+        # Set the issued_by field to current user
+        form.instance.issued_by = self.request.user
+        
+        # Auto-populate customer from invoice if invoice is selected
+        if form.instance.invoice and not form.instance.customer:
+            form.instance.customer = form.instance.invoice.customer
+        
+        receipt = form.save()
+        
+        # If this payment is for an invoice, update invoice status
+        if receipt.invoice and receipt.amount_received >= receipt.amount_due:
+            receipt.invoice.status = 'paid'
+            receipt.invoice.save()
+        
+        messages.success(
+            self.request, 
+            f'Payment receipt "{receipt.receipt_number}" created successfully!'
+        )
+        return super().form_valid(form)
+    
+    def get_success_url(self):
+        return reverse('portal:receipt_detail', kwargs={'pk': self.object.pk})
+
+
+@method_decorator(login_required, name='dispatch')
+class PaymentReceiptListView(ListView):
+    model = PaymentReceipt
+    template_name = 'portal/receipt_list.html'
+    context_object_name = 'receipts'
+    paginate_by = 20
+    
+    def get_queryset(self):
+        queryset = PaymentReceipt.objects.select_related(
+            'customer', 'invoice', 'issued_by'
+        ).order_by('-payment_date')
+        
+        # Filter by payment method if provided
+        payment_method = self.request.GET.get('payment_method')
+        if payment_method:
+            queryset = queryset.filter(payment_method=payment_method)
+            
+        # Filter by status if provided
+        status = self.request.GET.get('status')
+        if status:
+            queryset = queryset.filter(status=status)
+            
+        # Search functionality
+        search_query = self.request.GET.get('q', '')
+        if search_query:
+            queryset = queryset.filter(
+                Q(receipt_number__icontains=search_query) |
+                Q(customer__full_name__icontains=search_query) |
+                Q(reference_number__icontains=search_query)
+            )
+        
+        return queryset
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['payment_methods'] = PaymentReceipt.PAYMENT_METHODS
+        context['status_choices'] = PaymentReceipt.RECEIPT_STATUS
+        context['current_payment_method'] = self.request.GET.get('payment_method', '')
+        context['current_status'] = self.request.GET.get('status', '')
+        context['search_query'] = self.request.GET.get('q', '')
+        
+        # Calculate stats
+        from django.utils import timezone
+        from datetime import datetime
+        
+        all_receipts = PaymentReceipt.objects.all()
+        current_month = timezone.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        
+        context['receipt_stats'] = {
+            'total_amount': all_receipts.aggregate(
+                total=Sum('amount_received')
+            )['total'] or 0,
+            'this_month': all_receipts.filter(
+                payment_date__gte=current_month
+            ).count(),
+            'active': all_receipts.filter(status='issued').count()
+        }
+        
+        return context
+
+
+@method_decorator(login_required, name='dispatch')
+class PaymentReceiptDetailView(DetailView):
+    model = PaymentReceipt
+    template_name = 'portal/receipt_detail.html'
+    context_object_name = 'receipt'
+
+
+class PaymentReceiptPDFView(View):
+    @method_decorator(login_required, name='dispatch')
+    def get(self, request, pk, *args, **kwargs):
+        """Handle PDF generation for payment receipt"""
+        receipt = get_object_or_404(PaymentReceipt, pk=pk)
+        
+        context = {
+            'receipt': receipt,
+            'STATIC_URL': settings.STATIC_URL,
+        }
+        
+        try:
+            # Load and encode logo - try production paths first
+            logo_paths = [
+                # Production paths (staticfiles) - tried first
+                os.path.join(settings.BASE_DIR, 'staticfiles', 'images', 'logo.png'),
+                # Development paths (static)
+                os.path.join(settings.BASE_DIR, 'static', 'images', 'logo.png'),
+                # Media fallback
+                os.path.join(settings.BASE_DIR, 'media', 'logo.png'),
+            ]
+            
+            logo_base64 = None
+            for logo_path in logo_paths:
+                if os.path.exists(logo_path):
+                    try:
+                        with open(logo_path, 'rb') as logo_file:
+                            logo_data = base64.b64encode(logo_file.read()).decode()
+                            logo_base64 = f"data:image/png;base64,{logo_data}"
+                            logger.info(f"Logo loaded successfully from: {logo_path}")
+                            break
+                    except Exception as e:
+                        logger.error(f"Error reading logo from {logo_path}: {e}")
+                        continue
+            
+            if not logo_base64:
+                logger.warning("Logo could not be loaded from any path")
+                    
+            context['logo_base64'] = logo_base64
+            
+            # Render template with Arabic support
+            template = get_template('portal/receipt_pdf.html')
+            html_string = template.render(context)
+            
+            # Create PDF with WeasyPrint
+            html_doc = HTML(string=html_string, base_url=request.build_absolute_uri())
+            pdf_file = html_doc.write_pdf()
+            
+            # Return PDF response
+            response = HttpResponse(pdf_file, content_type='application/pdf')
+            response['Content-Disposition'] = f'inline; filename="receipt_{receipt.receipt_number}.pdf"'
+            return response
+            
+        except Exception as e:
+            logger.error(f"Error generating PDF for Receipt {receipt.receipt_number}: {e}")
+            messages.error(request, "Error generating PDF. Please try again.")
+            return redirect('portal:receipt_detail', pk=receipt.pk)

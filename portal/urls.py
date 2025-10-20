@@ -8,7 +8,9 @@ from .views import (
     CustomerListView, CustomerCreateView, CustomerDetailView, CustomerUpdateView,
     ProductListView, ProductDetailView, ProductCreateView, ProductUpdateView,
     product_delete, product_toggle_active, product_dashboard,
-    PublicProductCatalogView, PublicProductDetailView
+    PublicProductCatalogView, PublicProductDetailView,
+    QuotationCreateView, QuotationListView, QuotationDetailView, QuotationUpdateView, QuotationDeleteView,
+    PaymentReceiptCreateView, PaymentReceiptListView, PaymentReceiptDetailView
 )
 from .cart_views import (
     add_to_cart, update_cart_item, remove_from_cart, cart_count,
@@ -101,6 +103,20 @@ urlpatterns = [
     path('invoices/<int:pk>/delete/', InvoiceDeleteView.as_view(), name='invoice_delete'),
     path('invoices/<int:pk>/pdf/', views.InvoicePDFView.as_view(), name='invoice_pdf'),
     
+    # Quotation management
+    path('quotations/', QuotationListView.as_view(), name='quotation_list'),
+    path('quotations/create/', QuotationCreateView.as_view(), name='quotation_create'),
+    path('quotations/<int:pk>/', QuotationDetailView.as_view(), name='quotation_detail'),
+    path('quotations/<int:pk>/edit/', QuotationUpdateView.as_view(), name='quotation_update'),
+    path('quotations/<int:pk>/delete/', QuotationDeleteView.as_view(), name='quotation_delete'),
+    path('quotations/<int:pk>/pdf/', views.QuotationPDFView.as_view(), name='quotation_pdf'),
+    
+    # Payment Receipt management
+    path('receipts/', PaymentReceiptListView.as_view(), name='receipt_list'),
+    path('receipts/create/', PaymentReceiptCreateView.as_view(), name='receipt_create'),
+    path('receipts/<int:pk>/', PaymentReceiptDetailView.as_view(), name='receipt_detail'),
+    path('receipts/<int:pk>/pdf/', views.PaymentReceiptPDFView.as_view(), name='receipt_pdf'),
+    
     # Customer management
     path('customers/', CustomerListView.as_view(), name='customer_list'),
     path('customers/create/', CustomerCreateView.as_view(), name='customer_create'),
@@ -115,4 +131,5 @@ urlpatterns = [
     path('ajax/product-search/', ajax_views.product_search_public, name='product_search_public'),
     path('ajax/barcode-lookup/', ajax_views.product_barcode_lookup_public, name='barcode_lookup_public'),
     path('ajax/customer-search/', views.customer_search, name='customer_search'),
+    path('ajax/invoice-search/', ajax_views.invoice_search_ajax, name='invoice_search'),
 ]

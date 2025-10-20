@@ -147,3 +147,49 @@ def product_barcode_lookup_public(request):
         
     except Product.DoesNotExist:
         return JsonResponse({'error': 'Product not found or out of stock'}, status=404)
+
+
+@require_GET
+@staff_member_required
+def invoice_search_ajax(request):
+    """
+    AJAX endpoint for searching invoices for payment receipts
+    """
+    query = request.GET.get('q', '').strip()
+    
+    if len(query) < 2:
+        return JsonResponse({'invoices': []})
+    
+    from .models import Invoice
+    
+    # Search in invoice number, customer name, and company name
+    invoices = Invoice.objects.filter(
+        Q(invoice_number__icontains=query) |
+        Q(customer__full_name__icontains=query) |
+        Q(customer__company_name__icontains=query) |
+        Q(customer__phone__icontains=query),
+        status__in=['draft', 'sent']  # Only unpaid invoices
+    ).select_related('customer').order_by('-date')[:20]  # Limit to 20 results
+    
+    results = []
+    for invoice in invoices:
+        customer_name = invoice.customer.company_name or invoice.customer.full_name if invoice.customer else 'Walk-in Customer'
+        
+        results.append({
+            'id': invoice.id,
+            'invoice_number': invoice.invoice_number,
+            'customer_name': customer_name,
+            'customer_phone': invoice.customer.phone if invoice.customer else '',
+            'date': invoice.date.strftime('%Y-%m-%d') if invoice.date else '',
+            'total': float(invoice.total),
+            'status': invoice.get_status_display(),
+            'display_text': f"#{invoice.invoice_number} - {customer_name} - QAR {invoice.total:.2f}",
+            'customer_info': {
+                'id': invoice.customer.id if invoice.customer else None,
+                'name': customer_name,
+                'phone': invoice.customer.phone if invoice.customer else '',
+                'display_text': customer_name
+            }
+        })
+    
+    return JsonResponse({'invoices': results})

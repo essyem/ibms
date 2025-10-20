@@ -3,7 +3,7 @@ from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Submit, Row, Column, Field, Div, HTML
 from crispy_forms.bootstrap import FormActions
 from .models import(ProductEnquiry, Invoice, InvoiceItem, 
-    Product, Customer)
+    Product, Customer, Quotation, QuotationItem, PaymentReceipt)
 
 
 class InvoiceForm(forms.ModelForm):
@@ -251,3 +251,118 @@ class CustomerForm(forms.ModelForm):
                 css_class='text-end'
             )
         )
+
+
+# =============================================================================
+# QUOTATION FORMS
+# =============================================================================
+
+class QuotationForm(forms.ModelForm):
+    class Meta:
+        model = Quotation
+        fields = [
+            'customer', 'valid_until', 'status', 'notes', 'terms_conditions',
+            'discount_type', 'discount_value', 'tax_rate'
+        ]
+        widgets = {
+            'customer': forms.Select(attrs={'class': 'form-control'}),
+            'valid_until': forms.DateInput(attrs={
+                'class': 'form-control',
+                'type': 'date'
+            }),
+            'status': forms.Select(attrs={'class': 'form-control'}),
+            'notes': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'Additional notes or special instructions'
+            }),
+            'terms_conditions': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 4,
+                'placeholder': 'Terms and conditions for this quotation'
+            }),
+            'discount_type': forms.Select(attrs={'class': 'form-control'}),
+            'discount_value': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.01',
+                'min': '0'
+            }),
+            'tax_rate': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.01',
+                'min': '0',
+                'placeholder': 'Tax rate (%)'
+            }),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Set default validity date (30 days from now)
+        from datetime import date, timedelta
+        if not self.instance.pk:
+            self.fields['valid_until'].initial = date.today() + timedelta(days=30)
+
+
+class QuotationItemForm(forms.ModelForm):
+    class Meta:
+        model = QuotationItem
+        fields = ['product', 'quantity', 'unit_price', 'use_product_price']
+        widgets = {
+            'product': forms.Select(attrs={'class': 'form-control'}),
+            'quantity': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'min': '1'
+            }),
+            'unit_price': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.01',
+                'min': '0'
+            }),
+            'use_product_price': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+
+
+# =============================================================================
+# PAYMENT RECEIPT FORMS
+# =============================================================================
+
+class PaymentReceiptForm(forms.ModelForm):
+    # Remove customer from visible fields - it will be auto-populated from invoice
+    class Meta:
+        model = PaymentReceipt
+        fields = [
+            'invoice', 'payment_method', 'amount_received', 
+            'amount_due', 'reference_number', 'notes'
+        ]
+        widgets = {
+            # Invoice field will be replaced with search functionality in template
+            'invoice': forms.HiddenInput(),
+            'payment_method': forms.Select(attrs={'class': 'form-control'}),
+            'amount_received': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.01',
+                'min': '0',
+                'placeholder': 'Amount received from customer'
+            }),
+            'amount_due': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.01',
+                'min': '0',
+                'placeholder': 'Total amount due',
+                'readonly': True  # Will be auto-populated from invoice
+            }),
+            'reference_number': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Transaction/Reference number (optional)'
+            }),
+            'notes': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'Additional notes (optional)'
+            }),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Make invoice optional (can be cash payment without invoice)
+        self.fields['invoice'].required = False

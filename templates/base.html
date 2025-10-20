@@ -26,6 +26,9 @@
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
         
         .navbar-custom {
@@ -240,9 +243,19 @@
                             <i class="fas fa-shopping-cart me-1"></i>Sales
                         </a>
                         <ul class="dropdown-menu">
+                            <li><h6 class="dropdown-header">Invoices</h6></li>
                             <li><a class="dropdown-item" href="{% url 'portal:invoice_list' %}"><i class="fas fa-list me-2"></i>All Invoices</a></li>
                             <li><a class="dropdown-item" href="{% url 'portal:invoice_create' %}"><i class="fas fa-plus me-2"></i>Create Invoice</a></li>
                             <li><hr class="dropdown-divider"></li>
+                            <li><h6 class="dropdown-header">Quotations</h6></li>
+                            <li><a class="dropdown-item" href="{% url 'portal:quotation_list' %}"><i class="fas fa-file-invoice me-2"></i>All Quotations</a></li>
+                            <li><a class="dropdown-item" href="{% url 'portal:quotation_create' %}"><i class="fas fa-plus me-2"></i>Create Quotation</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><h6 class="dropdown-header">Payment Receipts</h6></li>
+                            <li><a class="dropdown-item" href="{% url 'portal:receipt_list' %}"><i class="fas fa-receipt me-2"></i>All Receipts</a></li>
+                            <li><a class="dropdown-item" href="{% url 'portal:receipt_create' %}"><i class="fas fa-plus me-2"></i>Create Receipt</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><h6 class="dropdown-header">Customers</h6></li>
                             <li><a class="dropdown-item" href="{% url 'portal:customer_list' %}"><i class="fas fa-users me-2"></i>All Customers</a></li>
                             <li><a class="dropdown-item" href="{% url 'portal:customer_create' %}"><i class="fas fa-user-plus me-2"></i>Add Customer</a></li>
                         </ul>
@@ -310,7 +323,7 @@
     {% endif %}
 
     <!-- Main Content -->
-    <main class="py-4">
+    <main class="py-4 flex-grow-1">
         {% block content %}{% endblock %}
     </main>
 
