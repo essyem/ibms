@@ -1,5 +1,4 @@
 # Django
-*/settings.py
 *.pyc
 __pycache__/
 *.log
