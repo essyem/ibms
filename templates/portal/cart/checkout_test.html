@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Checkout Test{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>Checkout Test</h1>
+    
+    {% if cart_items %}
+        <h2>Cart Items:</h2>
+        {% for item in cart_items %}
+            <div class="border p-2 mb-2">
+                <h5>{{ item.product.name }}</h5>
+                <p>Quantity: {{ item.quantity }}</p>
+                <p>Price: QAR {{ item.product.unit_price }}</p>
+                <p>Total: QAR {% widthratio item.quantity 1 item.product.unit_price %}</p>
+            </div>
+        {% endfor %}
+        
+        <h3>Total Amount: QAR {{ total_amount }}</h3>
+        
+    {% else %}
+        <p>No items in cart</p>
+    {% endif %}
+    
+    {% if cart_is_empty %}
+        <p>Cart is empty flag is set</p>
+    {% endif %}
+</div>
+{% endblock %}

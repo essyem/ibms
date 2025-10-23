@@ -1,0 +1,548 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% load static %}
+{% load i18n %}
+
+{% load localized %}
+{% block title %}{{ product|localized:"name" }} - {% trans "Product Details" %}{% endblock %}
+
+{% block meta_tags %}
+<!-- Open Graph Meta Tags for Social Sharing -->
+<meta property="og:title" content="{{ product|localized:"name" }} - TrendzApps">
+<meta property="og:description" content="{{ product|localized:'description'|default:'High quality product available at competitive price' }}">
+<meta property="og:url" content="{{ product_url }}">
+<meta property="og:type" content="product">
+<meta property="og:site_name" content="TrendzApps">
+<meta property="product:price:amount" content="{{ product.unit_price }}">
+<meta property="product:price:currency" content="QAR">
+
+<!-- Twitter Card Meta Tags -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{{ product|localized:"name" }} - TrendzApps">
+<meta name="twitter:description" content="{{ product|localized:'description'|default:'High quality product available at competitive price' }}">
+
+<!-- Additional SEO Meta Tags -->
+<meta name="description" content="{{ product|localized:'description'|default:'High quality product available at competitive price' }}">
+<meta name="keywords" content="{{ product|localized:"name" }}, {{ product.sku }}, {{ product.category.name }}, TrendzApps">
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.product-detail-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 2rem 0;
+    margin-bottom: 2rem;
+}
+
+.product-image-container {
+    background: linear-gradient(45deg, #f8f9fa, #e9ecef);
+    border-radius: 12px;
+    height: 400px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.product-image-container i {
+    font-size: 6rem;
+    color: #6c757d;
+}
+
+.product-info-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    padding: 2rem;
+    height: fit-content;
+}
+
+.product-price {
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: #e74c3c;
+    margin: 1rem 0;
+}
+
+.product-sku {
+    background: #f8f9fa;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-weight: 500;
+    color: #495057;
+    display: inline-block;
+    margin-bottom: 1rem;
+}
+
+.stock-info {
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+}
+
+.stock-info.in-stock {
+    background: #d4edda;
+    border: 1px solid #c3e6cb;
+    color: #155724;
+}
+
+.stock-info.low-stock {
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    color: #856404;
+}
+
+.stock-info.out-of-stock {
+    background: #f8d7da;
+    border: 1px solid #f5c6cb;
+    color: #721c24;
+}
+
+.add-to-cart-btn {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    border: none;
+    color: white;
+    padding: 1rem 2rem;
+    border-radius: 25px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    width: 100%;
+    margin-bottom: 1rem;
+}
+
+.add-to-cart-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(40, 167, 69, 0.3);
+    color: white;
+}
+
+.whatsapp-btn {
+    background: #25d366;
+    border: none;
+    color: white;
+    padding: 1rem 2rem;
+    border-radius: 25px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    width: 100%;
+    text-decoration: none;
+    display: inline-block;
+    text-align: center;
+}
+
+.whatsapp-btn:hover {
+    background: #20c75a;
+    transform: translateY(-2px);
+    color: white;
+    text-decoration: none;
+}
+
+.social-share-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 1rem;
+}
+
+.social-btn {
+    flex: 1;
+    padding: 0.75rem;
+    border: none;
+    border-radius: 8px;
+    color: white;
+    text-decoration: none;
+    text-align: center;
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+
+.social-btn:hover {
+    transform: translateY(-2px);
+    color: white;
+    text-decoration: none;
+}
+
+.social-btn.facebook { background: #3b5998; }
+.social-btn.twitter { background: #1da1f2; }
+.social-btn.linkedin { background: #0077b5; }
+.social-btn.whatsapp { background: #25d366; }
+
+.related-products {
+    margin-top: 3rem;
+}
+
+.related-product-card {
+    border: none;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.related-product-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+.related-product-image {
+    height: 200px;
+    background: linear-gradient(45deg, #f8f9fa, #e9ecef);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.related-product-image i {
+    font-size: 3rem;
+    color: #6c757d;
+}
+
+.breadcrumb-card {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    padding: 1rem;
+    margin-bottom: 2rem;
+}
+
+.specification-table th {
+    background: #f8f9fa;
+    font-weight: 600;
+    color: #495057;
+}
+
+.warranty-info {
+    background: #e3f2fd;
+    border: 1px solid #bbdefb;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-top: 1rem;
+}
+
+@media (max-width: 768px) {
+    .product-price {
+        font-size: 2rem;
+    }
+    
+    .social-share-buttons {
+        flex-wrap: wrap;
+    }
+    
+    .social-btn {
+        min-width: calc(50% - 5px);
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Breadcrumb -->
+<div class="container">
+    <div class="breadcrumb-card">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item">
+                    <a href="{% url 'portal:public_catalog' %}">
+                        <i class="fas fa-store me-1"></i>Catalog
+                    </a>
+                </li>
+                {% if product.category %}
+                <li class="breadcrumb-item">
+                    <a href="{% url 'portal:public_catalog' %}?category={{ product.category.id }}">
+                        {{ product.category.name }}
+                    </a>
+                </li>
+                {% endif %}
+                <li class="breadcrumb-item active" aria-current="page">{{ product_display_name|default:product|localized:"name" }}</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="container">
+    <div class="row">
+        <!-- Product Image -->
+        <div class="col-lg-6 mb-4">
+            <div class="product-image-container">
+                <i class="fas fa-box"></i>
+            </div>
+        </div>
+        
+        <!-- Product Information -->
+        <div class="col-lg-6 mb-4">
+            <div class="product-info-card">
+                <div class="product-sku">SKU: {{ product.sku }}</div>
+                
+                <h1 class="mb-3">{{ product_display_name|default:product|localized:"name" }}</h1>
+                
+                {% if product.description or product_display_description %}
+                <p class="text-muted mb-3">{{ product_display_description|default:product|localized:"description" }}</p>
+                {% endif %}
+                
+                <div class="product-price">QAR {{ product.unit_price|floatformat:2 }}</div>
+                
+                <!-- Stock Information -->
+                {% if product.stock > 10 %}
+                <div class="stock-info in-stock">
+                    <i class="fas fa-check-circle me-2"></i>
+                    <strong>In Stock</strong> - {{ product.stock }} units available
+                </div>
+                {% elif product.stock > 0 %}
+                <div class="stock-info low-stock">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Low Stock</strong> - Only {{ product.stock }} units left
+                </div>
+                {% else %}
+                <div class="stock-info out-of-stock">
+                    <i class="fas fa-times-circle me-2"></i>
+                    <strong>Out of Stock</strong> - Currently unavailable
+                </div>
+                {% endif %}
+                
+                <!-- Action Buttons -->
+                <div class="action-buttons">
+                    {% if product.stock > 0 %}
+                    <button class="add-to-cart-btn" 
+                            onclick="addToCart({{ product.id }}, '{{ product|localized:"name"|addslashes }}')">
+                        <i class="fas fa-shopping-cart me-2"></i>{% trans "Add to Cart" %}
+                    </button>
+                    {% else %}
+                    <button class="btn btn-secondary" disabled style="width: 100%; padding: 1rem 2rem; border-radius: 25px; font-size: 1.1rem; margin-bottom: 1rem;">
+                        <i class="fas fa-times me-2"></i>Out of Stock
+                    </button>
+                    {% endif %}
+                    
+                    <a href="https://wa.me/{{ whatsapp_number|cut:'+' }}?text={{ whatsapp_message|urlencode }}" 
+                       target="_blank" class="whatsapp-btn">
+                        <i class="fab fa-whatsapp me-2"></i>{% trans "Inquire via WhatsApp" %}
+                    </a>
+                </div>
+                
+                <!-- Social Share Buttons -->
+                <div class="social-share-buttons">
+                    <a href="https://www.facebook.com/sharer/sharer.php?u={{ product_url|urlencode }}" 
+                       target="_blank" class="social-btn facebook">
+                        <i class="fab fa-facebook-f me-1"></i>Share
+                    </a>
+                          <a href="https://twitter.com/intent/tweet?url={{ product_url|urlencode }}&text={{ product|localized:'name'|urlencode }}" 
+                       target="_blank" class="social-btn twitter">
+                        <i class="fab fa-twitter me-1"></i>Tweet
+                    </a>
+                    <a href="https://www.linkedin.com/sharing/share-offsite/?url={{ product_url|urlencode }}" 
+                       target="_blank" class="social-btn linkedin">
+                        <i class="fab fa-linkedin-in me-1"></i>Share
+                    </a>
+                    <a href="https://wa.me/{{ whatsapp_number|cut:'+' }}?text=Check out this product: {{ product_url }}" 
+                       target="_blank" class="social-btn whatsapp">
+                        <i class="fab fa-whatsapp me-1"></i>WhatsApp
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Product Details -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0"><i class="fas fa-info-circle me-2"></i>Product Specifications</h4>
+                </div>
+                    <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table specification-table">
+                            <tbody>
+                                <tr>
+                                    <th width="200">Product Name</th>
+                                    <td>{{ product|localized:"name" }}</td>
+                                </tr>
+                                <tr>
+                                    <th>SKU</th>
+                                    <td>{{ product.sku }}</td>
+                                </tr>
+                                {% if product.barcode %}
+                                <tr>
+                                    <th>Barcode</th>
+                                    <td>{{ product.barcode }}</td>
+                                </tr>
+                                {% endif %}
+                                {% if product.category %}
+                                <tr>
+                                    <th>Category</th>
+                                    <td>{{ product.category.name }}</td>
+                                </tr>
+                                {% endif %}
+                                <tr>
+                                    <th>Price</th>
+                                    <td class="fw-bold text-danger">QAR {{ product.unit_price|floatformat:2 }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Availability</th>
+                                    <td>
+                                        {% if product.stock > 0 %}
+                                            <span class="badge bg-success">In Stock ({{ product.stock }} units)</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">Out of Stock</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% if product.warranty_period %}
+                                <tr>
+                                    <th>Warranty</th>
+                                    <td>{{ product.warranty_period }} months</td>
+                                </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    {% if product.warranty_period %}
+                    <div class="warranty-info">
+                        <h6><i class="fas fa-shield-alt me-2"></i>Warranty Information</h6>
+                        <p class="mb-0">This product comes with a {{ product.warranty_period }}-month warranty covering manufacturing defects and quality issues.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Attachments removed (reverted) -->
+    
+    <!-- Related Products -->
+    {% if related_products %}
+    <div class="related-products">
+        <h3 class="mb-4"><i class="fas fa-tags me-2"></i>Related Products</h3>
+        <div class="row">
+            {% for related_product in related_products %}
+            <div class="col-lg-2 col-md-3 col-sm-4 col-6 mb-4">
+                <div class="card related-product-card h-100">
+                    <div class="related-product-image">
+                        <i class="fas fa-box"></i>
+                    </div>
+                    <div class="card-body text-center p-3">
+                        <h6 class="card-title small">{{ related_product|localized:"name"|truncatewords:3 }}</h6>
+                        <p class="text-danger fw-bold mb-2">QAR {{ related_product.unit_price|floatformat:2 }}</p>
+                        <a href="{% url 'portal:public_product_detail' related_product.pk %}" 
+                           class="btn btn-outline-primary btn-sm">
+                            View Details
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Shopping Cart Toast -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+    <div id="cart-toast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header bg-success text-white">
+            <i class="fas fa-shopping-cart me-2"></i>
+            <strong class="me-auto">{% trans "Added to Cart" %}</strong>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+        </div>
+        <div class="toast-body">
+            <span id="cart-message">{% trans "Product added to cart successfully!" %}</span>
+            <div class="mt-2">
+                <a href="#" class="btn btn-sm btn-outline-primary me-2" onclick="viewCart()">{% trans "View Cart" %}</a>
+                <button class="btn btn-sm btn-success" onclick="continueShoppingToast()">{% trans "Continue Shopping" %}</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Shopping cart functionality
+// Cart functionality - using Django backend
+
+function addToCart(productId, productName) {
+    // Send AJAX request to Django backend
+    fetch('{% url "portal:add_to_cart" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify({
+            product_id: productId,
+            quantity: 1
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            updateCartCounter(data.cart_total_items);
+            showCartToast(productName);
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error adding to cart:', error);
+        alert('Error adding item to cart. Please try again.');
+    });
+}
+
+function updateCartCounter(totalItems = null) {
+    if (totalItems !== null) {
+        const cartCounter = document.getElementById('cart-counter');
+        if (cartCounter) {
+            cartCounter.textContent = totalItems;
+            cartCounter.style.display = totalItems > 0 ? 'block' : 'none';
+        }
+    } else {
+        // Fetch cart count from server
+        fetch('{% url "portal:cart_count" %}')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const cartCounter = document.getElementById('cart-counter');
+                if (cartCounter) {
+                    cartCounter.textContent = data.cart_total_items;
+                    cartCounter.style.display = data.cart_total_items > 0 ? 'block' : 'none';
+                }
+            }
+        })
+        .catch(error => console.error('Error fetching cart count:', error));
+    }
+}
+
+function showCartToast(productName) {
+    const toast = new bootstrap.Toast(document.getElementById('cart-toast'));
+    document.getElementById('cart-message').textContent = `"${productName}" ${window.TRANSLATIONS?.product_added_suffix || '{% trans "added to cart successfully!" %}'}`;
+    toast.show();
+}
+
+function viewCart() {
+    // Redirect to cart page
+    window.location.href = '{% url "portal:cart" %}';
+}
+
+function continueShoppingToast() {
+    const toast = bootstrap.Toast.getInstance(document.getElementById('cart-toast'));
+    toast.hide();
+}
+
+// Initialize cart counter on page load
+document.addEventListener('DOMContentLoaded', function() {
+    updateCartCounter();
+});
+
+// Copy product URL to clipboard
+function copyProductUrl() {
+    const url = window.location.href;
+    navigator.clipboard.writeText(url).then(function() {
+        alert('Product URL copied to clipboard!');
+    });
+}
+</script>
+{% endblock %}

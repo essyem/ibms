@@ -1,0 +1,880 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{% if object %}Edit{% else %}Create{% endif %} Quotation - Trendz Portal{% endblock %}
+
+{% block extra_head %}
+<meta name="csrf-token" content="{{ csrf_token }}">
+<style>
+.customer-search-container, .product-search-container {
+    position: relative;
+}
+
+.customer-search-results, .search-results {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    max-height: 300px;
+    overflow-y: auto;
+    z-index: 1000;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.customer-search-result-item, .search-result-item {
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.customer-search-result-item:hover, .search-result-item:hover {
+    background-color: #f8f9fa;
+}
+
+.customer-search-result-item:last-child, .search-result-item:last-child {
+    border-bottom: none;
+}
+
+.no-results {
+    padding: 10px;
+    text-align: center;
+    color: #6c757d;
+    font-style: italic;
+}
+
+.product-item {
+    font-size: 14px;
+}
+
+.customer-item {
+    font-size: 14px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5 pt-3">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-lg" style="background: rgba(255,255,255,0.95); border: none; border-radius: 15px;">
+                <div class="card-header" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; border-radius: 15px 15px 0 0;">
+                    <h2 class="mb-0">
+                        <i class="fas fa-file-invoice me-2"></i>
+                        {% if object %}Edit Quotation{% else %}Create New Quotation{% endif %}
+                    </h2>
+                </div>
+                <div class="card-body p-4">
+                    
+                    {% if form.errors %}
+                    <div class="alert alert-danger">
+                        <strong>Error!</strong> Please correct the errors below.
+                    </div>
+                    {% endif %} 
+
+                    {% if messages %}
+                    <div class="alert alert-info">
+                        {% for message in messages %}
+                        <p>{{ message }}</p>
+                        {% endfor %}
+                    </div>
+                    {% endif %} 
+                    
+                    <form method="post" id="quotation-form">
+                        {% csrf_token %}
+                        
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">Customer Details</div>
+                                    <div class="card-body">
+                                        <div class="form-group">
+                                            <label for="customer-search">Customer Search</label>
+                                            <div class="customer-search-container position-relative">
+                                                <div class="input-group">
+                                                    <input type="text" 
+                                                           class="form-control customer-search-input" 
+                                                           id="customer-search"
+                                                           placeholder="Type to search customers..."
+                                                           value="{% if object %}{{ object.customer.company_name|default:object.customer.full_name }}{% endif %}"
+                                                           autocomplete="off">
+                                                    <input type="hidden" name="customer" id="customer-id" value="{% if object %}{{ object.customer.id }}{% endif %}">
+                                                    <a href="{% url 'portal:customer_create' %}" class="btn btn-success btn-sm" id="add-customer-btn" title="Add New Customer" target="_blank">
+                                                        <i class="fas fa-user-plus"></i> Add
+                                                    </a>
+                                                </div>
+                                                <div class="customer-search-results" style="display: none;"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">Quotation Details</div>
+                                    <div class="card-body">
+                                        <div class="form-group">
+                                            <label for="{{ form.valid_until.id_for_label }}">Valid Until</label>
+                                            {{ form.valid_until }}
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="{{ form.status.id_for_label }}">Status</label>
+                                            {{ form.status }}
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="quotation_number">Quotation Number</label>
+                                            <input type="text" class="form-control" name="quotation_number" 
+                                                id="quotation_number" value="Auto-generated" readonly>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.discount_type.id_for_label }}" class="form-label fw-bold">
+                                    <i class="fas fa-percentage me-1"></i>Discount Type
+                                </label>
+                                {{ form.discount_type }}
+                                {% if form.discount_type.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.discount_type.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.discount_value.id_for_label }}" class="form-label fw-bold">
+                                    <i class="fas fa-tag me-1"></i>Discount Value
+                                </label>
+                                {{ form.discount_value }}
+                                {% if form.discount_value.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.discount_value.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.tax_rate.id_for_label }}" class="form-label fw-bold">
+                                    <i class="fas fa-receipt me-1"></i>Tax Rate (%)
+                                </label>
+                                {{ form.tax_rate }}
+                                {% if form.tax_rate.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.tax_rate.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.notes.id_for_label }}" class="form-label fw-bold">
+                                    <i class="fas fa-sticky-note me-1"></i>Notes
+                                </label>
+                                {{ form.notes }}
+                                {% if form.notes.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.notes.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.terms_conditions.id_for_label }}" class="form-label fw-bold">
+                                    <i class="fas fa-file-contract me-1"></i>Terms & Conditions
+                                </label>
+                                {{ form.terms_conditions }}
+                                {% if form.terms_conditions.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.terms_conditions.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <!-- Products Section -->
+                        <div class="card mb-4">
+                            <div class="card-header">Products</div>
+                            <div class="card-body">
+                                <table class="table" id="products-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Product</th>
+                                            <th>Quantity</th>
+                                            <th>Unit Price <small class="text-muted">(editable)</small></th>
+                                            <th>Total</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="product-rows">
+                                        <!-- Product rows will be added here -->
+                                    </tbody>
+                                </table>
+                                
+                                <button type="button" class="btn btn-primary" id="add-product" style="background: #28a745; border: 1px solid #28a745; padding: 8px 16px;">
+                                    <i class="fas fa-plus"></i> Add Product
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Product Row Template -->
+                        <template id="product-row-template">
+                            <tr class="product-row">
+                                <td>
+                                    <div class="product-search-container">
+                                        <div class="search-controls">
+                                            <input type="text" 
+                                                   class="form-control product-search-input" 
+                                                   placeholder="Search products by name, barcode, or category..."
+                                                   style="margin-bottom: 5px;">
+                                            <button type="button" 
+                                                    class="btn btn-sm btn-primary barcode-scan-btn">
+                                                📷 Scan Barcode
+                                            </button>
+                                        </div>
+                                        <div class="search-results" style="display: none;"></div>
+                                        <select class="form-control product-select" name="products">
+                                            <option value="">Select a product...</option>
+                                            {% for product in products %}
+                                            <option value="{{ product.id }}" 
+                                                    data-selling-price="{{ product.unit_price }}" 
+                                                    data-unit-price="{{ product.unit_price }}"
+                                                    data-stock="{{ product.stock }}"
+                                                    data-barcode="{{ product.barcode }}">
+                                                {{ product.name }} - QAR {{ product.unit_price }} (Stock: {{ product.stock }})
+                                            </option>
+                                            {% endfor %}
+                                        </select>
+                                        <div class="selected-product-info" style="display: none;">
+                                            <div class="product-details"></div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <input type="number" class="form-control quantity" name="quantity" value="1" min="1" step="1" required>
+                                </td>
+                                <td>
+                                    <input type="number" class="form-control unit-price" name="unit_price" value="0.00" step="0.01" min="0" 
+                                           title="Click to edit unit price" placeholder="0.00"
+                                           style="border-left: 3px solid #28a745; background-color: #f8fff9;">
+                                </td>
+                                <td>
+                                    <input type="text" class="form-control total" name="total" value="0.00" readonly>
+                                </td>
+                                <td>
+                                    <button type="button" class="btn btn-danger remove-product">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        </template>
+                        
+                        <!-- Quotation Summary -->
+                        <div class="row mb-4">
+                            <div class="col-md-8">
+                                <div class="card">
+                                    <div class="card-header">Quotation Summary</div>
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-6 form-group mb-3">
+                                                <label class="form-label">Subtotal:</label>
+                                                <input type="text" class="form-control" id="subtotal" value="0.00" readonly>
+                                            </div>
+                                            <div class="col-md-6 form-group mb-3">
+                                                <label class="form-label">Tax Amount:</label>
+                                                <input type="text" class="form-control" id="tax-amount" value="0.00" readonly>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="form-group mb-3">
+                                            <label class="form-label">Discount Amount:</label>
+                                            <input type="text" class="form-control" id="discount-amount" value="0.00" readonly>
+                                        </div>
+                                        
+                                        <div class="form-group mb-3">
+                                            <label class="form-label"><strong>Grand Total:</strong></label>
+                                            <input type="text" class="form-control fw-bold" id="grand-total" value="0.00" readonly style="font-size: 1.1em; background-color: #f8f9fa;">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between pt-3 border-top mt-4">
+                            <a href="{% url 'portal:quotation_list' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-1"></i>Back to Quotations
+                            </a>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-save me-1"></i>
+                                {% if object %}Update Quotation{% else %}Save Quotation{% endif %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+/**
+ * Quotation Creation JavaScript - Enhanced with search functionality
+ * Based on invoice_create_unified.js
+ */
+
+(function($) {
+    'use strict';
+
+    console.log('🚀 Quotation Creation Script Loading...');
+
+    // Main Quotation Manager Class
+    class QuotationManager {
+        constructor() {
+            this.formElement = null;
+            this.productRows = null;
+            this.productTemplate = null;
+            this.initialized = false;
+
+            this.init();
+        }
+
+        init() {
+            console.log('🔧 Initializing Quotation Manager...');
+            
+            $(document).ready(() => {
+                this.findElements();
+                this.bindEvents();
+                this.addInitialProductRow();
+                this.initialized = true;
+                console.log('✅ Quotation Manager initialized successfully');
+            });
+        }
+
+        findElements() {
+            this.formElement = $('#quotation-form');
+            this.productRows = $('#product-rows');
+            this.productTemplate = $('#product-row-template');
+            
+            console.log('📋 Elements found:', {
+                form: this.formElement.length > 0,
+                rows: this.productRows.length > 0,
+                template: this.productTemplate.length > 0
+            });
+        }
+
+        bindEvents() {
+            console.log('🔗 Binding events...');
+            
+            // Add Product Button
+            $('#add-product').on('click', (e) => {
+                e.preventDefault();
+                this.addProductRow();
+            });
+
+            // Remove Product Button
+            $(document).on('click', '.remove-product', (e) => {
+                e.preventDefault();
+                this.removeProductRow($(e.target).closest('tr'));
+            });
+
+            // Product Search
+            $(document).on('input', '.product-search-input', (e) => {
+                this.handleProductSearch($(e.target));
+            });
+
+            // Product Selection
+            $(document).on('change', '.product-select', (e) => {
+                this.handleProductSelection($(e.target));
+            });
+
+            // Quantity or unit price change
+            $(document).on('input', '.quantity, .unit-price', (e) => {
+                this.calculateRowTotal($(e.target).closest('tr'));
+            });
+
+            // Barcode Scanning
+            $(document).on('click', '.barcode-scan-btn', (e) => {
+                e.preventDefault();
+                this.handleBarcodeScanning($(e.target).closest('tr'));
+            });
+
+            // Tax and Discount Changes
+            $(document).on('input', '#{{ form.tax_rate.id_for_label }}, #{{ form.discount_value.id_for_label }}', () => {
+                this.updateTotals();
+            });
+
+            $(document).on('change', '#{{ form.discount_type.id_for_label }}', () => {
+                this.updateTotals();
+            });
+
+            // Form Submission
+            this.formElement.on('submit', (e) => {
+                e.preventDefault();
+                this.handleFormSubmission();
+            });
+
+            // Hide search results when clicking outside
+            $(document).on('click', (e) => {
+                if (!$(e.target).closest('.product-search-container').length) {
+                    $('.search-results').hide();
+                }
+            });
+
+            // Customer Search
+            $(document).on('input', '.customer-search-input', (e) => {
+                console.log('🔍 Customer search input event triggered:', e.target.value);
+                this.handleCustomerSearch($(e.target));
+            });
+
+            // Customer Selection
+            $(document).on('click', '.customer-search-result-item', (e) => {
+                e.preventDefault();
+                this.selectCustomer($(e.target).closest('.customer-search-result-item'));
+            });
+
+            // Hide customer search results when clicking outside
+            $(document).on('click', (e) => {
+                if (!$(e.target).closest('.customer-search-container').length) {
+                    $('.customer-search-results').hide();
+                }
+            });
+        }
+
+        handleCustomerSearch($input) {
+            const query = $input.val().trim();
+            const $results = $input.closest('.customer-search-container').find('.customer-search-results');
+            
+            if (query.length < 2) {
+                $results.hide();
+                return;
+            }
+
+            $.ajax({
+                url: '/ajax/customer-search/',
+                method: 'GET',
+                data: { q: query },
+                success: (response) => {
+                    this.displayCustomerSearchResults(response.customers, $results);
+                },
+                error: (xhr) => {
+                    console.error('❌ Customer search error:', xhr);
+                    this.showError('Customer search failed');
+                }
+            });
+        }
+
+        displayCustomerSearchResults(customers, $results) {
+            $results.empty();
+
+            if (!customers || customers.length === 0) {
+                $results.html('<div class="no-results">No customers found</div>').show();
+                return;
+            }
+
+            customers.forEach((customer) => {
+                const $item = $('<div class="customer-search-result-item customer-item">')
+                    .html(`
+                        <strong>${customer.display_text}</strong><br>
+                        <small style="color: #94a3b8;">${customer.phone || 'No phone'}</small>
+                    `)
+                    .data('customer', customer)
+                    .on('click', (e) => {
+                        e.preventDefault();
+                        this.selectCustomer($(e.currentTarget));
+                        $results.hide();
+                    });
+                $results.append($item);
+            });
+
+            $results.show();
+        }
+
+        selectCustomer($item) {
+            const customer = $item.data('customer');
+            console.log('✅ Customer selected:', customer.display_text);
+
+            // Update hidden customer ID field
+            $('#customer-id').val(customer.id);
+
+            // Update search input
+            $('.customer-search-input').val(customer.display_text);
+        }
+
+        addProductRow() {
+            console.log('➕ Adding product row...');
+
+            if (!this.productTemplate.length) {
+                console.error('❌ Product template not found');
+                return;
+            }
+
+            let clone;
+            if (this.productTemplate[0].content) {
+                clone = document.importNode(this.productTemplate[0].content, true);
+            } else {
+                clone = $(this.productTemplate.html())[0];
+            }
+
+            this.productRows.append(clone);
+            this.updateTotals();
+            console.log('✅ Product row added');
+        }
+
+        removeProductRow($row) {
+            console.log('🗑️ Removing product row...');
+            $row.remove();
+            this.updateTotals();
+        }
+
+        addInitialProductRow() {
+            if (this.productRows.children().length === 0) {
+                setTimeout(() => {
+                    this.addProductRow();
+                    console.log('🚀 Initial product row added');
+                }, 100);
+            }
+        }
+
+        handleProductSearch($input) {
+            const query = $input.val().trim();
+            const $row = $input.closest('tr');
+            const $results = $row.find('.search-results');
+
+            if (query.length < 2) {
+                $results.hide();
+                return;
+            }
+
+            if (/^\d{8,}$/.test(query)) {
+                console.log('🔍 Barcode detected:', query);
+                this.lookupProductByBarcode(query, $row);
+                return;
+            }
+
+            this.searchProducts(query, $row);
+        }
+
+        searchProducts(query, $row) {
+            console.log('🔍 Searching products for:', query);
+            $.ajax({
+                url: '/ajax/product-search/',
+                method: 'GET',
+                data: { q: query },
+                success: (response) => {
+                    console.log('✅ Product search success:', response);
+                    this.displaySearchResults(response.products, $row);
+                },
+                error: (xhr) => {
+                    console.error('❌ Product search error:', xhr);
+                    this.showError('Product search failed');
+                }
+            });
+        }
+
+        displaySearchResults(products, $row) {
+            const $results = $row.find('.search-results');
+            $results.empty();
+
+            if (!products || products.length === 0) {
+                $results.html('<div class="no-results p-2" style="color: #94a3b8;">No products found</div>').show();
+                return;
+            }
+
+            products.forEach((product) => {
+                const $item = $('<div class="search-result-item product-item">')
+                    .html(`${product.display_text}<br><small style="color: #94a3b8;">${product.stock_text}</small>`)
+                    .data('product', product)
+                    .on('click', () => {
+                        this.selectProduct(product, $row);
+                        $results.hide();
+                    });
+                $results.append($item);
+            });
+
+            $results.show();
+        }
+
+        selectProduct(product, $row) {
+            console.log('✅ Product selected:', product.name);
+
+            const $select = $row.find('.product-select');
+            const $searchInput = $row.find('.product-search-input');
+            const $unitPriceInput = $row.find('.unit-price');
+
+            $select.val(product.id);
+            $searchInput.val(product.name);
+            
+            const productPrice = parseFloat(product.unit_price || 0);
+            $unitPriceInput.val(productPrice.toFixed(2));
+            
+            this.calculateRowTotal($row);
+        }
+
+        handleProductSelection($select) {
+            const $row = $select.closest('tr');
+            const $option = $select.find('option:selected');
+
+            if ($option.val()) {
+                const unitPrice = $option.data('selling-price') || $option.data('unit-price') || 0;
+                $row.find('.unit-price').val(parseFloat(unitPrice).toFixed(2));
+                
+                const productName = $option.text().split(' - ')[0];
+                $row.find('.product-search-input').val(productName);
+            } else {
+                $row.find('.unit-price').val('0.00');
+                $row.find('.product-search-input').val('');
+            }
+
+            this.calculateRowTotal($row);
+        }
+
+        handleBarcodeScanning($row) {
+            const barcode = prompt('Enter barcode manually or scan with barcode reader:');
+            if (barcode && barcode.trim()) {
+                this.lookupProductByBarcode(barcode.trim(), $row);
+            }
+        }
+
+        lookupProductByBarcode(barcode, $row) {
+            console.log('🔍 Looking up product by barcode:', barcode);
+            $.ajax({
+                url: '/ajax/barcode-lookup/',
+                method: 'GET',
+                data: { barcode: barcode },
+                success: (response) => {
+                    if (response.product) {
+                        this.selectProduct(response.product, $row);
+                        this.showSuccess(`Product found: ${response.product.name}`);
+                    } else {
+                        this.showError(`No product found for barcode: ${barcode}`);
+                    }
+                },
+                error: (xhr) => {
+                    console.error('❌ Barcode lookup error:', xhr);
+                    this.showError('Barcode lookup failed');
+                }
+            });
+        }
+
+        calculateRowTotal($row) {
+            const quantity = parseFloat($row.find('.quantity').val()) || 0;
+            const unitPrice = parseFloat($row.find('.unit-price').val()) || 0;
+            const total = quantity * unitPrice;
+
+            $row.find('.total').val(total.toFixed(2));
+            this.updateTotals();
+        }
+
+        updateTotals() {
+            let subtotal = 0;
+            $('.total').each(function() {
+                subtotal += parseFloat($(this).val()) || 0;
+            });
+
+            const taxRate = parseFloat($('#{{ form.tax_rate.id_for_label }}').val()) || 0;
+            const discountValue = parseFloat($('#{{ form.discount_value.id_for_label }}').val()) || 0;
+            const discountType = $('#{{ form.discount_type.id_for_label }}').val();
+
+            let discountAmount = 0;
+            if (discountType === 'percentage') {
+                discountAmount = subtotal * (discountValue / 100);
+            } else {
+                discountAmount = discountValue;
+            }
+
+            const taxAmount = subtotal * (taxRate / 100);
+            const grandTotal = subtotal + taxAmount - discountAmount;
+
+            $('#subtotal').val(subtotal.toFixed(2));
+            $('#tax-amount').val(taxAmount.toFixed(2));
+            $('#discount-amount').val(discountAmount.toFixed(2));
+            $('#grand-total').val(grandTotal.toFixed(2));
+        }
+
+        handleFormSubmission() {
+            console.log('📝 Submitting quotation form...');
+
+            if (!this.formElement || this.formElement.length === 0) {
+                console.error('❌ Form element not found');
+                this.showError('Form not found');
+                return false;
+            }
+
+            // Collect form data
+            const formData = new FormData(this.formElement[0]);
+
+            // Collect product items
+            const items = [];
+            $('#product-rows tr').each(function() {
+                const $row = $(this);
+                const productId = $row.find('.product-select').val();
+                const productName = $row.find('.product-select option:selected').text().split(' - ')[0] || 'Custom Item';
+                const quantity = $row.find('.quantity').val() || '1';
+                const unitPrice = $row.find('.unit-price').val() || '0';
+                const description = $row.find('.product-search-input').val() || productName;
+
+                if (productId && productId.trim() !== '') {
+                    items.push({
+                        product: productId.trim(),
+                        product_name: productName,
+                        quantity: quantity.trim(),
+                        unit_price: unitPrice.trim()
+                    });
+                } else if (quantity > 0 && unitPrice > 0) {
+                    items.push({
+                        product: null,
+                        product_name: description,
+                        quantity: quantity.trim(),
+                        unit_price: unitPrice.trim(),
+                        is_custom: true
+                    });
+                }
+            });
+
+            console.log('📋 Collected items:', items);
+            
+            // Validate we have at least one item
+            if (items.length === 0) {
+                this.showError('Please add at least one product to the quotation');
+                return false;
+            }
+
+            // Add items and totals to form data
+            formData.append('items', JSON.stringify(items));
+            formData.append('subtotal', $('#subtotal').val() || '0');
+            formData.append('tax_amount', $('#tax-amount').val() || '0');
+            formData.append('discount_amount', $('#discount-amount').val() || '0');
+            formData.append('total', $('#grand-total').val() || '0');
+
+            // Submit form via AJAX
+            this.submitForm(formData);
+        }
+
+        submitForm(formData) {
+            const csrfToken = this.getCSRFToken();
+            if (csrfToken) {
+                formData.append('csrfmiddlewaretoken', csrfToken);
+            }
+
+            const url = this.formElement.attr('action') || window.location.pathname;
+            
+            $.ajax({
+                url: url,
+                method: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                success: (response) => {
+                    console.log('✅ Quotation submitted successfully:', response);
+                    this.handleSubmissionSuccess(response);
+                },
+                error: (xhr) => {
+                    console.error('❌ Quotation submission error:', xhr);
+                    this.handleSubmissionError(xhr);
+                }
+            });
+        }
+
+        getCSRFToken() {
+            let token = $('[name=csrfmiddlewaretoken]').val();
+            if (!token) token = $('meta[name=csrf-token]').attr('content');
+            if (!token) {
+                const cookieValue = document.cookie.match('(^|;)\\s*csrftoken\\s*=\\s*([^;]+)');
+                token = cookieValue ? cookieValue.pop() : '';
+            }
+            return token;
+        }
+
+        handleSubmissionSuccess(response) {
+            if (response.success) {
+                this.showSuccessModal(response);
+            } else {
+                this.showError(response.message || 'Quotation submission failed');
+            }
+        }
+
+        handleSubmissionError(xhr) {
+            let message = 'Quotation submission failed';
+            
+            if (xhr.responseJSON) {
+                if (xhr.responseJSON.error) {
+                    message = xhr.responseJSON.error;
+                } else if (xhr.responseJSON.message) {
+                    message = xhr.responseJSON.message;
+                } else if (xhr.responseJSON.errors) {
+                    message = Object.values(xhr.responseJSON.errors).flat().join(', ');
+                }
+            }
+            
+            this.showError(message);
+        }
+
+        showSuccessModal(response) {
+            const quotationId = response.quotation_id;
+            const modalHtml = `
+                <div class="modal fade" id="successModal" tabindex="-1">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header bg-success text-white">
+                                <h5 class="modal-title">Quotation Created Successfully!</h5>
+                            </div>
+                            <div class="modal-body text-center">
+                                <p>Quotation #${response.quotation_number || quotationId} has been created successfully.</p>
+                                <div class="d-grid gap-2">
+                                    <a href="/quotations/${quotationId}/" class="btn btn-primary">View Quotation</a>
+                                    <a href="/quotations/${quotationId}/pdf/" class="btn btn-info">Download PDF</a>
+                                    <button onclick="window.open('/quotations/${quotationId}/pdf/', '_blank')" class="btn btn-secondary">Print Quotation</button>
+                                    <a href="/quotations/" class="btn btn-outline-primary">Quotation List</a>
+                                    <button onclick="location.reload()" class="btn btn-success">Create Another</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            $('body').append(modalHtml);
+            $('#successModal').modal('show');
+        }
+
+        showSuccess(message) {
+            console.log('✅', message);
+        }
+
+        showError(message) {
+            console.error('🚨 Error:', message);
+            alert('ERROR: ' + message + '\n\nCheck browser console for more details.');
+        }
+    }
+
+    // Initialize when document is ready
+    $(document).ready(function() {
+        console.log('📄 DOM ready, initializing Quotation Manager...');
+        window.quotationManager = new QuotationManager();
+    });
+
+})(jQuery);
+</script>
+{% endblock %}

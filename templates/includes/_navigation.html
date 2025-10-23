@@ -1,0 +1,78 @@
+{% load static %}
+<nav class="main-nav">
+  <div class="nav-brand">
+    <i class="fas fa-briefcase me-2"></i>
+    <span class="brand-text">Trendz Portal</span>
+  </div>
+  <button id="nav-toggle" class="nav-toggle" aria-expanded="false" aria-controls="main-nav-list">☰</button>
+  <ul id="main-nav-list" class="nav-list">
+    <!-- Dashboard with Reports dropdown -->
+    <li class="nav-item dropdown">
+      <a href="{% url 'portal:dashboard' %}" class="nav-link dropdown-toggle" data-dropdown="dashboard">
+        <i class="fas fa-tachometer-alt me-1"></i>Dashboard
+      </a>
+      <ul class="dropdown-menu" id="dashboard-dropdown">
+        <li><a href="{% url 'portal:dashboard' %}" class="dropdown-item"><i class="fas fa-chart-pie me-2"></i>Overview</a></li>
+        <li><a href="{% url 'portal:reports' %}" class="dropdown-item"><i class="fas fa-chart-bar me-2"></i>Reports</a></li>
+        <li><a href="{% url 'portal:analytics_api' %}" class="dropdown-item"><i class="fas fa-chart-line me-2"></i>Analytics</a></li>
+      </ul>
+    </li>
+
+    <!-- Invoices dropdown -->
+    <li class="nav-item dropdown">
+      <a href="{% url 'portal:invoice_list' %}" class="nav-link dropdown-toggle" data-dropdown="invoices">
+        <i class="fas fa-file-invoice me-1"></i>Invoices
+      </a>
+      <ul class="dropdown-menu" id="invoices-dropdown">
+        <li><a href="{% url 'portal:invoice_create' %}" class="dropdown-item"><i class="fas fa-plus me-2"></i>Create Invoice</a></li>
+        <li><a href="{% url 'portal:invoice_list' %}" class="dropdown-item"><i class="fas fa-list me-2"></i>View All Invoices</a></li>
+        <li><a href="{% url 'portal:barcode_scanner' %}" class="dropdown-item"><i class="fas fa-qrcode me-2"></i>Barcode Scanner</a></li>
+      </ul>
+    </li>
+
+    <!-- Customers dropdown -->
+    <li class="nav-item dropdown">
+      <a href="{% url 'portal:customer_list' %}" class="nav-link dropdown-toggle" data-dropdown="customers">
+        <i class="fas fa-users me-1"></i>Customers
+      </a>
+      <ul class="dropdown-menu" id="customers-dropdown">
+        <li><a href="{% url 'portal:customer_create' %}" class="dropdown-item"><i class="fas fa-user-plus me-2"></i>Add Customer</a></li>
+        <li><a href="{% url 'portal:customer_list' %}" class="dropdown-item"><i class="fas fa-list me-2"></i>View All Customers</a></li>
+      </ul>
+    </li>
+
+    <!-- Procurement dropdown -->
+    <li class="nav-item dropdown">
+      <a href="{% url 'procurement:supplier_list' %}" class="nav-link dropdown-toggle" data-dropdown="procurement">
+        <i class="fas fa-boxes me-1"></i>Procurement
+      </a>
+      <ul class="dropdown-menu" id="procurement-dropdown">
+        <li><a href="{% url 'portal:product_list' %}" class="dropdown-item"><i class="fas fa-cube me-2"></i>Products</a></li>
+        <li><a href="{% url 'procurement:supplier_list' %}" class="dropdown-item"><i class="fas fa-truck me-2"></i>Suppliers</a></li>
+        <li><a href="{% url 'procurement:purchase_order_list' %}" class="dropdown-item"><i class="fas fa-shopping-cart me-2"></i>Purchase Orders</a></li>
+        <li class="dropdown-divider"></li>
+        <li><a href="{% url 'procurement:purchase_order_create' %}" class="dropdown-item"><i class="fas fa-plus me-2"></i>New Purchase Order</a></li>
+      </ul>
+    </li>
+
+    <!-- Finance dropdown -->
+    <li class="nav-item dropdown">
+      <a href="{% url 'finance:index' %}" class="nav-link dropdown-toggle" data-dropdown="finance">
+        <i class="fas fa-calculator me-1"></i>Finance
+      </a>
+      <ul class="dropdown-menu" id="finance-dropdown">
+        <li><a href="{% url 'finance:index' %}" class="dropdown-item"><i class="fas fa-tachometer-alt me-2"></i>Finance Dashboard</a></li>
+        <li><a href="{% url 'finance:transaction_list' %}" class="dropdown-item"><i class="fas fa-exchange-alt me-2"></i>Transactions</a></li>
+        <li><a href="{% url 'finance:transaction_create' %}" class="dropdown-item"><i class="fas fa-plus me-2"></i>Add Transaction</a></li>
+        <li><hr class="dropdown-divider"></li>
+        <li><a href="{% url 'finance:daily_revenue_dashboard' %}" class="dropdown-item"><i class="fas fa-chart-line me-2"></i>Daily Revenue</a></li>
+        <li><a href="{% url 'finance:daily_revenue_create' %}" class="dropdown-item"><i class="fas fa-plus-circle me-2"></i>Add Daily Revenue</a></li>
+        <li><a href="{% url 'finance:daily_revenue_list' %}" class="dropdown-item"><i class="fas fa-list me-2"></i>Revenue History</a></li>
+        <li><hr class="dropdown-divider"></li>
+        <li><a href="{% url 'finance:finance_reports' %}" class="dropdown-item"><i class="fas fa-chart-bar me-2"></i>Financial Reports</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+<link rel="stylesheet" href="{% static 'portal/css/nav.css' %}">
+<script src="{% static 'portal/js/nav_toggle.js' %}"></script>

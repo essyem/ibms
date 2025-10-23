@@ -1,5 +1,5 @@
 <!-- templates/portal/purchase_payment_form.html -->
-{% extends 'portal/procurement_base.html' %}
+{% extends 'base.html' %}
 {% load crispy_forms_tags %}
 
 {% block title %}
@@ -7,6 +7,7 @@
 {% endblock %}
 
 {% block content %}
+<div class="container-fluid">
 <div class="row justify-content-center">
     <div class="col-lg-8">
         <div class="content-card">
@@ -177,4 +178,4 @@ function updateBalance() {
 document.getElementById('id_amount_due').addEventListener('input', updateBalance);
 document.getElementById('id_amount_paid').addEventListener('input', updateBalance);
 </script>
-{% endblock %}
+{% endblock extra_js %}

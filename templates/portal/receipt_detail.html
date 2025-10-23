@@ -1,0 +1,230 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Receipt {{ receipt.receipt_number }} - Trendz Portal{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-lg" style="background: rgba(255,255,255,0.95); border: none; border-radius: 15px;">
+                
+                <!-- Header -->
+                <div class="card-header" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; border-radius: 15px 15px 0 0;">
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <h2 class="mb-0">
+                                <i class="fas fa-receipt me-2"></i>{{ receipt.receipt_number }}
+                            </h2>
+                            <small>Payment Receipt Details</small>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <span class="badge 
+                                {% if receipt.status == 'issued' %}bg-success
+                                {% elif receipt.status == 'cancelled' %}bg-danger
+                                {% elif receipt.status == 'refunded' %}bg-warning
+                                {% endif %} fs-6 me-2">
+                                {{ receipt.get_status_display }}
+                            </span>
+                            <a href="{% url 'portal:receipt_pdf' receipt.pk %}" class="btn btn-light btn-sm" target="_blank">
+                                <i class="fas fa-file-pdf me-1"></i>PDF
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card-body p-4">
+                    
+                    <!-- Receipt Info -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h5><i class="fas fa-user me-2"></i>Customer Information</h5>
+                            {% if receipt.customer %}
+                                <div class="border rounded p-3 bg-light">
+                                    <strong>{{ receipt.customer.full_name }}</strong><br>
+                                    <i class="fas fa-phone me-1"></i>{{ receipt.customer.phone }}<br>
+                                    {% if receipt.customer.company_name %}
+                                        <i class="fas fa-building me-1"></i>{{ receipt.customer.company_name }}<br>
+                                    {% endif %}
+                                    {% if receipt.customer.address %}
+                                        <i class="fas fa-map-marker-alt me-1"></i>{{ receipt.customer.address }}
+                                    {% endif %}
+                                </div>
+                            {% else %}
+                                <div class="border rounded p-3 bg-light">
+                                    <span class="text-muted">Walk-in Customer</span>
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <h5><i class="fas fa-info-circle me-2"></i>Receipt Details</h5>
+                            <div class="border rounded p-3 bg-light">
+                                <div class="row">
+                                    <div class="col-6"><strong>Receipt #:</strong></div>
+                                    <div class="col-6">{{ receipt.receipt_number }}</div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-6"><strong>Payment Date:</strong></div>
+                                    <div class="col-6">{{ receipt.payment_date|date:"M d, Y H:i" }}</div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-6"><strong>Payment Method:</strong></div>
+                                    <div class="col-6">
+                                        <span class="badge 
+                                            {% if receipt.payment_method == 'cash' %}bg-success
+                                            {% elif receipt.payment_method == 'credit_card' %}bg-primary
+                                            {% elif receipt.payment_method == 'pos' %}bg-info
+                                            {% elif receipt.payment_method == 'bank_transfer' %}bg-secondary
+                                            {% else %}bg-dark
+                                            {% endif %}">
+                                            {{ receipt.get_payment_method_display }}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-6"><strong>Issued By:</strong></div>
+                                    <div class="col-6">{{ receipt.issued_by.get_full_name|default:receipt.issued_by.username }}</div>
+                                </div>
+                                {% if receipt.reference_number %}
+                                <div class="row">
+                                    <div class="col-6"><strong>Reference #:</strong></div>
+                                    <div class="col-6">{{ receipt.reference_number }}</div>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Invoice Information (if linked) -->
+                    {% if receipt.invoice %}
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5><i class="fas fa-file-invoice me-2"></i>Related Invoice</h5>
+                            <div class="border rounded p-3 bg-info bg-opacity-10">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <strong>Invoice Number:</strong><br>
+                                        <a href="{% url 'portal:invoice_detail' receipt.invoice.pk %}" class="text-decoration-none">
+                                            {{ receipt.invoice.invoice_number }}
+                                        </a>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <strong>Invoice Date:</strong><br>
+                                        {{ receipt.invoice.date|date:"M d, Y" }}
+                                    </div>
+                                    <div class="col-md-3">
+                                        <strong>Invoice Total:</strong><br>
+                                        QAR {{ receipt.invoice.total|floatformat:2 }}
+                                    </div>
+                                    <div class="col-md-3">
+                                        <strong>Invoice Status:</strong><br>
+                                        <span class="badge 
+                                            {% if receipt.invoice.status == 'paid' %}bg-success
+                                            {% elif receipt.invoice.status == 'sent' %}bg-primary
+                                            {% elif receipt.invoice.status == 'draft' %}bg-secondary
+                                            {% elif receipt.invoice.status == 'cancelled' %}bg-danger
+                                            {% endif %}">
+                                            {{ receipt.invoice.get_status_display }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Payment Summary -->
+                    <div class="row mb-4">
+                        <div class="col-md-6 offset-md-6">
+                            <h5><i class="fas fa-calculator me-2"></i>Payment Summary</h5>
+                            <div class="border rounded p-3 bg-success bg-opacity-10">
+                                <div class="row">
+                                    <div class="col-6"><strong>Amount Due:</strong></div>
+                                    <div class="col-6 text-end">QAR {{ receipt.amount_due|floatformat:2 }}</div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-6"><strong>Amount Received:</strong></div>
+                                    <div class="col-6 text-end">QAR {{ receipt.amount_received|floatformat:2 }}</div>
+                                </div>
+                                {% if receipt.change_given > 0 %}
+                                <hr>
+                                <div class="row">
+                                    <div class="col-6"><strong>Change Given:</strong></div>
+                                    <div class="col-6 text-end text-info"><strong>QAR {{ receipt.change_given|floatformat:2 }}</strong></div>
+                                </div>
+                                {% endif %}
+                                <hr>
+                                <div class="row">
+                                    <div class="col-6"><h6><strong>Payment Status:</strong></h6></div>
+                                    <div class="col-6 text-end">
+                                        {% if receipt.amount_received >= receipt.amount_due %}
+                                            {% if receipt.change_given > 0 %}
+                                                <span class="badge bg-info">Overpaid</span>
+                                            {% else %}
+                                                <span class="badge bg-success">Full Payment</span>
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="badge bg-warning">Partial Payment</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Notes -->
+                    {% if receipt.notes %}
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5><i class="fas fa-sticky-note me-2"></i>Notes</h5>
+                            <div class="border rounded p-3 bg-light">
+                                {{ receipt.notes|linebreaks }}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Actions -->
+                    <div class="d-flex justify-content-between pt-3 border-top">
+                        <a href="{% url 'portal:receipt_list' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-1"></i>Back to Receipts
+                        </a>
+                        <div>
+                            {% if receipt.status == 'issued' %}
+                            <button class="btn btn-warning me-2" onclick="cancelReceipt({{ receipt.pk }})">
+                                <i class="fas fa-ban me-1"></i>Cancel Receipt
+                            </button>
+                            <button class="btn btn-info me-2" onclick="refundReceipt({{ receipt.pk }})">
+                                <i class="fas fa-undo me-1"></i>Process Refund
+                            </button>
+                            {% endif %}
+                            <a href="{% url 'portal:receipt_pdf' receipt.pk %}" class="btn btn-success" target="_blank">
+                                <i class="fas fa-file-pdf me-1"></i>Download PDF
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function cancelReceipt(receiptId) {
+        if (confirm('Are you sure you want to cancel this receipt? This action cannot be undone.')) {
+            // This would need to be implemented as a separate view/AJAX endpoint
+            alert('Cancel receipt functionality needs to be implemented.');
+        }
+    }
+    
+    function refundReceipt(receiptId) {
+        if (confirm('Are you sure you want to process a refund for this receipt?')) {
+            // This would need to be implemented as a separate view/AJAX endpoint
+            alert('Refund receipt functionality needs to be implemented.');
+        }
+    }
+</script>
+{% endblock %}

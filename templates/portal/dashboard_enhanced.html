@@ -1,0 +1,161 @@
+{% extends "portal/dashboard.html" %}
+{% load static %}
+
+{% block title %}TrendzApps Dashboard - IBMS{% endblock %}
+
+{% block extra_css %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'portal/css/dashboard.css' %}">
+{% endblock %}
+
+{% block content %}
+
+
+<div class="container">
+    <!-- Quick Stats Row -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="welcome-card">
+                <div class="row">
+                    <div class="col-md-12">
+                        <h3 class="text-primary mb-3">
+                            <i class="fas fa-chart-line me-2"></i>Business Overview
+                        </h3>
+                        <p class="text-muted mb-3">
+                            Your comprehensive business management portal providing real-time insights, 
+                            streamlined operations, and powerful analytics for Trendz Trading & Services.
+                        </p>
+                        <!-- Placeholder where the full dashboard summary (cards/tables) will be injected asynchronously -->
+                        <div id="dashboard-summary-placeholder" class="mt-3"></div>
+                        <div class="d-flex gap-2 flex-wrap">
+                            <a href="{% url 'portal:product_dashboard' %}" class="btn btn-primary btn-sm">
+                                <i class="fas fa-boxes me-1"></i>Product Analytics
+                            </a>
+                            <a href="{% url 'finance:daily_revenue_dashboard' %}" class="btn btn-success btn-sm">
+                                <i class="fas fa-dollar-sign me-1"></i>Revenue Dashboard
+                            </a>
+                            <a href="{% url 'portal:reports' %}" class="btn btn-info btn-sm">
+                                <i class="fas fa-chart-bar me-1"></i>Reports
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Enhanced Quick Actions with Trendz Branding -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h4 class="mb-3 text-primary">
+                <i class="fas fa-bolt me-2"></i>Quick Actions
+            </h4>
+        </div>
+        
+        <div class="col-lg-3 col-md-6">
+            <div class="quick-actions">
+                <a href="{% url 'portal:product_create' %}" class="text-decoration-none">
+                    <div class="action-card">
+                        <div class="icon">
+                            <i class="fas fa-plus-circle"></i>
+                        </div>
+                        <h6 class="text-dark">Add Product</h6>
+                        <small class="text-muted">Create new product entry</small>
+                    </div>
+                </a>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6">
+            <div class="quick-actions">
+                <a href="{% url 'portal:invoice_create' %}" class="text-decoration-none">
+                    <div class="action-card">
+                        <div class="icon text-success">
+                            <i class="fas fa-file-invoice-dollar"></i>
+                        </div>
+                        <h6 class="text-dark">New Invoice</h6>
+                        <small class="text-muted">Create customer invoice</small>
+                    </div>
+                </a>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6">
+            <div class="quick-actions">
+                <a href="{% url 'finance:daily_revenue_create' %}" class="text-decoration-none">
+                    <div class="action-card">
+                        <div class="icon text-warning">
+                            <i class="fas fa-calendar-plus"></i>
+                        </div>
+                        <h6 class="text-dark">Daily Revenue</h6>
+                        <small class="text-muted">Record daily sales</small>
+                    </div>
+                </a>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6">
+            <div class="quick-actions">
+                <a href="{% url 'portal:barcode_scanner' %}" class="text-decoration-none">
+                    <div class="action-card">
+                        <div class="icon text-info">
+                            <i class="fas fa-qrcode"></i>
+                        </div>
+                        <h6 class="text-dark">Barcode Scanner</h6>
+                        <small class="text-muted">Scan product barcodes</small>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Top Customers -->
+    <div class="row mb-4">
+        <div class="col-lg-8">
+            <div class="recent-activity">
+                <h5 class="mb-3">Top Customers (by revenue)</h5>
+                <canvas id="chartTopCustomers" height="120"></canvas>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="recent-activity">
+                <h5 class="mb-3">Quick Stats</h5>
+                <div class="quick-stats">
+                    <div class="stat-card mb-2">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <small>Total Customers</small>
+                                <div class="stat-value">{{ total_customers }}</div>
+                            </div>
+                            <div style="width:90px"><canvas class="sparkline" id="sparkCustomers"></canvas></div>
+                        </div>
+                    </div>
+                    <div class="stat-card mb-2">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <small>Monthly Revenue</small>
+                                <div class="stat-value">QAR {{ monthly_revenue|floatformat:0 }}</div>
+                            </div>
+                            <div style="width:90px"><canvas class="sparkline" id="sparkRevenue"></canvas></div>
+                        </div>
+                    </div>
+                    <div class="stat-card mb-2">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <small>Active Products</small>
+                                <div class="stat-value">{{ active_products }}</div>
+                            </div>
+                            <div style="width:90px"><canvas class="sparkline" id="sparkProducts"></canvas></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script src="{% static 'portal/js/dashboard_charts.js' %}"></script>
+{% endblock %}

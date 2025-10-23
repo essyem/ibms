@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>منتج اختبار - Product Details</title>
+    
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- Favicon and icons -->
+    <link rel="icon" type="image/x-icon" href="/static/favicon/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/favicon/favicon.png">
+    <link rel="shortcut icon" href="/static/favicon/favicon.ico">>
+    <style>
+        :root {
+            --primary-color: #336699;
+            --secondary-color: #50b3a2;
+            --accent-color: #ff6b35;
+            --dark-color: #2c3e50;
+            --light-color: #f8f9fa;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+        }
+        
+        .navbar-custom {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .brand-logo {
+            max-height: 40px;
+        }
+        
+        /* Header styles */
+        .trendz-header {
+            background: linear-gradient(135deg, #336699 0%, #50b3a2 100%);
+            color: white;
+            padding: 1rem 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+        }
+        
+        .trendz-header h1 {
+            font-weight: 700;
+            font-size: 1.8rem;
+            margin: 0;
+        }
+        
+        .trendz-header a {
+            color: rgba(255,255,255,0.9);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        
+        .trendz-header a:hover {
+            color: white;
+        }
+        
+        /* Navigation styles */
+        .navbar-nav .nav-link {
+            font-weight: 500;
+            padding: 0.8rem 1.2rem !important;
+            transition: all 0.3s ease;
+            border-radius: 25px;
+            margin: 0 0.2rem;
+        }
+        
+        .navbar-nav .nav-link:hover {
+            background: rgba(255,255,255,0.15);
+            transform: translateY(-2px);
+        }
+        
+        /* Footer styles */
+        .footer {
+            background: linear-gradient(135deg, var(--dark-color) 0%, var(--primary-color) 100%);
+            color: white;
+            margin-top: auto;
+        }
+        
+        .footer a {
+            color: rgba(255,255,255,0.8);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        
+        .footer a:hover {
+            color: white;
+        }
+        
+        /* Smooth scrolling */
+        html {
+            scroll-behavior: smooth;
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: var(--primary-color);
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--secondary-color);
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .trendz-header h1 {
+                font-size: 1.4rem;
+            }
+            
+            .trendz-header .col-md-6:last-child {
+                text-align: center !important;
+                margin-top: 10px;
+            }
+            
+            .navbar-brand {
+                font-size: 1.1rem !important;
+            }
+            
+            .navbar-nav .nav-link {
+                padding: 0.6rem 1rem !important;
+                margin: 0.1rem 0;
+            }
+            
+            .dropdown-menu {
+                border: none;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            }
+            
+            .footer {
+                text-align: center !important;
+            }
+            
+            .footer .col-md-6:last-child {
+                margin-top: 1rem;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .navbar-brand {
+                font-size: 1rem !important;
+            }
+            
+            .container {
+                padding-left: 15px;
+                padding-right: 15px;
+            }
+            
+            .navbar-nav .nav-link {
+                padding: 0.5rem 0.8rem !important;
+                font-size: 0.9rem;
+            }
+            
+            .dropdown-item {
+                padding: 0.5rem 1rem;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+
+    
+<style>
+.product-detail-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 2rem 0;
+    margin-bottom: 2rem;
+}
+
+.product-image-container {
+    background: linear-gradient(45deg, #f8f9fa, #e9ecef);
+    border-radius: 12px;
+    height: 400px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.product-image-container i {
+    font-size: 6rem;
+    color: #6c757d;
+}
+
+.product-info-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    padding: 2rem;
+    height: fit-content;
+}
+
+.product-price {
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: #e74c3c;
+    margin: 1rem 0;
+}
+
+.product-sku {
+    background: #f8f9fa;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-weight: 500;
+    color: #495057;
+    display: inline-block;
+    margin-bottom: 1rem;
+}
+
+.stock-info {
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+}
+
+.stock-info.in-stock {
+    background: #d4edda;
+    border: 1px solid #c3e6cb;
+    color: #155724;
+}
+
+.stock-info.low-stock {
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    color: #856404;
+}
+
+.stock-info.out-of-stock {
+    background: #f8d7da;
+    border: 1px solid #f5c6cb;
+    color: #721c24;
+}
+
+.add-to-cart-btn {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    border: none;
+    color: white;
+    padding: 1rem 2rem;
+    border-radius: 25px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    width: 100%;
+    margin-bottom: 1rem;
+}
+
+.add-to-cart-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(40, 167, 69, 0.3);
+    color: white;
+}
+
+.whatsapp-btn {
+    background: #25d366;
+    border: none;
+    color: white;
+    padding: 1rem 2rem;
+    border-radius: 25px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    width: 100%;
+    text-decoration: none;
+    display: inline-block;
+    text-align: center;
+}
+
+.whatsapp-btn:hover {
+    background: #20c75a;
+    transform: translateY(-2px);
+    color: white;
+    text-decoration: none;
+}
+
+.social-share-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 1rem;
+}
+
+.social-btn {
+    flex: 1;
+    padding: 0.75rem;
+    border: none;
+    border-radius: 8px;
+    color: white;
+    text-decoration: none;
+    text-align: center;
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+
+.social-btn:hover {
+    transform: translateY(-2px);
+    color: white;
+    text-decoration: none;
+}
+
+.social-btn.facebook { background: #3b5998; }
+.social-btn.twitter { background: #1da1f2; }
+.social-btn.linkedin { background: #0077b5; }
+.social-btn.whatsapp { background: #25d366; }
+
+.related-products {
+    margin-top: 3rem;
+}
+
+.related-product-card {
+    border: none;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.related-product-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+.related-product-image {
+    height: 200px;
+    background: linear-gradient(45deg, #f8f9fa, #e9ecef);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.related-product-image i {
+    font-size: 3rem;
+    color: #6c757d;
+}
+
+.breadcrumb-card {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    padding: 1rem;
+    margin-bottom: 2rem;
+}
+
+.specification-table th {
+    background: #f8f9fa;
+    font-weight: 600;
+    color: #495057;
+}
+
+.warranty-info {
+    background: #e3f2fd;
+    border: 1px solid #bbdefb;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-top: 1rem;
+}
+
+@media (max-width: 768px) {
+    .product-price {
+        font-size: 2rem;
+    }
+    
+    .social-share-buttons {
+        flex-wrap: wrap;
+    }
+    
+    .social-btn {
+        min-width: calc(50% - 5px);
+    }
+}
+</style>
+
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-business-time me-2"></i>
+                <span class="d-none d-sm-inline"><strong>TrendzApps - IBMS</strong></span>
+                <span class="d-inline d-sm-none"><strong>TrendzApps</strong></span>
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link fw-bold text-primary" href="/catalog/">
+                            <i class="fas fa-store me-1"></i>Product Catalog
+                        </a>
+                    </li>
+                    
+                    
+                </ul>
+                
+                <ul class="navbar-nav">
+                    <!-- Language switcher -->
+                    <li class="nav-item dropdown me-3">
+                        <a class="nav-link dropdown-toggle" href="#" id="langDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-language me-1"></i>
+                            <span id="current-lang">EN</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="langDropdown">
+                            <li><a class="dropdown-item lang-select" href="#" data-lang="en">English</a></li>
+                            <li><a class="dropdown-item lang-select" href="#" data-lang="ar">العربية</a></li>
+                        </ul>
+                    </li>
+                    <!-- Shopping Cart -->
+                    <li class="nav-item me-3">
+                        <a class="nav-link position-relative" href="/cart/" title="Shopping Cart">
+                            <i class="fas fa-shopping-cart fa-lg"></i>
+                            <span id="cart-counter" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="display: none;">0</span>
+                        </a>
+                    </li>
+                    
+                    
+                    <li class="nav-item">
+                        <a class="nav-link" href="/accounts/login/">Login</a>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Messages -->
+    
+
+    <!-- Main Content -->
+    <main class="py-4">
+        
+<!-- Breadcrumb -->
+<div class="container">
+    <div class="breadcrumb-card">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item">
+                    <a href="/catalog/">
+                        <i class="fas fa-store me-1"></i>Catalog
+                    </a>
+                </li>
+                
+                <li class="breadcrumb-item">
+                    <a href="/catalog/?category=31">
+                        Test Category
+                    </a>
+                </li>
+                
+                <li class="breadcrumb-item active" aria-current="page">منتج اختبار</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="container">
+    <div class="row">
+        <!-- Product Image -->
+        <div class="col-lg-6 mb-4">
+            <div class="product-image-container">
+                <i class="fas fa-box"></i>
+            </div>
+        </div>
+        
+        <!-- Product Information -->
+        <div class="col-lg-6 mb-4">
+            <div class="product-info-card">
+                <div class="product-sku">SKU: TESTSKU002</div>
+                
+                <h1 class="mb-3">منتج اختبار</h1>
+                
+                
+                <p class="text-muted mb-3">Fallback English description</p>
+                
+                
+                <div class="product-price">QAR 30,00</div>
+                
+                <!-- Stock Information -->
+                
+                <div class="stock-info in-stock">
+                    <i class="fas fa-check-circle me-2"></i>
+                    <strong>In Stock</strong> - 25 units available
+                </div>
+                
+                
+                <!-- Action Buttons -->
+                <div class="action-buttons">
+                    
+                    <button class="add-to-cart-btn" 
+                            onclick="addToCart(1329, 'منتج اختبار')">
+                        <i class="fas fa-shopping-cart me-2"></i>Add to Cart
+                    </button>
+                    
+                    
+                    <a href="https://wa.me/97430514865?text=Hi%21%20I%27m%20interested%20in%20Test%20Product%20AR%20%28fallback%29%20%28SKU%3A%20TESTSKU002%29.%20Can%20you%20provide%20more%20details%3F" 
+                       target="_blank" class="whatsapp-btn">
+                        <i class="fab fa-whatsapp me-2"></i>Inquire via WhatsApp
+                    </a>
+                </div>
+                
+                <!-- Social Share Buttons -->
+                <div class="social-share-buttons">
+                    <a href="https://www.facebook.com/sharer/sharer.php?u=http%3A//testserver/catalog/1329/" 
+                       target="_blank" class="social-btn facebook">
+                        <i class="fab fa-facebook-f me-1"></i>Share
+                    </a>
+                    <a href="https://twitter.com/intent/tweet?url=http%3A//testserver/catalog/1329/&text=Test%20Product%20AR%20%28fallback%29" 
+                       target="_blank" class="social-btn twitter">
+                        <i class="fab fa-twitter me-1"></i>Tweet
+                    </a>
+                    <a href="https://www.linkedin.com/sharing/share-offsite/?url=http%3A//testserver/catalog/1329/" 
+                       target="_blank" class="social-btn linkedin">
+                        <i class="fab fa-linkedin-in me-1"></i>Share
+                    </a>
+                    <a href="https://wa.me/97430514865?text=Check out this product: http://testserver/catalog/1329/" 
+                       target="_blank" class="social-btn whatsapp">
+                        <i class="fab fa-whatsapp me-1"></i>WhatsApp
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Product Details -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0"><i class="fas fa-info-circle me-2"></i>Product Specifications</h4>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table specification-table">
+                            <tbody>
+                                <tr>
+                                    <th width="200">Product Name</th>
+                                    <td>Test Product AR (fallback)</td>
+                                </tr>
+                                <tr>
+                                    <th>SKU</th>
+                                    <td>TESTSKU002</td>
+                                </tr>
+                                
+                                <tr>
+                                    <th>Barcode</th>
+                                    <td>TESTBAR002</td>
+                                </tr>
+                                
+                                
+                                <tr>
+                                    <th>Category</th>
+                                    <td>Test Category</td>
+                                </tr>
+                                
+                                <tr>
+                                    <th>Price</th>
+                                    <td class="fw-bold text-danger">QAR 30,00</td>
+                                </tr>
+                                <tr>
+                                    <th>Availability</th>
+                                    <td>
+                                        
+                                            <span class="badge bg-success">In Stock (25 units)</span>
+                                        
+                                    </td>
+                                </tr>
+                                
+                                <tr>
+                                    <th>Warranty</th>
+                                    <td>6 months</td>
+                                </tr>
+                                
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    
+                    <div class="warranty-info">
+                        <h6><i class="fas fa-shield-alt me-2"></i>Warranty Information</h6>
+                        <p class="mb-0">This product comes with a 6-month warranty covering manufacturing defects and quality issues.</p>
+                    </div>
+                    
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Related Products -->
+    
+    <div class="related-products">
+        <h3 class="mb-4"><i class="fas fa-tags me-2"></i>Related Products</h3>
+        <div class="row">
+            
+            <div class="col-lg-2 col-md-3 col-sm-4 col-6 mb-4">
+                <div class="card related-product-card h-100">
+                    <div class="related-product-image">
+                        <i class="fas fa-box"></i>
+                    </div>
+                    <div class="card-body text-center p-3">
+                        <h6 class="card-title small">Test Product EN</h6>
+                        <p class="text-danger fw-bold mb-2">QAR 15,00</p>
+                        <a href="/catalog/1328/" 
+                           class="btn btn-outline-primary btn-sm">
+                            View Details
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+    
+</div>
+
+<!-- Shopping Cart Toast -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+    <div id="cart-toast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header bg-success text-white">
+            <i class="fas fa-shopping-cart me-2"></i>
+            <strong class="me-auto">Added to Cart</strong>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+        </div>
+        <div class="toast-body">
+            <span id="cart-message">Product added to cart successfully!</span>
+            <div class="mt-2">
+                <a href="#" class="btn btn-sm btn-outline-primary me-2" onclick="viewCart()">عرض السلة</a>
+                <button class="btn btn-sm btn-success" onclick="continueShoppingToast()">متابعة التسوق</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer py-4">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6 mb-3 mb-md-0">
+                    <h5><i class="fas fa-business-time me-2"></i>TrendzApps - IBMS</h5>
+                    <p class="mb-2">Integrated Business Management System</p>
+                    <p class="mb-0">
+                        <i class="fas fa-envelope me-2"></i>hello@trendzapps.com<br>
+                        <i class="fas fa-phone me-2"></i>+974 3051 4865
+                    </p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p class="mb-0">&copy; 2025 TrendzApps All rights reserved.</p>
+                    <p class="mb-0">Affiliated with Trendz T&C and Infinify D&S</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- jQuery (loaded first for compatibility) -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
+    <!-- Custom JavaScript -->
+    <script>
+        // Auto-hide alerts after 5 seconds
+        setTimeout(function() {
+            document.querySelectorAll('.alert').forEach(function(alert) {
+                new bootstrap.Alert(alert).close();
+            });
+        }, 5000);
+        
+        // Add loading state to forms
+        document.addEventListener('DOMContentLoaded', function() {
+            const forms = document.querySelectorAll('form');
+            forms.forEach(function(form) {
+                form.addEventListener('submit', function() {
+                    const submitBtn = form.querySelector('button[type="submit"]');
+                    if (submitBtn) {
+                        submitBtn.disabled = true;
+                        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
+                    }
+                });
+            });
+            
+            // Initialize cart counter
+            updateCartCounter();
+        });
+        
+        // Cart functionality
+        function updateCartCounter() {
+            fetch('/cart/count/')
+            .then(response => response.json())
+            .then(data => {
+                const cartCounter = document.getElementById('cart-counter');
+                if (cartCounter) {
+                    cartCounter.textContent = data.cart_total_items || 0;
+                    cartCounter.style.display = (data.cart_total_items || 0) > 0 ? 'block' : 'none';
+                }
+            })
+            .catch(error => console.log('Cart counter update failed:', error));
+        }
+        
+        // Add to cart function for global use
+                        <a class="nav-link" href="/">الرئيسية</a>
+            fetch('/cart/add/', {
+                method: 'POST',
+                        <a class="nav-link fw-bold text-primary" href="/catalog/">كتالوج المنتجات</a>
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || getCookie('csrftoken'),
+                },
+                body: JSON.stringify({
+                    product_id: productId,
+                    quantity: 1
+                        <a class="nav-link" href="/dashboard/">لوحة التحكم</a>
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    updateCartCounter();
+                    showCartToast(productName || (window.TRANSLATIONS?.product_generic_name || 'Product'));
+                } else {
+                    alert(data.message || (window.TRANSLATIONS?.error_adding_to_cart || 'Error adding to cart'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert(window.TRANSLATIONS?.error_adding_to_cart || 'Error adding product to cart');
+            });
+        }
+        
+        function showCartToast(productName) {
+            // Create modal if it doesn't exist
+            let modal = document.getElementById('cart-success-modal');
+            if (!modal) {
+                modal = document.createElement('div');
+                modal.id = 'cart-success-modal';
+                modal.className = 'modal fade';
+                modal.tabIndex = -1;
+                modal.innerHTML = `
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                                        <div class="modal-header bg-success text-white">
+                                            <h5 class="modal-title">
+                                                <i class="fas fa-check-circle me-2"></i>
+                                                <span id="cart-modal-title">${window.TRANSLATIONS?.added_to_cart_title || 'تم بنجاح!'}</span>
+                                            </h5>
+                                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                        </div>
+                            <div class="modal-body text-center">
+                                <i class="fas fa-shopping-cart text-success mb-3" style="font-size: 3rem;"></i>
+                                <h4 class="text-success mb-3">${window.TRANSLATIONS?.added_to_cart_title || 'تم بنجاح!'}</h4>
+                                <p id="cart-modal-message" class="mb-4">${productName} ${window.TRANSLATIONS?.product_added_suffix || 'تمت إضافة المنتج إلى السلة بنجاح!'}</p>
+                            </div>
+                            <div class="modal-footer justify-content-center">
+                                <a href="/cart/" class="btn btn-primary btn-lg me-3">
+                                    <i class="fas fa-shopping-cart me-2"></i><span>${window.TRANSLATIONS?.view_cart || 'عرض السلة'}</span>
+                                </a>
+                                <button type="button" class="btn btn-success btn-lg" data-bs-dismiss="modal">
+                                    <i class="fas fa-shopping-bag me-2"></i><span>${window.TRANSLATIONS?.continue_shopping || 'متابعة التسوق'}</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+            } else {
+                document.getElementById('cart-modal-message').textContent = `${productName} added to cart successfully!`;
+            }
+            
+            const bsModal = new bootstrap.Modal(modal);
+            bsModal.show();
+        }
+        
+        // Get CSRF token from cookies
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    </script>
+    <script>
+        // Expose a small set of translated strings for JS
+        window.TRANSLATIONS = {
+            added_to_cart_title: `تم بنجاح!`,
+            product_added_suffix: `تمت إضافة المنتج إلى السلة بنجاح!`,
+            product_generic_name: `Product`,
+            error_adding_to_cart: `Error adding to cart`,
+            cart_updated: `تم تحديث السلة بنجاح!`,
+            remove_item_confirm: `هل أنت متأكد أنك تريد إزالة هذا العنصر؟`,
+            remove_confirm_yes: `نعم`,
+            remove_confirm_no: `لا`,
+            continue_shopping: `متابعة التسوق`,
+            view_cart: `عرض السلة`
+        };
+    </script>
+    <script>
+        // Language switcher handler
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize current language display from session cookie if available
+            const lang = (function() {
+                const match = document.cookie.match(new RegExp('(?:^|; )' + 'site_language' + '=([^;]*)'));
+                return match ? decodeURIComponent(match[1]) : (window.navigator.language || 'en').slice(0,2);
+            })();
+            const currentLangEl = document.getElementById('current-lang');
+            if (currentLangEl) currentLangEl.textContent = (lang && lang.startsWith('ar')) ? 'AR' : 'EN';
+
+            document.querySelectorAll('.lang-select').forEach(function(el) {
+                el.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const selected = this.dataset.lang;
+                    // Set cookies client-side so language preference persists across ports
+                    document.cookie = `site_language=${selected}; path=/`;
+                    document.cookie = `django_language=${selected}; path=/`;
+
+                    if (currentLangEl) currentLangEl.textContent = (selected === 'ar') ? 'AR' : 'EN';
+
+                    // Update URL query param ?lang=selected while preserving other params
+                    try {
+                        const url = new URL(window.location.href);
+                        url.searchParams.set('lang', selected);
+                        window.location.href = url.toString();
+                    } catch (err) {
+                        // Fallback: simple navigation
+                        window.location.pathname = window.location.pathname + `?lang=${selected}`;
+                    }
+                });
+            });
+        });
+    </script>
+    
+    
+<script>
+// Shopping cart functionality
+let cart = JSON.parse(localStorage.getItem('shopping_cart') || '{}');
+
+function addToCart(productId, productName) {
+    if (cart[productId]) {
+        cart[productId].quantity += 1;
+    } else {
+        cart[productId] = {
+            name: productName,
+            quantity: 1
+        };
+    }
+    
+    localStorage.setItem('shopping_cart', JSON.stringify(cart));
+    updateCartCounter();
+    showCartToast(productName);
+}
+
+function updateCartCounter() {
+    const totalItems = Object.values(cart).reduce((sum, item) => sum + item.quantity, 0);
+    const cartCounter = document.getElementById('cart-counter');
+    if (cartCounter) {
+        cartCounter.textContent = totalItems;
+        cartCounter.style.display = totalItems > 0 ? 'block' : 'none';
+    }
+}
+
+function showCartToast(productName) {
+    const toast = new bootstrap.Toast(document.getElementById('cart-toast'));
+    document.getElementById('cart-message').textContent = `"${productName}" ${window.TRANSLATIONS?.product_added_suffix || 'تمت إضافة المنتج إلى السلة بنجاح!'}`;
+    toast.show();
+}
+
+function viewCart() {
+    // This will be implemented when we create the cart page
+    alert('Cart functionality will be implemented in the next step!');
+}
+
+function continueShoppingToast() {
+    const toast = bootstrap.Toast.getInstance(document.getElementById('cart-toast'));
+    toast.hide();
+}
+
+// Initialize cart counter on page load
+document.addEventListener('DOMContentLoaded', function() {
+    updateCartCounter();
+});
+
+// Copy product URL to clipboard
+function copyProductUrl() {
+    const url = window.location.href;
+    navigator.clipboard.writeText(url).then(function() {
+        alert('Product URL copied to clipboard!');
+    });
+}
+</script>
+
+</body>
+</html>

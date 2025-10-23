@@ -84,6 +84,81 @@ $(document).ready(function() {
         $('#deleteModal').modal('show');
     });
     
+    // Customer Search Functionality
+    $(document).on('input', '.customer-search-input', function() {
+        const query = $(this).val().trim();
+        const $results = $('.customer-search-results');
+        
+        if (query.length < 2) {
+            $results.hide();
+            return;
+        }
+        
+        $.ajax({
+            url: '/ajax/customer-search/',
+            method: 'GET',
+            data: { q: query },
+            success: function(response) {
+                displayCustomerSearchResults(response.customers, $results);
+            },
+            error: function(xhr) {
+                console.error('Customer search error:', xhr);
+                $results.hide();
+            }
+        });
+    });
+    
+    // Handle customer selection
+    $(document).on('click', '.customer-search-result-item', function() {
+        const customerId = $(this).data('customer-id');
+        const customerName = $(this).find('strong').text();
+        const customerPhone = $(this).data('phone');
+        const customerTaxNumber = $(this).data('tax-number');
+        const customerAddress = $(this).data('address');
+        
+        // Update form fields
+        $('#customer-id').val(customerId);
+        $('.customer-search-input').val(customerName);
+        $('#phone').val(customerPhone || '');
+        $('#tax_number').val(customerTaxNumber || '');
+        $('#address').val(customerAddress || '');
+        
+        $('.customer-search-results').hide();
+    });
+    
+    // Hide search results when clicking outside
+    $(document).on('click', function(e) {
+        if (!$(e.target).closest('.customer-search-container').length) {
+            $('.customer-search-results').hide();
+        }
+    });
+    
+    // Function to display customer search results
+    function displayCustomerSearchResults(customers, $results) {
+        $results.empty();
+        
+        if (!customers || customers.length === 0) {
+            $results.html('<div class="customer-item">No customers found</div>').show();
+            return;
+        }
+        
+        customers.forEach(function(customer) {
+            const $item = $('<div class="customer-search-result-item customer-item">')
+                .data('customer-id', customer.id)
+                .data('phone', customer.phone)
+                .data('tax-number', customer.tax_number)
+                .data('address', customer.address)
+                .html(`
+                    <strong>${customer.display_text}</strong><br>
+                    <small style="color: #94a3b8;">${customer.phone || 'No phone'}</small>
+                `);
+            
+            $results.append($item);
+        });
+        
+        $results.show();
+    }
+    
     // Calculate row total
     function calculateRowTotal($row) {
         let quantity = parseFloat($row.find('.quantity').val()) || 0;

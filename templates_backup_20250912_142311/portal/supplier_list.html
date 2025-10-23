@@ -1,0 +1,138 @@
+<!-- templates/portal/supplier_list.html -->
+{% extends 'portal/procurement_base.html' %}
+
+{% block title %}Suppliers - Trendz Procurement{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="content-card">
+            <div class="card-header procurement-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h4><i class="fas fa-industry me-2"></i>Suppliers</h4>
+                    <a href="{% url 'procurement:supplier_create' %}" class="btn btn-light">
+                        <i class="fas fa-plus me-1"></i>Add New Supplier
+                    </a>
+                </div>
+            </div>
+            <div class="card-body">
+                {% if suppliers %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Contact Person</th>
+                                    <th>Phone</th>
+                                    <th>Email</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for supplier in suppliers %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ supplier.name }}</strong>
+                                        {% if supplier.tax_id %}
+                                            <br><small class="text-muted">Tax ID: {{ supplier.tax_id }}</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ supplier.contact_person|default:"-" }}</td>
+                                    <td>{{ supplier.phone }}</td>
+                                    <td>{{ supplier.email|default:"-" }}</td>
+                                    <td>
+                                        {% if supplier.is_active %}
+                                            <span class="badge bg-success">Active</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Inactive</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a href="{% url 'procurement:supplier_edit' supplier.pk %}" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="confirmDelete('{{ supplier.name }}', '{% url 'procurement:supplier_edit' supplier.pk %}')">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-industry fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No suppliers found</h5>
+                        <p class="text-muted">Get started by adding your first supplier</p>
+                        <a href="{% url 'procurement:supplier_create' %}" class="btn btn-primary">
+                            <i class="fas fa-plus me-1"></i>Add First Supplier
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Row -->
+<div class="row">
+    <div class="col-md-3">
+        <div class="stats-card">
+            <div class="stats-number">{{ total_suppliers }}</div>
+            <div class="stats-label">Total Suppliers</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stats-card">
+            <div class="stats-number">{{ active_suppliers }}</div>
+            <div class="stats-label">Active Suppliers</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stats-card">
+            <div class="stats-number">{{ total_orders }}</div>
+            <div class="stats-label">Total Orders</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stats-card">
+            <div class="stats-number">QAR {{ total_spent|floatformat:0 }}</div>
+            <div class="stats-label">Total Spent</div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function confirmDelete(supplierName, deleteUrl) {
+    if (confirm(`Are you sure you want to delete supplier "${supplierName}"? This action cannot be undone.`)) {
+        // Create a form and submit it for deletion
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = deleteUrl;
+        
+        // Add CSRF token
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = 'csrfmiddlewaretoken';
+        csrfInput.value = '{{ csrf_token }}';
+        form.appendChild(csrfInput);
+        
+        // Add delete confirmation
+        const deleteInput = document.createElement('input');
+        deleteInput.type = 'hidden';
+        deleteInput.name = 'delete_confirm';
+        deleteInput.value = 'true';
+        form.appendChild(deleteInput);
+        
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+</script>
+{% endblock %}

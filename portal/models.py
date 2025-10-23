@@ -12,6 +12,8 @@ from django.utils import timezone
 import random   
 import string
 from django.utils.text import gettext_lazy as _
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.crypto import get_random_string
 
 # Multi-tenant manager for site-based filtering
 class SiteManager(models.Manager):
@@ -37,6 +39,107 @@ class SiteModel(models.Model):
     
     class Meta:
         abstract = True
+
+
+# User Profile extension
+class UserProfile(SiteModel):
+    """Extended user profile with additional fields"""
+    
+    CONTACT_METHODS = [
+        ('email', 'Email'),
+        ('phone', 'Phone'),
+        ('whatsapp', 'WhatsApp'),
+    ]
+    
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
+    phone = models.CharField(max_length=20, blank=True, null=True)
+    company_name = models.CharField(max_length=100, blank=True, null=True)
+    address = models.TextField(blank=True, null=True)
+    preferred_contact_method = models.CharField(
+        max_length=10,
+        choices=CONTACT_METHODS,
+        default='email'
+    )
+    
+    # Email verification fields
+    email_verified = models.BooleanField(default=False)
+    email_verification_token = models.CharField(max_length=100, blank=True, null=True)
+    email_verification_sent_at = models.DateTimeField(null=True, blank=True)
+    
+    # TOTP fields
+    totp_secret = models.CharField(max_length=32, blank=True, null=True)
+    totp_enabled = models.BooleanField(default=False)
+    backup_codes = models.JSONField(default=list, blank=True)
+    
+    # Account settings
+    receive_marketing_emails = models.BooleanField(default=True)
+    receive_order_updates = models.BooleanField(default=True)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    def __str__(self):
+        return f"{self.user.get_full_name() or self.user.username}'s Profile"
+    
+    def generate_verification_token(self):
+        """Generate a new email verification token"""
+        self.email_verification_token = get_random_string(64)
+        self.email_verification_sent_at = timezone.now()
+        self.save()
+        return self.email_verification_token
+    
+    def is_verification_token_valid(self, token, max_age_hours=24):
+        """Check if verification token is valid and not expired"""
+        if not self.email_verification_token or self.email_verification_token != token:
+            return False
+        
+        if not self.email_verification_sent_at:
+            return False
+        
+        # Check if token is expired (24 hours by default)
+        expiry_time = self.email_verification_sent_at + timezone.timedelta(hours=max_age_hours)
+        return timezone.now() <= expiry_time
+    
+    def verify_email(self):
+        """Mark email as verified and clear verification token"""
+        self.email_verified = True
+        self.email_verification_token = None
+        self.email_verification_sent_at = None
+        self.save()
+        
+        # Activate the user account
+        if not self.user.is_active:
+            self.user.is_active = True
+            self.user.save()
+    
+    def generate_backup_codes(self, count=10):
+        """Generate TOTP backup codes"""
+        codes = []
+        for _ in range(count):
+            code = get_random_string(8, allowed_chars='0123456789')
+            codes.append(code)
+        
+        self.backup_codes = codes
+        self.save()
+        return codes
+
+
+# Email verification model for tracking verification attempts
+class UserEmailVerification(models.Model):
+    """Track email verification attempts for portal users"""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='portal_email_verifications')
+    email = models.EmailField()
+    token = models.CharField(max_length=100)
+    created_at = models.DateTimeField(auto_now_add=True)
+    verified_at = models.DateTimeField(null=True, blank=True)
+    is_used = models.BooleanField(default=False)
+    
+    class Meta:
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"Portal verification for {self.email} at {self.created_at}"
+
 
 class Customer(SiteModel):
     customer_id = models.CharField(
@@ -277,6 +380,12 @@ class Invoice(SiteModel):
 
     def save(self, *args, **kwargs):
         print(f"Model save - incoming status: {self.status}")
+        
+        # Ensure discount_value is never null
+        if self.discount_value is None:
+            self.discount_value = 0
+            print(f"DEBUG: Set discount_value from None to 0")
+        
         super().save(*args, **kwargs)
         print(f"Model save - after save status: {self.status}")
 
@@ -288,11 +397,14 @@ class InvoiceItem(SiteModel):
     product = models.ForeignKey('Product', on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField(default=1)
     unit_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    use_product_price = models.BooleanField(default=True, 
+                                          help_text="If True, uses product's unit price. If False, allows custom price.")
     
     def save(self, *args, **kwargs):
-        # Auto-set unit_price from product if not provided
-        if self.product and not self.unit_price:
+        # Auto-set unit_price from product only if use_product_price is True and no custom price provided
+        if self.product and self.use_product_price and not self.unit_price:
             self.unit_price = self.product.unit_price
+        # If use_product_price is False, keep whatever unit_price was set manually
         super().save(*args, **kwargs)
     
     def subtotal(self):
@@ -303,6 +415,36 @@ class InvoiceItem(SiteModel):
     
     def __str__(self):
         return f"{self.product.name} ({self.quantity} x {self.unit_price})"
+
+
+class SoldItem(SiteModel):
+    """
+    Tracks items sold through paid invoices without reducing master inventory stock.
+    This allows for sales reporting while keeping product stock separate.
+    """
+    invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE, related_name='sold_items')
+    product_name = models.CharField(max_length=200, help_text="Product name at time of sale")
+    quantity = models.PositiveIntegerField(default=1)
+    unit_price = models.DecimalField(max_digits=10, decimal_places=2)
+    date_sold = models.DateTimeField(auto_now_add=True)
+    product = models.ForeignKey('Product', on_delete=models.SET_NULL, null=True, blank=True, 
+                               help_text="Reference to original product (may be null if product deleted)")
+    
+    # Additional fields for better tracking
+    product_sku = models.CharField(max_length=100, blank=True, null=True)
+    category_name = models.CharField(max_length=100, blank=True, null=True)
+    
+    class Meta:
+        ordering = ['-date_sold']
+        verbose_name = "Sold Item"
+        verbose_name_plural = "Sold Items"
+    
+    def subtotal(self):
+        from decimal import Decimal
+        return Decimal(str(self.quantity)) * self.unit_price
+    
+    def __str__(self):
+        return f"{self.product_name} - {self.quantity} units sold on {self.date_sold.strftime('%Y-%m-%d')}"
 
 
 class Category(SiteModel):
@@ -334,8 +476,11 @@ class Category(SiteModel):
 class Product(SiteModel):
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
     name = models.CharField(max_length=200)
+    # Optional Arabic translations for product name and description
+    name_ar = models.CharField(max_length=200, blank=True, null=True, verbose_name=_("Name (Arabic)"))
     sku = models.CharField(max_length=50, unique=True)
     description = models.TextField()
+    description_ar = models.TextField(blank=True, null=True, verbose_name=_("Description (Arabic)"))
     cost_price = models.DecimalField(
         max_digits=10, 
         decimal_places=2,
@@ -392,9 +537,38 @@ class Product(SiteModel):
 
 
 class Cart(SiteModel):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
+    session_key = models.CharField(max_length=40, null=True, blank=True, help_text="For anonymous users")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        # Ensure one cart per user or session
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user'], 
+                condition=models.Q(user__isnull=False),
+                name='unique_cart_per_user'
+            ),
+            models.UniqueConstraint(
+                fields=['session_key'], 
+                condition=models.Q(session_key__isnull=False),
+                name='unique_cart_per_session'
+            ),
+        ]
+    
+    def __str__(self):
+        if self.user:
+            return f"Cart for {self.user.username}"
+        return f"Anonymous cart {self.session_key}"
+    
+    @property
+    def total_items(self):
+        return sum(item.quantity for item in self.cartitem_set.all())
+    
+    @property
+    def total_amount(self):
+        return sum(item.quantity * item.product.unit_price for item in self.cartitem_set.all())
 
 class CartItem(SiteModel):
     cart = models.ForeignKey(Cart, on_delete=models.CASCADE)
@@ -411,6 +585,11 @@ class Order(SiteModel):
         ('delivered', 'Delivered'),
         ('cancelled', 'Cancelled'),
     ]
+    
+    PAYMENT_METHODS = [
+        ('cod', 'Cash on Delivery'),
+        ('bank_transfer', 'Bank Transfer/Fawran Method'),
+    ]
 
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     order_number = models.CharField(max_length=20, unique=True)
@@ -419,8 +598,45 @@ class Order(SiteModel):
     order_date = models.DateTimeField(auto_now_add=True)
     status = models.CharField(max_length=20, choices=ORDER_STATUS, default='pending')
     payment_status = models.BooleanField(default=False)
-    delivery_address = models.TextField()
-    preferred_contact = models.CharField(max_length=100)
+    
+    # Payment Information
+    payment_method = models.CharField(max_length=20, choices=PAYMENT_METHODS, default='cod')
+    transfer_receipt = models.FileField(upload_to='transfer_receipts/', null=True, blank=True, 
+                                       help_text='Upload transfer receipt for Bank Transfer/Fawran payments')
+    
+    # Customer Information
+    customer_name = models.CharField(max_length=200, default='Walk-in Customer')
+    customer_email = models.EmailField(default='walk-in@example.com')
+    customer_phone = models.CharField(max_length=20, default='0000000000')
+    
+    # Detailed Delivery Address
+    delivery_zone = models.CharField(max_length=100, help_text='Zone or Area', default='')
+    delivery_street = models.CharField(max_length=200, help_text='Street name or number', default='')
+    delivery_building = models.CharField(max_length=100, help_text='Building name or number', default='')
+    delivery_flat = models.CharField(max_length=50, blank=True, help_text='Flat/Apartment number (optional)')
+    delivery_additional_info = models.TextField(blank=True, help_text='Additional delivery instructions')
+    
+    # Legacy fields for backward compatibility
+    delivery_address = models.TextField(blank=True, help_text='Legacy address field')
+    preferred_contact = models.CharField(max_length=100, blank=True, help_text='Legacy contact field')
+    
+    def get_full_delivery_address(self):
+        """Return formatted full delivery address"""
+        address_parts = [
+            f"Zone: {self.delivery_zone}" if self.delivery_zone else "",
+            f"Street: {self.delivery_street}" if self.delivery_street else "",
+            f"Building: {self.delivery_building}" if self.delivery_building else "",
+            f"Flat: {self.delivery_flat}" if self.delivery_flat else "",
+        ]
+        formatted_address = ", ".join(filter(None, address_parts))
+        
+        if self.delivery_additional_info:
+            formatted_address += f"\nAdditional Info: {self.delivery_additional_info}"
+        
+        return formatted_address or self.delivery_address
+    
+    def __str__(self):
+        return f"Order {self.order_number} - {self.customer_name} ({self.get_payment_method_display()})"
 
 class ProductEnquiry(SiteModel):
     PRODUCT_CHOICES = [
@@ -461,4 +677,220 @@ class ProductEnquiry(SiteModel):
                 fail_silently=True,
             )
 
+
+# =============================================================================
+# QUOTATION SYSTEM
+# =============================================================================
+
+class Quotation(SiteModel):
+    QUOTATION_STATUS = [
+        ('draft', 'Draft'),
+        ('sent', 'Sent'),
+        ('accepted', 'Accepted'),
+        ('rejected', 'Rejected'),
+        ('expired', 'Expired'),
+        ('converted', 'Converted to Invoice'),
+    ]
+    
+    customer = models.ForeignKey(
+        'Customer',
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        verbose_name='Customer'
+    )
+    
+    quotation_number = models.CharField(
+        max_length=50,
+        unique=True,
+        blank=True,
+        null=True
+    )
+    date = models.DateField(auto_now_add=True, editable=False)
+    valid_until = models.DateField(help_text="Quotation validity date")
+    status = models.CharField(max_length=20, choices=QUOTATION_STATUS, default='draft')
+    notes = models.TextField(blank=True)
+    terms_conditions = models.TextField(blank=True, help_text="Terms and conditions for this quotation")
+    subtotal = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    tax = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    total = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    discount_type = models.CharField(
+        max_length=10,
+        choices=[('percent', 'Percentage'), ('amount', 'Fixed Amount')],
+        default='percent'
+    )
+    discount_value = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+    tax_rate = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+    
+    # Reference to converted invoice (if applicable)
+    converted_invoice = models.ForeignKey(
+        'Invoice',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        help_text="Invoice created from this quotation"
+    )
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    def save(self, *args, **kwargs):
+        if not self.quotation_number:
+            self.quotation_number = self.generate_quotation_number()
+        super().save(*args, **kwargs)
+
+    @classmethod
+    def generate_quotation_number(cls):
+        """Generate quotation number in format: QT-YYYYMMDDNN"""
+        from django.utils import timezone
+        now = timezone.now()
+        date_part = now.strftime('%Y%m%d')
+        
+        # Find the highest number for today
+        today_quotes = cls.objects.filter(
+            quotation_number__startswith=f'QT-{date_part}'
+        ).order_by('-quotation_number')
+        
+        if today_quotes.exists():
+            last_number = today_quotes.first().quotation_number
+            sequence = int(last_number.split('-')[1][-2:]) + 1
+        else:
+            sequence = 1
+            
+        return f'QT-{date_part}{sequence:02d}'
+    
+    def __str__(self):
+        customer_name = self.customer.full_name if self.customer else "Walk-in Customer"
+        return f"{self.quotation_number} - {customer_name}"
+    
+    class Meta:
+        ordering = ['-date']
+
+
+class QuotationItem(SiteModel):
+    quotation = models.ForeignKey(Quotation, on_delete=models.CASCADE, related_name='items')
+    product = models.ForeignKey('Product', on_delete=models.CASCADE)
+    quantity = models.PositiveIntegerField(default=1)
+    unit_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    use_product_price = models.BooleanField(default=True, 
+                                          help_text="If True, uses product's unit price. If False, allows custom price.")
+    
+    def save(self, *args, **kwargs):
+        # Auto-set unit_price from product only if use_product_price is True and no custom price provided
+        if self.product and self.use_product_price and not self.unit_price:
+            self.unit_price = self.product.unit_price
+        super().save(*args, **kwargs)
+    
+    def subtotal(self):
+        from decimal import Decimal
+        if self.unit_price is None:
+            return Decimal('0.00')
+        return Decimal(str(self.quantity)) * self.unit_price
+    
+    def __str__(self):
+        return f"{self.product.name} ({self.quantity} x {self.unit_price})"
+
+
+# =============================================================================
+# PAYMENT RECEIPT SYSTEM
+# =============================================================================
+
+class PaymentReceipt(SiteModel):
+    PAYMENT_METHODS = [
+        ('cash', 'Cash'),
+        ('credit_card', 'Credit Card'),
+        ('debit_card', 'Debit Card'),
+        ('pos', 'POS'),
+        ('bank_transfer', 'Bank Transfer'),
+        ('cheque', 'Cheque'),
+        ('mobile_payment', 'Mobile Payment'),
+        ('other', 'Other'),
+    ]
+    
+    RECEIPT_STATUS = [
+        ('issued', 'Issued'),
+        ('cancelled', 'Cancelled'),
+        ('refunded', 'Refunded'),
+    ]
+    
+    receipt_number = models.CharField(
+        max_length=50,
+        unique=True,
+        blank=True,
+        null=True
+    )
+    
+    # Link to invoice (optional - can be standalone receipt)
+    invoice = models.ForeignKey(
+        'Invoice',
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        help_text="Invoice this payment is for (optional)"
+    )
+    
+    customer = models.ForeignKey(
+        'Customer',
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        verbose_name='Customer'
+    )
+    
+    payment_date = models.DateTimeField(auto_now_add=True)
+    payment_method = models.CharField(max_length=20, choices=PAYMENT_METHODS, default='cash')
+    amount_received = models.DecimalField(max_digits=12, decimal_places=2)
+    amount_due = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    change_given = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    
+    # Additional payment details
+    reference_number = models.CharField(max_length=100, blank=True, help_text="Transaction/Reference number")
+    notes = models.TextField(blank=True)
+    status = models.CharField(max_length=20, choices=RECEIPT_STATUS, default='issued')
+    
+    # Audit fields
+    issued_by = models.ForeignKey(
+        'auth.User',
+        on_delete=models.PROTECT,
+        help_text="User who issued this receipt"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    def save(self, *args, **kwargs):
+        if not self.receipt_number:
+            self.receipt_number = self.generate_receipt_number()
+        
+        # Calculate change given
+        if self.amount_received and self.amount_due:
+            self.change_given = max(0, self.amount_received - self.amount_due)
+        
+        super().save(*args, **kwargs)
+
+    @classmethod
+    def generate_receipt_number(cls):
+        """Generate receipt number in format: RC-YYYYMMDDNN"""
+        from django.utils import timezone
+        now = timezone.now()
+        date_part = now.strftime('%Y%m%d')
+        
+        # Find the highest number for today
+        today_receipts = cls.objects.filter(
+            receipt_number__startswith=f'RC-{date_part}'
+        ).order_by('-receipt_number')
+        
+        if today_receipts.exists():
+            last_number = today_receipts.first().receipt_number
+            sequence = int(last_number.split('-')[1][-2:]) + 1
+        else:
+            sequence = 1
+            
+        return f'RC-{date_part}{sequence:02d}'
+    
+    def __str__(self):
+        customer_name = self.customer.full_name if self.customer else "Walk-in Customer"
+        return f"{self.receipt_number} - {customer_name} - ${self.amount_received}"
+    
+    class Meta:
+        ordering = ['-payment_date']
 

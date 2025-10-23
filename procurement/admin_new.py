@@ -19,7 +19,7 @@ class PurchaseItemInline(admin.TabularInline):
         formset.form.base_fields['product'].queryset = Product.objects.annotate(
             price_display=Concat(
                 'name', 
-                Value(' - $'), 
+                Value(' - QAR'), 
                 'unit_price',
                 output_field=CharField()
             )
@@ -44,7 +44,7 @@ class PurchaseItemInline(admin.TabularInline):
             kwargs["queryset"] = Product.objects.annotate(
                 price_display=Concat(
                     'name',
-                    Value(' - $'),
+                    Value(' - QAR'),
                     'unit_price',
                     output_field=CharField()
                 )
@@ -258,13 +258,13 @@ class PurchasePaymentAdmin(admin.ModelAdmin):
     
     def amount_paid(self, obj):
         """Display amount with currency formatting"""
-        return f'${obj.amount:,.2f}'
+        return f'QAR {obj.amount:,.2f}'
     amount_paid.short_description = 'Amount Paid'
     amount_paid.admin_order_field = 'amount'
     
     def amount_due_display(self, obj):
         """Display amount due with currency formatting"""
-        return f'${obj.amount_due:,.2f}'
+        return f'QAR {obj.amount_due:,.2f}'
     amount_due_display.short_description = 'Amount Due'
     amount_due_display.admin_order_field = 'amount_due'
     

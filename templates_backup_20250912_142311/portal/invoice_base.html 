@@ -1,0 +1,29 @@
+<!-- templates/invoice_base.html -->
+{% load crispy_forms_tags %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}Invoice{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .invoice-box {
+            padding: 30px;
+            border: 1px solid #eee;
+            margin-top: 30px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body class="container mt-5">
+
+    <div class="invoice-box">
+        {% block content %}
+        <!-- Invoices will go here -->
+        {% endblock %}
+    </div>
+
+</body>
+</html>

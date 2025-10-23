@@ -1,8 +1,9 @@
-{% extends 'portal/procurement_base.html' %}
+{% extends 'base.html' %}
 
 {% block title %}Procurement Dashboard - Trendz Portal{% endblock %}
 
 {% block content %}
+<div class="container-fluid">
 <div class="container-fluid mt-4">
     <!-- Header -->
     <div class="row mb-4">
@@ -148,7 +149,7 @@
                                         </a>
                                     </td>
                                     <td>{{ order.supplier.name }}</td>
-                                    <td>${{ order.total|floatformat:2 }}</td>
+                                    <td>QAR {{ order.total|floatformat:2 }}</td>
                                     <td>
                                         <span class="badge bg-{% if order.status == 'draft' %}secondary{% elif order.status == 'ordered' %}warning{% elif order.status == 'received' %}success{% else %}danger{% endif %}">
                                             {{ order.get_status_display }}
@@ -202,7 +203,7 @@
                                             {{ payment.purchase_order.reference }}
                                         </a>
                                     </td>
-                                    <td>${{ payment.amount|floatformat:2 }}</td>
+                                    <td>QAR {{ payment.amount|floatformat:2 }}</td>
                                     <td>{{ payment.payment_date }}</td>
                                     <td>
                                         <span class="badge bg-{% if payment.status == 'paid' %}success{% elif payment.status == 'partial' %}warning{% elif payment.status == 'overdue' %}danger{% else %}secondary{% endif %}">

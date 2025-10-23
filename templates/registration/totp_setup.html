@@ -1,0 +1,254 @@
+{% extends "base.html" %}
+{% load widget_tweaks %}
+
+{% block title %}Setup Two-Factor Authentication - {{ block.super }}{% endblock %}
+
+{% block extra_head %}
+<style>
+    .totp-setup-container {
+        max-width: 600px;
+        margin: 2rem auto;
+    }
+    
+    .qr-code-section {
+        text-align: center;
+        padding: 2rem;
+        background: #f8f9fa;
+        border-radius: 10px;
+        margin: 2rem 0;
+    }
+    
+    .secret-key {
+        font-family: monospace;
+        background: #e9ecef;
+        padding: 1rem;
+        border-radius: 5px;
+        word-break: break-all;
+        font-size: 1.1rem;
+        margin: 1rem 0;
+    }
+    
+    .step-indicator {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 2rem;
+    }
+    
+    .step {
+        display: flex;
+        align-items: center;
+        margin: 0 1rem;
+    }
+    
+    .step-number {
+        background: #007bff;
+        color: white;
+        border-radius: 50%;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 0.5rem;
+    }
+    
+    .app-icons {
+        display: flex;
+        justify-content: center;
+        gap: 2rem;
+        margin: 2rem 0;
+    }
+    
+    .app-icon {
+        text-align: center;
+        padding: 1rem;
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        min-width: 120px;
+    }
+    
+    .verification-section {
+        background: #fff3cd;
+        border: 1px solid #ffeaa7;
+        border-radius: 10px;
+        padding: 2rem;
+        margin: 2rem 0;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="totp-setup-container">
+        <div class="text-center mb-4">
+            <h2><i class="fas fa-shield-alt text-success"></i> Setup Two-Factor Authentication</h2>
+            <p class="text-muted">Add an extra layer of security to your account</p>
+        </div>
+
+        <div class="step-indicator">
+            <div class="step">
+                <div class="step-number">1</div>
+                <span>Install App</span>
+            </div>
+            <div class="step">
+                <div class="step-number">2</div>
+                <span>Scan QR Code</span>
+            </div>
+            <div class="step">
+                <div class="step-number">3</div>
+                <span>Verify Setup</span>
+            </div>
+        </div>
+
+        <!-- Step 1: Install Authenticator App -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-mobile-alt text-primary"></i> Step 1: Install an Authenticator App
+                </h5>
+                <p class="card-text">
+                    Download and install one of these authenticator apps on your mobile device:
+                </p>
+                
+                <div class="app-icons">
+                    <div class="app-icon">
+                        <i class="fab fa-google fa-2x text-primary"></i>
+                        <h6>Google Authenticator</h6>
+                        <small class="text-muted">iOS & Android</small>
+                    </div>
+                    <div class="app-icon">
+                        <i class="fab fa-microsoft fa-2x text-info"></i>
+                        <h6>Microsoft Authenticator</h6>
+                        <small class="text-muted">iOS & Android</small>
+                    </div>
+                    <div class="app-icon">
+                        <i class="fas fa-key fa-2x text-warning"></i>
+                        <h6>Authy</h6>
+                        <small class="text-muted">iOS & Android</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 2: Scan QR Code -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-qrcode text-primary"></i> Step 2: Scan QR Code
+                </h5>
+                
+                <div class="qr-code-section">
+                    <img src="data:image/png;base64,{{ qr_code_base64 }}" 
+                         alt="TOTP QR Code" 
+                         class="img-fluid"
+                         style="max-width: 200px;">
+                    
+                    <div class="mt-3">
+                        <p><strong>Account:</strong> {{ account_name }}</p>
+                        <p><strong>Service:</strong> {{ issuer_name }}</p>
+                    </div>
+                </div>
+                
+                <div class="alert alert-info">
+                    <h6><i class="fas fa-info-circle"></i> Can't scan the QR code?</h6>
+                    <p class="mb-2">Enter this code manually in your authenticator app:</p>
+                    <div class="secret-key">{{ secret }}</div>
+                    <small class="text-muted">
+                        Keep this secret key safe - you can use it to set up additional devices.
+                    </small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 3: Verify Setup -->
+        <div class="verification-section">
+            <h5><i class="fas fa-check-circle text-warning"></i> Step 3: Verify Your Setup</h5>
+            <p>Enter the 6-digit code from your authenticator app to complete the setup:</p>
+            
+            <form method="post" id="totpVerifyForm">
+                {% csrf_token %}
+                
+                <div class="mb-3">
+                    <label for="totp_code" class="form-label">
+                        <i class="fas fa-key"></i> Verification Code
+                    </label>
+                    <input type="text" 
+                           name="totp_code" 
+                           id="totp_code"
+                           class="form-control form-control-lg text-center"
+                           maxlength="6"
+                           pattern="[0-9]{6}"
+                           placeholder="000000"
+                           autocomplete="off"
+                           required>
+                    <div class="form-text text-center">
+                        Enter the 6-digit code shown in your authenticator app
+                    </div>
+                </div>
+                
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-success btn-lg">
+                        <i class="fas fa-shield-check"></i> Enable Two-Factor Authentication
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Security Notice -->
+        <div class="alert alert-warning mt-4">
+            <h6><i class="fas fa-exclamation-triangle"></i> Important Security Notes:</h6>
+            <ul class="mb-0">
+                <li>Keep your device secure - anyone with access to your authenticator app can generate codes</li>
+                <li>Backup codes will be provided after setup for account recovery</li>
+                <li>You can disable 2FA anytime from your account settings</li>
+                <li>Contact support if you lose access to your authenticator device</li>
+            </ul>
+        </div>
+
+        <div class="text-center mt-4">
+            <a href="{% url 'portal:profile_edit' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i> Cancel Setup
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('totpVerifyForm');
+    const codeInput = document.getElementById('totp_code');
+    
+    // Auto-format input (numbers only)
+    codeInput.addEventListener('input', function() {
+        this.value = this.value.replace(/\D/g, '').substring(0, 6);
+    });
+    
+    // Auto-submit when 6 digits entered
+    codeInput.addEventListener('input', function() {
+        if (this.value.length === 6) {
+            // Optional: Add a small delay for user feedback
+            setTimeout(() => {
+                form.submit();
+            }, 500);
+        }
+    });
+    
+    // Focus on input
+    codeInput.focus();
+    
+    // Form validation
+    form.addEventListener('submit', function(e) {
+        const code = codeInput.value.trim();
+        
+        if (code.length !== 6 || !/^\d{6}$/.test(code)) {
+            e.preventDefault();
+            alert('Please enter a valid 6-digit code.');
+            codeInput.focus();
+        }
+    });
+});
+</script>
+{% endblock %}

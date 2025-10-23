@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Search Test</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .search-container { position: relative; width: 300px; }
+        .search-input { width: 100%; padding: 10px; border: 1px solid #ddd; }
+        .search-results { 
+            position: absolute; 
+            top: 100%; 
+            left: 0; 
+            right: 0; 
+            background: white; 
+            border: 1px solid #ddd; 
+            max-height: 200px; 
+            overflow-y: auto; 
+            display: none; 
+        }
+        .search-result-item { 
+            padding: 10px; 
+            border-bottom: 1px solid #eee; 
+            cursor: pointer; 
+        }
+        .search-result-item:hover { background: #f0f0f0; }
+        .log { background: #f5f5f5; padding: 10px; margin: 10px 0; border-left: 3px solid #333; }
+    </style>
+</head>
+<body>
+    <h1>Customer Search Test</h1>
+    <p>Type in the search box below to test customer search functionality:</p>
+    
+    <div class="search-container">
+        <input type="text" class="search-input" placeholder="Type customer name (try 'AL', 'Ashik', 'Test')..." />
+        <div class="search-results"></div>
+    </div>
+    
+    <div class="log" id="log">
+        Ready to search...
+    </div>
+
+    <script>
+        function log(message) {
+            document.getElementById('log').innerHTML += '<br>' + new Date().toLocaleTimeString() + ': ' + message;
+        }
+
+        $(document).ready(function() {
+            log('jQuery loaded, setting up customer search...');
+
+            $('.search-input').on('input', function() {
+                const query = $(this).val().trim();
+                const $results = $('.search-results');
+                
+                log('Search input: "' + query + '"');
+
+                if (query.length < 2) {
+                    $results.hide();
+                    return;
+                }
+
+                log('Making AJAX request to /ajax/customer-search/');
+                
+                $.ajax({
+                    url: '/ajax/customer-search/',
+                    method: 'GET',
+                    data: { q: query },
+                    success: function(response) {
+                        log('✅ AJAX Success - Found ' + response.customers.length + ' customers');
+                        displayResults(response.customers, $results);
+                    },
+                    error: function(xhr) {
+                        log('❌ AJAX Error: ' + xhr.status + ' - ' + xhr.statusText);
+                        log('Response: ' + xhr.responseText);
+                    }
+                });
+            });
+
+            function displayResults(customers, $results) {
+                $results.empty();
+
+                if (!customers || customers.length === 0) {
+                    $results.html('<div class="search-result-item">No customers found</div>').show();
+                    return;
+                }
+
+                customers.forEach(function(customer) {
+                    const $item = $('<div class="search-result-item">')
+                        .html('<strong>' + customer.display_text + '</strong><br><small>' + (customer.phone || 'No phone') + '</small>')
+                        .on('click', function() {
+                            $('.search-input').val(customer.display_text);
+                            $results.hide();
+                            log('Selected customer: ' + customer.display_text);
+                        });
+                    $results.append($item);
+                });
+
+                $results.show();
+            }
+
+            // Hide results when clicking outside
+            $(document).on('click', function(e) {
+                if (!$(e.target).closest('.search-container').length) {
+                    $('.search-results').hide();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

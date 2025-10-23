@@ -80,7 +80,7 @@ class FinanceTransaction(FinanceSiteModel):
         verbose_name_plural = 'Finance Transactions'
     
     def __str__(self):
-        return f"{self.site.domain}: {self.get_type_display()} - ${self.amount}"
+        return f"{self.site.domain}: {self.get_type_display()} - QAR {self.amount}"
 
 
 class FinancialSummary(FinanceSiteModel):
@@ -156,3 +156,89 @@ class InventoryTransaction(FinanceSiteModel):
     
     def __str__(self):
         return f"{self.site.domain}: {self.product.name} - {self.type} ({self.quantity})"
+
+
+class DailyRevenue(FinanceSiteModel):
+    """Daily revenue tracking with automated calculations"""
+    date = models.DateField(unique=True)
+    
+    # Manual entry fields
+    daily_cash_sales = models.DecimalField(
+        max_digits=12, decimal_places=2, default=0,
+        help_text="Manual entry: Cash sales for the day"
+    )
+    daily_pos_sales = models.DecimalField(
+        max_digits=12, decimal_places=2, default=0,
+        help_text="Manual entry: POS/Card sales for the day"
+    )
+    daily_service_revenue = models.DecimalField(
+        max_digits=12, decimal_places=2, default=0,
+        help_text="Manual entry: Service revenue for the day"
+    )
+    daily_purchase = models.DecimalField(
+        max_digits=12, decimal_places=2, default=0,
+        help_text="Manual entry: Purchase expenses for the day"
+    )
+    
+    # Auto-calculated field
+    daily_revenue = models.DecimalField(
+        max_digits=12, decimal_places=2, default=0,
+        help_text="Auto-calculated: Cash Sales + POS Sales + Service Revenue - Purchase"
+    )
+    
+    # Additional tracking fields
+    notes = models.TextField(blank=True, help_text="Daily notes or comments")
+    entered_by = models.ForeignKey(User, on_delete=models.PROTECT)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    # Print tracking
+    printed_count = models.IntegerField(default=0, help_text="Number of times printed")
+    last_printed_at = models.DateTimeField(null=True, blank=True)
+    last_printed_by = models.ForeignKey(
+        User, on_delete=models.PROTECT, null=True, blank=True,
+        related_name='daily_revenue_prints'
+    )
+    
+    class Meta:
+        ordering = ['-date', 'site']
+        unique_together = ['site', 'date']
+        verbose_name = 'Daily Revenue'
+        verbose_name_plural = 'Daily Revenues'
+    
+    def save(self, *args, **kwargs):
+        """Auto-calculate daily revenue on save"""
+        self.calculate_daily_revenue()
+        super().save(*args, **kwargs)
+    
+    def calculate_daily_revenue(self):
+        """Calculate daily revenue: Cash + POS + Service - Purchase"""
+        self.daily_revenue = (
+            self.daily_cash_sales + 
+            self.daily_pos_sales + 
+            self.daily_service_revenue - 
+            self.daily_purchase
+        )
+        return self.daily_revenue
+    
+    def total_sales(self):
+        """Total sales (Cash + POS + Service)"""
+        return self.daily_cash_sales + self.daily_pos_sales + self.daily_service_revenue
+    
+    def net_profit_margin(self):
+        """Calculate profit margin percentage"""
+        total_sales = self.total_sales()
+        if total_sales > 0:
+            return (self.daily_revenue / total_sales) * 100
+        return 0
+    
+    def mark_printed(self, user):
+        """Mark as printed and update tracking"""
+        from django.utils import timezone
+        self.printed_count += 1
+        self.last_printed_at = timezone.now()
+        self.last_printed_by = user
+        self.save(update_fields=['printed_count', 'last_printed_at', 'last_printed_by'])
+    
+    def __str__(self):
+        return f"{self.site.domain}: {self.date} - QAR {self.daily_revenue:,.2f}"

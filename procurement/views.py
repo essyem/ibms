@@ -1,5 +1,6 @@
 from django.views.generic import ListView, CreateView, UpdateView, DetailView, TemplateView
 from django.urls import reverse_lazy
+from django.db import models
 from procurement.models import Supplier, PurchaseOrder, PurchasePayment
 from procurement.forms import SupplierForm, PurchaseOrderForm, PurchasePaymentForm
 
@@ -27,6 +28,27 @@ class PurchaseOrderListView(ListView):
     context_object_name = 'orders'
     paginate_by = 20
     ordering = ['-order_date']
+    
+    def get_queryset(self):
+        # Temporarily remove site filtering to test basic functionality
+        return super().get_queryset()
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        queryset = self.get_queryset()
+        
+        # Statistics
+        context['total_orders'] = queryset.count()
+        context['draft_orders'] = queryset.filter(status='draft').count()
+        context['ordered_orders'] = queryset.filter(status='ordered').count()
+        context['received_orders'] = queryset.filter(status='received').count()
+        context['pending_payments'] = queryset.filter(status__in=['ordered', 'received']).count()
+        context['total_value'] = queryset.aggregate(total=models.Sum('total'))['total'] or 0
+        
+        # Suppliers for filter dropdown
+        context['suppliers'] = Supplier.objects.all()
+        
+        return context
 
 class PurchaseOrderCreateView(CreateView):
     model = PurchaseOrder

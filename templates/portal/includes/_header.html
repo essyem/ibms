@@ -1,13 +1,113 @@
-  {% load static %}
+<!-- Trendz Portal Header -->
+{% load static %}
 <header class="trendz-header py-3">
-  <div class="container">
-    <div class="row align-items-center">
-      <div class="col-md-4">
-        <img src="{% static 'images/trendz-logo.png' %}" alt="Trendz Trading" class="img-fluid" style="max-height: 80px;">
-      </div>
-      <div class="col-md-8 text-end">
-        <h1 class="mb-0">Your Trusted IT Solutions Partner Since 2017</h1>
-      </div>
+    <div class="container-fluid">
+        <div class="row align-items-center">
+            <div class="col-md-4">
+                <div class="d-flex align-items-center">
+                    <img src="{% static 'images/trendz-logo.png' %}" alt="Trendz Logo" height="40" class="me-3">
+                    <div>
+                        <h1 class="h4 mb-0 text-white fw-bold">TRENDZ Trading & Services</h1>
+                        <small class="text-light opacity-75">Complete Business Management Portal</small>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4 text-center">
+                <div class="header-stats d-none d-md-block">
+                    <small class="text-light">
+                        <i class="fas fa-calendar me-1"></i>
+                        <span id="currentDate"></span>
+                        <span class="mx-2">|</span>
+                        <i class="fas fa-clock me-1"></i>
+                        <span id="currentTime"></span>
+                    </small>
+                </div>
+            </div>
+            
+            <div class="col-md-4 text-end">
+                {% if user.is_authenticated %}
+                    <div class="user-info d-flex align-items-center justify-content-end">
+                        <div class="me-3 text-end d-none d-sm-block">
+                            <div class="text-white fw-medium">{{ user.get_full_name|default:user.username }}</div>
+                            <small class="text-light opacity-75">
+                                {% if user.is_superuser %}
+                                    <i class="fas fa-crown me-1"></i>Super Admin
+                                {% elif user.is_staff %}
+                                    <i class="fas fa-user-shield me-1"></i>Staff Member
+                                {% else %}
+                                    <i class="fas fa-user me-1"></i>User
+                                {% endif %}
+                            </small>
+                        </div>
+                        <div class="dropdown">
+                            <button class="btn btn-outline-light btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-user-circle"></i>
+                                <span class="d-none d-sm-inline ms-1">Account</span>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li>
+                                    <h6 class="dropdown-header">
+                                        <i class="fas fa-user me-1"></i>{{ user.username }}
+                                    </h6>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="{% url 'portal:profile' %}">
+                                    <i class="fas fa-user-edit me-2"></i>Edit Profile
+                                </a></li>
+                                {% if user.is_staff %}
+                                <li><a class="dropdown-item" href="{% url 'admin:index' %}">
+                                    <i class="fas fa-cogs me-2"></i>Admin Panel
+                                </a></li>
+                                {% endif %}
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item text-danger" href="{% url 'admin:logout' %}">
+                                    <i class="fas fa-sign-out-alt me-2"></i>Logout
+                                </a></li>
+                            </ul>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="auth-buttons">
+                        <a href="{% url 'admin:login' %}" class="btn btn-outline-light me-2">
+                            <i class="fas fa-sign-in-alt me-1"></i>Login
+                        </a>
+                        <a href="{% url 'admin:index' %}" class="btn btn-light">
+                            <i class="fas fa-user-shield me-1"></i>Admin
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
     </div>
-  </div>
 </header>
+
+
+
+<script>
+// Update current date and time
+function updateDateTime() {
+    const now = new Date();
+    const dateElement = document.getElementById('currentDate');
+    const timeElement = document.getElementById('currentTime');
+    
+    if (dateElement && timeElement) {
+        const options = { 
+            year: 'numeric', 
+            month: 'short', 
+            day: 'numeric',
+            weekday: 'short'
+        };
+        dateElement.textContent = now.toLocaleDateString('en-US', options);
+        timeElement.textContent = now.toLocaleTimeString('en-US', { 
+            hour12: true, 
+            hour: '2-digit', 
+            minute: '2-digit'
+        });
+    }
+}
+
+// Update every second
+setInterval(updateDateTime, 1000);
+updateDateTime(); // Initial call
+</script>

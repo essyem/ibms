@@ -1,67 +1,53 @@
-{% extends "portal/base.html" %}
+{% extends "base.html" %}
 {% load static %}
 
+{% block title %}Terms and Conditions - TRENDZ Trading and Services{% endblock %}
+
 {% block content %}
-<!DOCTYPE html>
-<html lang="en">
+  <div class="container">
+    <h3 id="introduction">1. Introduction</h3>
+    <p>Welcome to TRENDZ Trading and Services ("we," "us," or "our"). These Terms and Conditions govern your use of our services, including product enquiries, purchases, and support. By submitting an enquiry or using our services, you agree to comply with these terms.</p>
 
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Terms and Conditions for TRENDZ Trading and Services">
-  <meta name="keywords" content="TRENDZ, Trading, Services, Terms, Conditions, Qatar">
-  <meta name="author" content="TRENDZ Trading and Services">
-  <link rel="icon" href="{% static 'portal/images/favicon.ico' %}" type="image/x-icon">
-  <title>Terms and Conditions - TRENDZ Trading and Services</title>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&display=swap">
-</head>
-<body>
-  <div class="tp-dfwv"></div>
+    <h3 id="product-enquiries">2. Product Enquiries &amp; Quotations</h3>
+    <p>All product enquiries submitted through our website or other channels are subject to availability.</p>
+    <p>Prices and specifications are subject to change without prior notice.</p>
+    <p>Quotations provided are valid for 7 days unless otherwise stated.</p>
+    <p>We reserve the right to reject or cancel any enquiry at our discretion.</p>
 
-  <h3 id="introduction">1. Introduction</h3>
-  <p>Welcome to TRENDZ Trading and Services ("we," "us," or "our"). These Terms and Conditions govern your use of our services, including product enquiries, purchases, and support. By submitting an enquiry or using our services, you agree to comply with these terms.</p>
+    <h3 id="orders-payment">3. Orders &amp; Payment</h3>
+    <p>Purchase Orders (POs) must be confirmed in writing.</p>
+    <p>Accepted payment methods: Bank transfer, credit/debit card.</p>
 
-  <h3 id="product-enquiries">2. Product Enquiries & Quotations</h3>
-  <p>All product enquiries submitted through our website or other channels are subject to availability.</p>
-  <p>Prices and specifications are subject to change without prior notice.</p>
-  <p>Quotations provided are valid for 7 days unless otherwise stated.</p>
-  <p>We reserve the right to reject or cancel any enquiry at our discretion.</p>
+    <h3 id="delivery-shipping">4. Delivery &amp; Shipping</h3>
+    <p>Delivery timelines are estimates and not guaranteed. Delays due to unforeseen circumstances (e.g., customs, logistics) are not our liability.</p>
+    <p>Qatar Deliveries: Free within Doha for bulk orders (conditions apply).</p>
+    <p>International Shipments: Additional charges apply; customer responsible for customs clearance.</p>
+    <p>Risk of loss/damage transfers to the buyer upon delivery.</p>
 
-<h3 id="orders-payment">3. Orders & Payment</h3>
-<p>Purchase Orders (POs) must be confirmed in writing.</p>
-<p>Accepted payment methods: Bank transfer, credit/debit card.</p>
+    <h3 id="warranty-returns">5. Warranty &amp; Returns</h3>
+    <p>Hardware Warranty: Covered as per manufacturer terms (typically 1-3 years).</p>
+    <p>AMC (Annual Maintenance Contract): Separate terms apply.</p>
+    <p>Defective Products: Must be reported within 7 days of delivery for replacement/repair.</p>
+    <p>No Refunds: Only replacements/repairs for defective items (non-defective returns not accepted).</p>
 
-<h3 id="delivery-shipping">4. Delivery & Shipping</h3>
-<p>Delivery timelines are estimates and not guaranteed. Delays due to unforeseen circumstances (e.g., customs, logistics) are not our liability.</p>
-<p>Qatar Deliveries: Free within Doha for bulk orders (conditions apply).</p>
-<p>International Shipments: Additional charges apply; customer responsible for customs clearance.</p>
-<p>Risk of loss/damage transfers to the buyer upon delivery.</p>
+    <h3 id="data-privacy">6. Data Privacy</h3>
+    <p>Personal data (name, email, phone, company) is collected for processing enquiries and orders.</p>
+    <p>We do not share/sell customer data to third parties without consent.</p>
+    <p>By submitting an enquiry, you consent to receiving follow-up communications.</p>
 
-<h3 id="warranty-returns">5. Warranty & Returns</h3>
-<p>Hardware Warranty: Covered as per manufacturer terms (typically 1-3 years).</p>
-<p>AMC (Annual Maintenance Contract): Separate terms apply.</p>
-<p>Defective Products: Must be reported within 7 days of delivery for replacement/repair.</p>
-<p>No Refunds: Only replacements/repairs for defective items (non-defective returns not accepted).</p>
+    <h3 id="limitation-liability">7. Limitation of Liability</h3>
+    <p>We are not liable for:</p>
+    <ul>
+      <li>Indirect, incidental, or consequential damages.</li>
+      <li>Delays beyond our control (e.g., supplier issues, natural disasters).</li>
+      <li>Misuse of products by the customer.</li>
+    </ul>
 
-<h3 id="data-privacy">6. Data Privacy</h3>
-<p>Personal data (name, email, phone, company) is collected for processing enquiries and orders.</p>
-<p>We do not share/sell customer data to third parties without consent.</p>
-<p>By submitting an enquiry, you consent to receiving follow-up communications.</p>
+    <h3 id="governing-law">8. Governing Law</h3>
+    <p>These terms are governed by Qatari law.</p>
+    <p>Disputes shall be resolved through Qatar courts.</p>
 
-<h3 id="limitation-liability">7. Limitation of Liability</h3>
-<p>We are not liable for:</p>
-<ul>
-  <li>Indirect, incidental, or consequential damages.</li>
-  <li>Delays beyond our control (e.g., supplier issues, natural disasters).</li>
-  <li>Misuse of products by the customer.</li>
-</ul>
-
-<h3 id="governing-law">8. Governing Law</h3>
-<p>These terms are governed by Qatari law.</p>
-<p>Disputes shall be resolved through Qatar courts.</p>
-
-<h3 id="amendments">9. Amendments</h3>
-<p>We may update these terms at any time. Continued use of our services implies acceptance.</p>
-
-</html>
+    <h3 id="amendments">9. Amendments</h3>
+    <p>We may update these terms at any time. Continued use of our services implies acceptance.</p>
+  </div>
 {% endblock %}

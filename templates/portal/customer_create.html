@@ -1,4 +1,4 @@
-{% extends "portal/invoice_base.html" %}
+{% extends "base.html" %}
 {% load static %}
 
 {% block title %}{% if object %}Edit{% else %}Add{% endif %} Customer - Trendz Portal{% endblock %}
@@ -113,7 +113,7 @@
                             <a href="{% url 'portal:customer_list' %}" class="btn btn-secondary">
                                 <i class="fas fa-arrow-left me-1"></i>Back to Customers
                             </a>
-                            <button type="submit" class="btn btn-primary">
+                            <button type="submit" class="btn btn-success">
                                 <i class="fas fa-save me-1"></i>
                                 {% if object %}Update Customer{% else %}Save Customer{% endif %}
                             </button>

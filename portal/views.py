@@ -1,20 +1,22 @@
 # portal/views.py
 from django.views import View
-from django.views.generic import (CreateView, UpdateView, 
+from django.views.generic import (CreateView, UpdateView, DeleteView,
 ListView, DetailView, View)
-from portal.models import Invoice, InvoiceItem, Product, Customer
+from portal.models import Invoice, InvoiceItem, Product, Customer, Quotation, QuotationItem, PaymentReceipt
 from procurement.models import Supplier, PurchaseOrder
-from django.db.models import Sum, Q, Avg, Count, F, Case, When, DecimalField
+from django.db.models import Sum, Q, Avg, Count, F, Case, When, DecimalField, Min, Max
 from django.db.models.functions import Cast
 from django.contrib.auth.decorators import login_required
+from django.utils.decorators import method_decorator
 from django.db.models.functions import TruncDate, TruncMonth
 from django.db import transaction
 from django.shortcuts import render, redirect, get_object_or_404
-from portal.forms import ProductEnquiryForm, InvoiceForm, InvoiceItemForm, CustomerForm
+from portal.forms import ProductEnquiryForm, InvoiceForm, InvoiceItemForm, CustomerForm, QuotationForm, PaymentReceiptForm
 from django.contrib import messages
 import decimal
 from decimal import Decimal
 from django.http import JsonResponse, HttpResponse, Http404, HttpResponseRedirect
+from django.urls import reverse, reverse_lazy
 from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 from django.views.decorators.http import require_http_methods
 from .decorators import superuser_required, dashboard_access_required, reports_access_required
@@ -40,6 +42,7 @@ from datetime import datetime, timedelta
 from django.core.paginator import Paginator
 import csv
 from django.db.models import ExpressionWrapper, FloatField
+from django.views.decorators.csrf import csrf_exempt
 
 
 logger = logging.getLogger(__name__)
@@ -59,7 +62,35 @@ def process_arabic_text(text):
         # Return original text if processing fails
         return text
 
+
+@csrf_exempt
+def set_language(request):
+    """Set the preferred site language in session and redirect back.
+
+    Accepts POST or GET with 'lang' param (e.g., 'en' or 'ar'). Stores in
+    session under 'site_language' and also sets Django's LANGUAGE_CODE key.
+    """
+    lang = request.POST.get('lang') or request.GET.get('lang')
+    next_url = request.META.get('HTTP_REFERER') or reverse('portal:index')
+
+    if not lang:
+        return redirect(next_url)
+
+    # Save language in session
+    try:
+        request.session['site_language'] = lang
+        request.session['django_language'] = lang
+    except Exception:
+        # If session not available, fall back to cookie
+        response = redirect(next_url)
+        response.set_cookie('site_language', lang)
+        response.set_cookie('django_language', lang)
+        return response
+
+    return redirect(next_url)
+
 class InvoicePDFView(View):
+    @method_decorator(login_required, name='dispatch')
     def get(self, request, pk, *args, **kwargs):
         """Handle PDF generation with Arabic support using WeasyPrint"""
         invoice = get_object_or_404(Invoice, pk=pk)
@@ -294,6 +325,7 @@ class InvoicePDFView(View):
             return HttpResponse(f"Server error during PDF generation: {str(e)}", status=500)
 
 @method_decorator(ensure_csrf_cookie, name='dispatch')
+@method_decorator(login_required, name='dispatch')
 class InvoiceCreateView(CreateView):
     model = Invoice
     form_class = InvoiceForm
@@ -988,6 +1020,7 @@ class InvoiceCreateView(CreateView):
     def get_success_url(self):
         return reverse('portal:invoice_detail', kwargs={'pk': self.object.pk})
 
+@method_decorator(login_required, name='dispatch')
 class InvoiceUpdateView(UpdateView):
     model = Invoice
     form_class = InvoiceForm
@@ -1024,9 +1057,12 @@ class InvoiceUpdateView(UpdateView):
                 invoice.subtotal = form.cleaned_data.get('subtotal', 0)
                 invoice.tax = form.cleaned_data.get('tax', 0)
                 invoice.discount_type = form.cleaned_data.get('discount_type', 'amount')
-                invoice.discount_value = form.cleaned_data.get('discount_value', 0)
+                discount_value = form.cleaned_data.get('discount_value', 0)
+                print(f"DEBUG: discount_value from form: {discount_value} (type: {type(discount_value)})")
+                invoice.discount_value = discount_value if discount_value is not None else 0
                 invoice.discount_amount = form.cleaned_data.get('discount_amount', 0)
                 invoice.grand_total = form.cleaned_data.get('grand_total', 0)
+                print(f"DEBUG: invoice.discount_value before save: {invoice.discount_value}")
                 invoice.save()
                 
                 messages.success(self.request, f"Invoice #{invoice.invoice_number} updated successfully!")
@@ -1094,6 +1130,7 @@ class InvoiceUpdateView(UpdateView):
             invoice.items.filter(id__in=items_to_delete).delete()
 
 
+@method_decorator(login_required, name='dispatch')
 class InvoiceDetailView(DetailView):
     model = Invoice
     template_name = 'portal/invoice_detail.html'
@@ -1113,6 +1150,7 @@ class InvoiceDetailView(DetailView):
         })
         return context
 
+@method_decorator(login_required, name='dispatch')
 class InvoiceListView(ListView):
     model = Invoice
     template_name = 'portal/invoice_list.html'
@@ -1184,6 +1222,30 @@ class InvoiceListView(ListView):
         })
         return context
 
+
+@method_decorator(login_required, name='dispatch')
+class InvoiceDeleteView(DeleteView):
+    model = Invoice
+    success_url = reverse_lazy('portal:invoice_list')
+    
+    def get_queryset(self):
+        return super().get_queryset().filter(site=self.request.site)
+    
+    def delete(self, request, *args, **kwargs):
+        # Get the object before deletion for success message
+        self.object = self.get_object()
+        invoice_number = self.object.invoice_number
+        
+        # Perform the deletion
+        response = super().delete(request, *args, **kwargs)
+        
+        # Add success message
+        messages.success(request, f'Invoice #{invoice_number} has been deleted successfully.')
+        
+        return response
+
+
+@login_required
 def get_product_details(request, product_id):
     product = get_object_or_404(Product, pk=product_id)
     return JsonResponse({
@@ -1195,6 +1257,7 @@ def get_product_details(request, product_id):
         'image_url': product.image.url if product.image else None
     })
 
+@login_required
 def enquiry(request):
     if request.method == 'POST':
         form = ProductEnquiryForm(request.POST)
@@ -1220,11 +1283,13 @@ def register(request):
 def terms(request):
     return render(request, 'portal/terms.html')
 
+@login_required
 def profile(request):
     return render(request, 'portal/profile.html', {
         'featured_products': Product.objects.filter(is_active=True)[:4]
     })
 
+@method_decorator(login_required, name='dispatch')
 class ProductSearchView(ListView):
     model = Product
     template_name = 'portal/products/search.html'  # Updated path to follow Django conventions
@@ -1248,11 +1313,13 @@ class ProductSearchView(ListView):
         context['query'] = self.request.GET.get('q', '')
         return context
 
+@login_required
 def product_search_fallback(request):
     return render(request, 'portal/products/search_empty.html')
 
 @csrf_exempt  # For simplicity in development, remove in production with proper CSRF handling
 @require_http_methods(["POST"])
+@login_required
 def barcode_scan(request):
     """
     Enhanced barcode scanner that fetches complete product details including:
@@ -1335,6 +1402,7 @@ def barcode_scan(request):
 from django.views.decorators.csrf import csrf_exempt
 
 @csrf_exempt
+@login_required
 def customer_search(request):
     print(f"🔍 customer_search called with query: {request.GET.get('q', '')}")
     query = request.GET.get('q', '')
@@ -1366,11 +1434,20 @@ def customer_search(request):
     return JsonResponse({'customers': results})
 
 # BarcodeScanner
+@login_required
 def barcode_scanner_view(request):
     """Render the barcode scanner interface page"""
     return render(request, 'portal/barcode_scanner.html')
 
+def custom_logout(request):
+    """Custom logout view that properly clears session and redirects"""
+    from django.contrib.auth import logout
+    logout(request)
+    messages.success(request, 'You have been successfully logged out.')
+    return redirect('/')
+
 # Multi-tenant index view
+@login_required
 def index(request):
     """
     Main index view that renders site-specific templates
@@ -1601,7 +1678,8 @@ def dashboard_view(request):
         'avg_order_value': avg_order_value,
     }
     
-    return render(request, 'portal/dashboard.html', context)
+    # Render enhanced dashboard with improved styling
+    return render(request, 'portal/dashboard_enhanced.html', context)
 
 @dashboard_access_required
 def analytics_api(request):
@@ -1657,6 +1735,69 @@ def analytics_api(request):
         'revenue_trend': revenue_data,
         'top_customers': customer_data,
     })
+
+
+@dashboard_access_required
+def dashboard_summary_api(request):
+    """
+    Returns rendered HTML for the dashboard summary (cards/tables) so the main dashboard can load quickly
+    and fetch heavy data asynchronously.
+    """
+    # Build the same heavy context used previously but keep it minimal and efficient
+    total_customers = Customer.objects.count()
+    active_products = Product.objects.filter(is_active=True).count()
+    active_suppliers = Supplier.objects.filter(is_active=True).count()
+    pending_invoices = Invoice.objects.filter(status__in=['draft', 'pending']).count()
+
+    monthly_revenue = Invoice.objects.filter(
+        date__gte=timezone.now().date().replace(day=1),
+        status='paid'
+    ).aggregate(total=Sum('grand_total'))['total'] or 0
+
+    # Product/Procurement aggregates (limited sets)
+    total_inventory_cost_value = Product.objects.filter(is_active=True).aggregate(total_value=Sum(F('cost_price') * F('stock')))['total_value'] or 0
+    total_inventory_value = Product.objects.filter(is_active=True).aggregate(total_value=Sum(F('unit_price') * F('stock')))['total_value'] or 0
+    potential_profit = total_inventory_value - total_inventory_cost_value
+
+    total_purchase_orders = PurchaseOrder.objects.count()
+    total_procurement_value = PurchaseOrder.objects.aggregate(total=Sum('total'))['total'] or 0
+    monthly_procurement = PurchaseOrder.objects.filter(order_date__gte=timezone.now().date().replace(day=1)).aggregate(total=Sum('total'))['total'] or 0
+    avg_order_value = 0
+    if total_purchase_orders > 0:
+        avg_order_value = total_procurement_value / total_purchase_orders
+
+    products_by_category = Product.objects.filter(is_active=True).values('category__name').annotate(
+        count=Count('id'),
+        total_cost_value=Sum(F('cost_price') * F('stock')),
+        total_value=Sum(F('unit_price') * F('stock')),
+        profit=Sum((F('unit_price') - F('cost_price')) * F('stock'))
+    ).order_by('-count')[:5]
+
+    high_value_products = Product.objects.filter(is_active=True).annotate(
+        profit_per_unit=F('unit_price') - F('cost_price'),
+        total_cost_value=F('cost_price') * F('stock'),
+        total_selling_value=F('unit_price') * F('stock')
+    ).order_by('-unit_price')[:10]
+
+    ctx = {
+        'total_customers': total_customers,
+        'pending_invoices': pending_invoices,
+        'monthly_revenue': monthly_revenue,
+        'active_products': active_products,
+        'active_suppliers': active_suppliers,
+        'total_inventory_cost_value': total_inventory_cost_value,
+        'total_inventory_value': total_inventory_value,
+        'potential_profit': potential_profit,
+        'total_purchase_orders': total_purchase_orders,
+        'total_procurement_value': total_procurement_value,
+        'monthly_procurement': monthly_procurement,
+        'avg_order_value': avg_order_value,
+        'products_by_category': products_by_category,
+        'high_value_products': high_value_products,
+    }
+
+    html = render(request, 'portal/_dashboard_summary.html', ctx).content.decode('utf-8')
+    return JsonResponse({'html': html})
 
 @reports_access_required
 def report_view(request):
@@ -1946,6 +2087,7 @@ def report_view(request):
     
     return render(request, 'portal/report.html', context)
 
+@login_required
 def export_reports(request):
     export_type = request.GET.get('export', 'invoices')
     
@@ -2324,6 +2466,7 @@ def report_view(request):
 '''
 
 # Customer Management Views
+@method_decorator(login_required, name='dispatch')
 class CustomerListView(ListView):
     model = Customer
     template_name = 'portal/customer_list.html'
@@ -2346,6 +2489,7 @@ class CustomerListView(ListView):
         context['search'] = self.request.GET.get('search', '')
         return context
 
+@method_decorator(login_required, name='dispatch')
 class CustomerCreateView(CreateView):
     model = Customer
     form_class = CustomerForm
@@ -2383,6 +2527,7 @@ class CustomerCreateView(CreateView):
             }, status=400)
         return super().form_invalid(form)
 
+@method_decorator(login_required, name='dispatch')
 class CustomerDetailView(DetailView):
     model = Customer
     template_name = 'portal/customer_detail.html'
@@ -2396,6 +2541,7 @@ class CustomerDetailView(DetailView):
         ).order_by('-date')[:10]  # Last 10 invoices
         return context
 
+@method_decorator(login_required, name='dispatch')
 class CustomerUpdateView(UpdateView):
     model = Customer
     form_class = CustomerForm
@@ -2407,3 +2553,902 @@ class CustomerUpdateView(UpdateView):
     def form_valid(self, form):
         messages.success(self.request, f'Customer "{form.instance.full_name}" updated successfully!')
         return super().form_valid(form)
+
+
+# =============================================================================
+# PRODUCT MANAGEMENT VIEWS
+# =============================================================================
+
+@method_decorator(login_required, name='dispatch')
+class ProductListView(ListView):
+    """Frontend product list view with filtering and search"""
+    model = Product
+    template_name = 'portal/products/product_list.html'
+    context_object_name = 'products'
+    paginate_by = 20
+    
+    def get_queryset(self):
+        queryset = Product.objects.select_related('category').order_by('-id')
+        
+        # Search functionality
+        search_query = self.request.GET.get('q', '')
+        if search_query:
+            queryset = queryset.filter(
+                Q(name__icontains=search_query) |
+                Q(sku__icontains=search_query) |
+                Q(barcode__icontains=search_query) |
+                Q(description__icontains=search_query)
+            )
+        
+        # Category filter
+        category_id = self.request.GET.get('category', '')
+        if category_id:
+            queryset = queryset.filter(category_id=category_id)
+        
+        # Stock status filter
+        stock_status = self.request.GET.get('stock_status', '')
+        if stock_status == 'in_stock':
+            queryset = queryset.filter(stock__gt=10)
+        elif stock_status == 'low_stock':
+            queryset = queryset.filter(stock__lte=10, stock__gt=0)
+        elif stock_status == 'out_of_stock':
+            queryset = queryset.filter(stock=0)
+        
+        # Active status filter
+        is_active = self.request.GET.get('is_active', '')
+        if is_active:
+            queryset = queryset.filter(is_active=is_active == 'true')
+        
+        return queryset
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        from portal.models import Category
+        
+        context.update({
+            'categories': Category.objects.all(),
+            'current_category': self.request.GET.get('category', ''),
+            'current_search': self.request.GET.get('q', ''),
+            'current_stock_status': self.request.GET.get('stock_status', ''),
+            'current_is_active': self.request.GET.get('is_active', ''),
+            'total_products': Product.objects.count(),
+            'active_products': Product.objects.filter(is_active=True).count(),
+            'low_stock_products': Product.objects.filter(stock__lte=10, stock__gt=0).count(),
+            'out_of_stock_products': Product.objects.filter(stock=0).count(),
+        })
+        return context
+
+
+@method_decorator(login_required, name='dispatch')
+class ProductDetailView(DetailView):
+    """Frontend product detail view"""
+    model = Product
+    template_name = 'portal/products/product_detail.html'
+    context_object_name = 'product'
+    
+    def get_template_names(self):
+        """Always use the public product detail template (storefront) for all users."""
+        return ['portal/products/public_product_detail.html']
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        product = self.get_object()
+        
+        # Get related products from same category
+        related_products = Product.objects.filter(
+            category=product.category,
+            is_active=True
+        ).exclude(id=product.id)[:6]
+        
+        # Base context used by admin/internal template
+        context.update({
+            'related_products': related_products,
+            'profit_margin': product.profit_margin(),
+            'profit_amount': product.profit_amount(),
+        })
+
+        # If this view is rendering the public template for a regular user,
+        # provide the additional context keys the public template expects.
+        try:
+            template_names = self.get_template_names()
+            if 'portal/products/public_product_detail.html' in template_names:
+                from django.utils.translation import get_language
+                lang_param = self.request.GET.get('lang')
+                lang = lang_param or get_language()
+                use_ar = bool(lang and str(lang).lower().startswith('ar'))
+                display_name = product.name_ar if use_ar and getattr(product, 'name_ar', None) else product.name
+                display_description = product.description_ar if use_ar and getattr(product, 'description_ar', None) else product.description
+
+                product_url = self.request.build_absolute_uri(
+                    reverse('portal:public_product_detail', kwargs={'pk': product.pk})
+                )
+                if lang_param:
+                    sep = '&' if '?' in product_url else '?'
+                    product_url = f"{product_url}{sep}lang={lang_param}"
+
+                context.update({
+                    'product_url': product_url,
+                    'whatsapp_number': getattr(settings, 'WHATSAPP_BUSINESS_NUMBER', '+97444444444'),
+                    'whatsapp_message': f"Hi! I'm interested in {display_name} (SKU: {product.sku}). Can you provide more details?",
+                    'product_display_name': display_name,
+                    'product_display_description': display_description,
+                })
+        except Exception:
+            # If anything goes wrong adding public context, leave base context as-is
+            pass
+        return context
+
+
+class PublicProductCatalogView(ListView):
+    """Public product catalog view for e-commerce functionality"""
+    model = Product
+    template_name = 'portal/products/public_catalog.html'
+    context_object_name = 'products'
+    paginate_by = 24  # More products per page for grid view
+    
+    def get_queryset(self):
+        # Only show active products with stock > 0
+        queryset = Product.objects.filter(
+            is_active=True,
+            stock__gt=0
+        ).select_related('category').order_by('-id')
+        
+        # Search functionality
+        search_query = self.request.GET.get('q', '')
+        if search_query:
+            queryset = queryset.filter(
+                Q(name__icontains=search_query) |
+                Q(sku__icontains=search_query) |
+                Q(barcode__icontains=search_query) |
+                Q(description__icontains=search_query)
+            )
+        
+        # Category filter
+        category_id = self.request.GET.get('category', '')
+        if category_id:
+            queryset = queryset.filter(category_id=category_id)
+        
+        # Price range filter
+        min_price = self.request.GET.get('min_price', '')
+        max_price = self.request.GET.get('max_price', '')
+        if min_price:
+            try:
+                queryset = queryset.filter(unit_price__gte=Decimal(min_price))
+            except (ValueError, TypeError):
+                pass
+        if max_price:
+            try:
+                queryset = queryset.filter(unit_price__lte=Decimal(max_price))
+            except (ValueError, TypeError):
+                pass
+        
+        # Sorting
+        sort_by = self.request.GET.get('sort', 'newest')
+        if sort_by == 'price_low':
+            queryset = queryset.order_by('unit_price')
+        elif sort_by == 'price_high':
+            queryset = queryset.order_by('-unit_price')
+        elif sort_by == 'name':
+            queryset = queryset.order_by('name')
+        elif sort_by == 'popular':
+            # For now, order by stock (higher stock = more popular)
+            queryset = queryset.order_by('-stock')
+        else:  # newest (default)
+            queryset = queryset.order_by('-id')
+            
+        return queryset
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        from portal.models import Category
+        
+        # Get categories that have active products
+        categories = Category.objects.filter(
+            product__is_active=True,
+            product__stock__gt=0
+        ).distinct()
+        
+        # Get price range for filters
+        products = Product.objects.filter(is_active=True, stock__gt=0)
+        price_range = products.aggregate(
+            min_price=Min('unit_price'),
+            max_price=Max('unit_price')
+        )
+        
+        context.update({
+            'categories': categories,
+            'current_category': self.request.GET.get('category', ''),
+            'current_search': self.request.GET.get('q', ''),
+            'current_sort': self.request.GET.get('sort', 'newest'),
+            'current_min_price': self.request.GET.get('min_price', ''),
+            'current_max_price': self.request.GET.get('max_price', ''),
+            'price_range': price_range,
+            'total_products': products.count(),
+            'whatsapp_number': getattr(settings, 'WHATSAPP_BUSINESS_NUMBER', '+97444444444'),  # Default Qatar number
+        })
+        return context
+
+
+class PublicProductDetailView(DetailView):
+    """Public product detail view for e-commerce functionality"""
+    model = Product
+    template_name = 'portal/products/public_product_detail.html'
+    context_object_name = 'product'
+    
+    def get_queryset(self):
+        # Only show active products
+        return Product.objects.filter(is_active=True)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        product = self.get_object()
+        
+        # Get related products from same category
+        related_products = Product.objects.filter(
+            category=product.category,
+            is_active=True,
+            stock__gt=0
+        ).exclude(id=product.id)[:6]
+        
+        # Determine preferred language from ?lang= or from Django's active language
+        from django.utils.translation import get_language
+        lang_param = self.request.GET.get('lang')
+        lang = lang_param or get_language()
+
+        # Choose localized product fields when Arabic requested and translation exists
+        use_ar = bool(lang and str(lang).lower().startswith('ar'))
+        display_name = product.name_ar if use_ar and getattr(product, 'name_ar', None) else product.name
+        display_description = product.description_ar if use_ar and getattr(product, 'description_ar', None) else product.description
+
+        # Create product URL for sharing (preserve ?lang param if present)
+        product_url = self.request.build_absolute_uri(
+            reverse('portal:public_product_detail', kwargs={'pk': product.pk})
+        )
+        if lang_param:
+            sep = '&' if '?' in product_url else '?'
+            product_url = f"{product_url}{sep}lang={lang_param}"
+
+        context.update({
+            'related_products': related_products,
+            'product_url': product_url,
+            'whatsapp_number': getattr(settings, 'WHATSAPP_BUSINESS_NUMBER', '+97444444444'),
+            'whatsapp_message': f"Hi! I'm interested in {display_name} (SKU: {product.sku}). Can you provide more details?",
+            'product_display_name': display_name,
+            'product_display_description': display_description,
+            # Note: attachments are not provided by default
+        })
+        # Attachments/discovery removed in revert - no additional context changes
+
+        return context
+
+
+@method_decorator(login_required, name='dispatch')
+class ProductCreateView(CreateView):
+    """Frontend product creation view"""
+    model = Product
+    template_name = 'portal/products/product_form.html'
+    fields = [
+        'category', 'name', 'name_ar', 'sku', 'description', 'description_ar', 'cost_price', 
+        'unit_price', 'stock', 'image', 'warranty_period', 
+        'barcode', 'is_active'
+    ]
+    
+    def get_success_url(self):
+        return reverse('portal:product_detail', kwargs={'pk': self.object.pk})
+    
+    def form_valid(self, form):
+        messages.success(self.request, f'Product "{form.instance.name}" created successfully!')
+        return super().form_valid(form)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        from portal.models import Category
+        context['categories'] = Category.objects.all()
+        context['form_action'] = 'Create'
+        return context
+
+
+@method_decorator(login_required, name='dispatch')
+class ProductUpdateView(UpdateView):
+    """Frontend product update view"""
+    model = Product
+    template_name = 'portal/products/product_form.html'
+    fields = [
+        'category', 'name', 'name_ar', 'sku', 'description', 'description_ar', 'cost_price', 
+        'unit_price', 'stock', 'image', 'warranty_period', 
+        'barcode', 'is_active'
+    ]
+    
+    def get_success_url(self):
+        return reverse('portal:product_detail', kwargs={'pk': self.object.pk})
+    
+    def form_valid(self, form):
+        messages.success(self.request, f'Product "{form.instance.name}" updated successfully!')
+        return super().form_valid(form)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        from portal.models import Category
+        context['categories'] = Category.objects.all()
+        context['form_action'] = 'Update'
+        return context
+
+
+@require_http_methods(["POST"])
+@login_required
+def product_delete(request, pk):
+    """Delete product via AJAX"""
+    try:
+        product = get_object_or_404(Product, pk=pk)
+        product_name = product.name
+        product.delete()
+        
+        if request.headers.get('Content-Type') == 'application/json':
+            return JsonResponse({
+                'success': True,
+                'message': f'Product "{product_name}" deleted successfully!'
+            })
+        else:
+            messages.success(request, f'Product "{product_name}" deleted successfully!')
+            return redirect('portal:product_list')
+            
+    except Exception as e:
+        if request.headers.get('Content-Type') == 'application/json':
+            return JsonResponse({
+                'success': False,
+                'message': f'Error deleting product: {str(e)}'
+            })
+        else:
+            messages.error(request, f'Error deleting product: {str(e)}')
+            return redirect('portal:product_list')
+
+
+@require_http_methods(["POST"])
+@login_required
+def product_toggle_active(request, pk):
+    """Toggle product active status via AJAX"""
+    try:
+        product = get_object_or_404(Product, pk=pk)
+        product.is_active = not product.is_active
+        product.save()
+        
+        return JsonResponse({
+            'success': True,
+            'is_active': product.is_active,
+            'message': f'Product "{product.name}" {"activated" if product.is_active else "deactivated"} successfully!'
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'Error updating product: {str(e)}'
+        })
+
+
+@login_required
+def product_dashboard(request):
+    """Product management dashboard"""
+    from django.db.models import Sum, Avg, Count
+    from portal.models import Category
+    
+    # Get statistics
+    total_products = Product.objects.count()
+    active_products = Product.objects.filter(is_active=True).count()
+    low_stock_products = Product.objects.filter(stock__lte=10, stock__gt=0).count()
+    out_of_stock_products = Product.objects.filter(stock=0).count()
+    total_stock_value = Product.objects.aggregate(
+        total_value=Sum(F('cost_price') * F('stock'))
+    )['total_value'] or 0
+    
+    # Recent products
+    recent_products = Product.objects.order_by('-id')[:5]
+    
+    # Low stock products
+    low_stock_list = Product.objects.filter(stock__lte=10).order_by('stock')[:10]
+    
+    # Category breakdown
+    category_stats = Category.objects.annotate(
+        product_count=Count('product'),
+        total_stock=Sum('product__stock')
+    ).order_by('-product_count')[:5]
+    
+    # Price analysis
+    price_stats = Product.objects.aggregate(
+        avg_cost=Avg('cost_price'),
+        avg_unit=Avg('unit_price'),
+        min_price=Min('unit_price'),
+        max_price=Max('unit_price')
+    )
+    # Compute average margin (absolute and percent) safely here so templates don't need custom filters
+    avg_cost = price_stats.get('avg_cost') or 0
+    avg_unit = price_stats.get('avg_unit') or 0
+    try:
+        avg_margin = avg_unit - avg_cost
+        margin_percent = (avg_margin / avg_cost) * 100 if avg_cost and avg_cost != 0 else 0
+    except Exception:
+        avg_margin = 0
+        margin_percent = 0
+    
+    context = {
+        'total_products': total_products,
+        'active_products': active_products,
+        'low_stock_products': low_stock_products,
+        'out_of_stock_products': out_of_stock_products,
+        'total_stock_value': total_stock_value,
+        'recent_products': recent_products,
+        'low_stock_list': low_stock_list,
+        'category_stats': category_stats,
+        'price_stats': price_stats,
+        'avg_margin': avg_margin,
+        'margin_percent': margin_percent,
+    }
+    
+    return render(request, 'portal/products/product_dashboard.html', context)
+
+
+# =============================================================================
+# QUOTATION MANAGEMENT VIEWS
+# =============================================================================
+
+@method_decorator(ensure_csrf_cookie, name='dispatch')
+@method_decorator(login_required, name='dispatch')
+class QuotationCreateView(CreateView):
+    model = Quotation
+    form_class = QuotationForm
+    template_name = 'portal/quotation_create.html'
+    
+    def get_context_data(self, **kwargs):
+        """Add products and customers to template context"""
+        context = super().get_context_data(**kwargs)
+        context.update({
+            'products': Product.objects.filter(is_active=True),
+            'customers': Customer.objects.all()[:100],
+        })
+        return context
+    
+    def form_valid(self, form):
+        try:
+            with transaction.atomic():
+                quotation = form.save(commit=False)
+                
+                # Handle customer
+                customer_id = self.request.POST.get('customer', '').strip()
+                if customer_id and customer_id != '':
+                    try:
+                        quotation.customer_id = int(customer_id)
+                    except (ValueError, TypeError):
+                        # Create or get walk-in customer
+                        walk_in_customer, created = Customer.objects.get_or_create(
+                            full_name='Walk-in Customer',
+                            defaults={'phone': '', 'address': ''}
+                        )
+                        quotation.customer = walk_in_customer
+                else:
+                    # Create or get walk-in customer
+                    walk_in_customer, created = Customer.objects.get_or_create(
+                        full_name='Walk-in Customer',
+                        defaults={'phone': '', 'address': ''}
+                    )
+                    quotation.customer = walk_in_customer
+
+                # Generate quotation number if needed
+                if not quotation.quotation_number:
+                    quotation.quotation_number = self._generate_quotation_number()
+
+                quotation.save()
+                
+                # Create quotation items
+                self._create_quotation_items(quotation)
+                self._update_quotation_totals(quotation)
+
+                return self._handle_response(quotation)
+
+        except Exception as e:
+            logger.error(f"Quotation creation error: {str(e)}")
+            return self._handle_error(e, form)
+    
+    def _generate_quotation_number(self):
+        """Generate quotation number in QT-YYYYMMDDNN format"""
+        date_part = timezone.now().strftime('%Y%m%d')
+        prefix = f"QT-{date_part}"
+        
+        try:
+            with transaction.atomic():
+                last_quotation = Quotation.objects.filter(
+                    quotation_number__startswith=prefix
+                ).order_by('-quotation_number').first()
+                
+                if last_quotation:
+                    last_num = int(last_quotation.quotation_number[-2:])
+                    next_num = last_num + 1
+                else:
+                    next_num = 1
+                
+                if next_num > 99:
+                    raise ValueError("Maximum daily quotation limit (99) reached")
+                
+                return f"{prefix}{next_num:02d}"
+        except Exception as e:
+            fallback_num = random.randint(1, 99)
+            return f"{prefix}{fallback_num:02d}F"
+
+    def _create_quotation_items(self, quotation):
+        """Create all associated quotation items"""
+        items_data = json.loads(self.request.POST.get('items', '[]'))
+        
+        for item in items_data:
+            try:
+                product_id = item.get('product', '').strip()
+                
+                if not product_id or product_id == '':
+                    continue
+                
+                try:
+                    product = Product.objects.get(id=int(product_id))
+                except (ValueError, Product.DoesNotExist):
+                    continue
+                
+                QuotationItem.objects.create(
+                    quotation=quotation,
+                    product=product,
+                    quantity=int(item.get('quantity', 1)),
+                    unit_price=Decimal(str(item.get('unit_price', '0')))
+                )
+                
+            except Exception as e:
+                logger.error(f"Error creating quotation item: {str(e)}")
+                continue
+
+    def _update_quotation_totals(self, quotation):
+        """Update quotation totals based on items"""
+        items = quotation.items.all()
+        subtotal = sum(item.quantity * item.unit_price for item in items)
+        
+        # Apply discount
+        discount_amount = Decimal('0')
+        if quotation.discount_type == 'percentage':
+            discount_amount = subtotal * (quotation.discount_value / 100)
+        else:
+            discount_amount = quotation.discount_value
+        
+        # Apply tax
+        tax_amount = subtotal * (quotation.tax_rate / 100)
+        
+        total = subtotal + tax_amount - discount_amount
+        
+        quotation.subtotal = subtotal
+        quotation.tax_amount = tax_amount
+        quotation.discount_amount = discount_amount
+        quotation.total = total
+        quotation.save()
+
+    def _handle_response(self, quotation):
+        """Return appropriate response based on request type"""
+        if self.request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({
+                'success': True,
+                'redirect_url': reverse('portal:quotation_detail', kwargs={'pk': quotation.pk}),
+                'quotation_number': quotation.quotation_number,
+                'total_amount': str(quotation.total),
+                'quotation_id': quotation.pk
+            })
+        self.object = quotation
+        return HttpResponseRedirect(reverse('portal:quotation_detail', kwargs={'pk': quotation.pk}))
+
+    def _handle_error(self, error, form=None):
+        """Handle errors appropriately based on request type"""
+        if self.request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({
+                'success': False,
+                'message': str(error)
+            }, status=400)
+        if form is None:
+            form = self.get_form()
+        return super().form_invalid(form)
+
+
+@method_decorator(login_required, name='dispatch')
+class QuotationListView(ListView):
+    model = Quotation
+    template_name = 'portal/quotation_list.html'
+    context_object_name = 'quotations'
+    paginate_by = 20
+    
+    def get_queryset(self):
+        queryset = Quotation.objects.select_related('customer').order_by('-date')
+        
+        # Filter by status if provided
+        status = self.request.GET.get('status')
+        if status:
+            queryset = queryset.filter(status=status)
+            
+        # Search functionality
+        search_query = self.request.GET.get('q', '')
+        if search_query:
+            queryset = queryset.filter(
+                Q(quotation_number__icontains=search_query) |
+                Q(customer__full_name__icontains=search_query) |
+                Q(customer__phone__icontains=search_query)
+            )
+        
+        return queryset
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['status_choices'] = Quotation.QUOTATION_STATUS
+        context['current_status'] = self.request.GET.get('status', '')
+        context['search_query'] = self.request.GET.get('q', '')
+        
+        # Calculate stats
+        all_quotations = Quotation.objects.all()
+        context['quotation_stats'] = {
+            'active': all_quotations.filter(status__in=['sent', 'accepted']).count(),
+            'pending': all_quotations.filter(status='draft').count(),
+            'total_value': all_quotations.aggregate(
+                total=Sum('total')
+            )['total'] or 0
+        }
+        
+        return context
+
+
+@method_decorator(login_required, name='dispatch')
+class QuotationDetailView(DetailView):
+    model = Quotation
+    template_name = 'portal/quotation_detail.html'
+    context_object_name = 'quotation'
+
+
+@method_decorator(login_required, name='dispatch')
+class QuotationUpdateView(UpdateView):
+    model = Quotation
+    form_class = QuotationForm
+    template_name = 'portal/quotation_create.html'
+    
+    def get_success_url(self):
+        return reverse('portal:quotation_detail', kwargs={'pk': self.object.pk})
+    
+    def form_valid(self, form):
+        messages.success(
+            self.request, 
+            f'Quotation "{form.instance.quotation_number}" updated successfully!'
+        )
+        return super().form_valid(form)
+
+
+@method_decorator(login_required, name='dispatch')
+class QuotationDeleteView(DeleteView):
+    model = Quotation
+    template_name = 'portal/quotation_confirm_delete.html'
+    
+    def get_success_url(self):
+        return reverse('portal:quotation_list')
+    
+    def delete(self, request, *args, **kwargs):
+        quotation = self.get_object()
+        messages.success(
+            request, 
+            f'Quotation "{quotation.quotation_number}" deleted successfully!'
+        )
+        return super().delete(request, *args, **kwargs)
+
+
+class QuotationPDFView(View):
+    @method_decorator(login_required, name='dispatch')
+    def get(self, request, pk, *args, **kwargs):
+        """Handle PDF generation with Arabic support using WeasyPrint"""
+        quotation = get_object_or_404(Quotation, pk=pk)
+        
+        context = {
+            'quotation': quotation,
+            'STATIC_URL': settings.STATIC_URL,
+        }
+        
+        try:
+            # Load and encode logo - try production paths first
+            logo_paths = [
+                # Production paths (staticfiles) - tried first
+                os.path.join(settings.BASE_DIR, 'staticfiles', 'images', 'logo.png'),
+                # Development paths (static)
+                os.path.join(settings.BASE_DIR, 'static', 'images', 'logo.png'),
+                # Media fallback
+                os.path.join(settings.BASE_DIR, 'media', 'logo.png'),
+            ]
+            
+            logo_base64 = None
+            for logo_path in logo_paths:
+                if os.path.exists(logo_path):
+                    try:
+                        with open(logo_path, 'rb') as logo_file:
+                            logo_data = base64.b64encode(logo_file.read()).decode()
+                            logo_base64 = f"data:image/png;base64,{logo_data}"
+                            logger.info(f"Logo loaded successfully from: {logo_path}")
+                            break
+                    except Exception as e:
+                        logger.error(f"Error reading logo from {logo_path}: {e}")
+                        continue
+            
+            if not logo_base64:
+                logger.warning("Logo could not be loaded from any path")
+                    
+            context['logo_base64'] = logo_base64
+            
+            # Render template with Arabic support
+            template = get_template('portal/quotation_pdf.html')
+            html_string = template.render(context)
+            
+            # Create PDF with WeasyPrint
+            html_doc = HTML(string=html_string, base_url=request.build_absolute_uri())
+            pdf_file = html_doc.write_pdf()
+            
+            # Return PDF response
+            response = HttpResponse(pdf_file, content_type='application/pdf')
+            response['Content-Disposition'] = f'inline; filename="quotation_{quotation.quotation_number}.pdf"'
+            return response
+            
+        except Exception as e:
+            logger.error(f"Error generating PDF for Quotation {quotation.quotation_number}: {e}")
+            messages.error(request, "Error generating PDF. Please try again.")
+            return redirect('portal:quotation_detail', pk=quotation.pk)
+
+
+# =============================================================================
+# PAYMENT RECEIPT MANAGEMENT VIEWS
+# =============================================================================
+
+@method_decorator(login_required, name='dispatch')
+class PaymentReceiptCreateView(CreateView):
+    model = PaymentReceipt
+    form_class = PaymentReceiptForm
+    template_name = 'portal/receipt_create.html'
+    
+    def form_valid(self, form):
+        # Set the issued_by field to current user
+        form.instance.issued_by = self.request.user
+        
+        # Auto-populate customer from invoice if invoice is selected
+        if form.instance.invoice and not form.instance.customer:
+            form.instance.customer = form.instance.invoice.customer
+        
+        receipt = form.save()
+        
+        # If this payment is for an invoice, update invoice status
+        if receipt.invoice and receipt.amount_received >= receipt.amount_due:
+            receipt.invoice.status = 'paid'
+            receipt.invoice.save()
+        
+        messages.success(
+            self.request, 
+            f'Payment receipt "{receipt.receipt_number}" created successfully!'
+        )
+        return super().form_valid(form)
+    
+    def get_success_url(self):
+        return reverse('portal:receipt_detail', kwargs={'pk': self.object.pk})
+
+
+@method_decorator(login_required, name='dispatch')
+class PaymentReceiptListView(ListView):
+    model = PaymentReceipt
+    template_name = 'portal/receipt_list.html'
+    context_object_name = 'receipts'
+    paginate_by = 20
+    
+    def get_queryset(self):
+        queryset = PaymentReceipt.objects.select_related(
+            'customer', 'invoice', 'issued_by'
+        ).order_by('-payment_date')
+        
+        # Filter by payment method if provided
+        payment_method = self.request.GET.get('payment_method')
+        if payment_method:
+            queryset = queryset.filter(payment_method=payment_method)
+            
+        # Filter by status if provided
+        status = self.request.GET.get('status')
+        if status:
+            queryset = queryset.filter(status=status)
+            
+        # Search functionality
+        search_query = self.request.GET.get('q', '')
+        if search_query:
+            queryset = queryset.filter(
+                Q(receipt_number__icontains=search_query) |
+                Q(customer__full_name__icontains=search_query) |
+                Q(reference_number__icontains=search_query)
+            )
+        
+        return queryset
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['payment_methods'] = PaymentReceipt.PAYMENT_METHODS
+        context['status_choices'] = PaymentReceipt.RECEIPT_STATUS
+        context['current_payment_method'] = self.request.GET.get('payment_method', '')
+        context['current_status'] = self.request.GET.get('status', '')
+        context['search_query'] = self.request.GET.get('q', '')
+        
+        # Calculate stats
+        from django.utils import timezone
+        from datetime import datetime
+        
+        all_receipts = PaymentReceipt.objects.all()
+        current_month = timezone.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        
+        context['receipt_stats'] = {
+            'total_amount': all_receipts.aggregate(
+                total=Sum('amount_received')
+            )['total'] or 0,
+            'this_month': all_receipts.filter(
+                payment_date__gte=current_month
+            ).count(),
+            'active': all_receipts.filter(status='issued').count()
+        }
+        
+        return context
+
+
+@method_decorator(login_required, name='dispatch')
+class PaymentReceiptDetailView(DetailView):
+    model = PaymentReceipt
+    template_name = 'portal/receipt_detail.html'
+    context_object_name = 'receipt'
+
+
+class PaymentReceiptPDFView(View):
+    @method_decorator(login_required, name='dispatch')
+    def get(self, request, pk, *args, **kwargs):
+        """Handle PDF generation for payment receipt"""
+        receipt = get_object_or_404(PaymentReceipt, pk=pk)
+        
+        context = {
+            'receipt': receipt,
+            'STATIC_URL': settings.STATIC_URL,
+        }
+        
+        try:
+            # Load and encode logo - try production paths first
+            logo_paths = [
+                # Production paths (staticfiles) - tried first
+                os.path.join(settings.BASE_DIR, 'staticfiles', 'images', 'logo.png'),
+                # Development paths (static)
+                os.path.join(settings.BASE_DIR, 'static', 'images', 'logo.png'),
+                # Media fallback
+                os.path.join(settings.BASE_DIR, 'media', 'logo.png'),
+            ]
+            
+            logo_base64 = None
+            for logo_path in logo_paths:
+                if os.path.exists(logo_path):
+                    try:
+                        with open(logo_path, 'rb') as logo_file:
+                            logo_data = base64.b64encode(logo_file.read()).decode()
+                            logo_base64 = f"data:image/png;base64,{logo_data}"
+                            logger.info(f"Logo loaded successfully from: {logo_path}")
+                            break
+                    except Exception as e:
+                        logger.error(f"Error reading logo from {logo_path}: {e}")
+                        continue
+            
+            if not logo_base64:
+                logger.warning("Logo could not be loaded from any path")
+                    
+            context['logo_base64'] = logo_base64
+            
+            # Render template with Arabic support
+            template = get_template('portal/receipt_pdf.html')
+            html_string = template.render(context)
+            
+            # Create PDF with WeasyPrint
+            html_doc = HTML(string=html_string, base_url=request.build_absolute_uri())
+            pdf_file = html_doc.write_pdf()
+            
+            # Return PDF response
+            response = HttpResponse(pdf_file, content_type='application/pdf')
+            response['Content-Disposition'] = f'inline; filename="receipt_{receipt.receipt_number}.pdf"'
+            return response
+            
+        except Exception as e:
+            logger.error(f"Error generating PDF for Receipt {receipt.receipt_number}: {e}")
+            messages.error(request, "Error generating PDF. Please try again.")
+            return redirect('portal:receipt_detail', pk=receipt.pk)

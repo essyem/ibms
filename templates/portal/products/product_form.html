@@ -1,0 +1,445 @@
+{% extends "base.html" %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{{ form_action }} Product - Trendz Portal{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'portal:product_list' %}">Products</a></li>
+            {% if object %}
+                <li class="breadcrumb-item"><a href="{% url 'portal:product_detail' object.pk %}">{{ object.name }}</a></li>
+                <li class="breadcrumb-item active">Edit</li>
+            {% else %}
+                <li class="breadcrumb-item active">Create New Product</li>
+            {% endif %}
+        </ol>
+    </nav>
+
+    <!-- Form Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-1">{{ form_action }} Product</h2>
+                    <p class="text-muted mb-0">
+                        {% if form_action == 'Create' %}
+                            Add a new product to your inventory
+                        {% else %}
+                            Update product information and settings
+                        {% endif %}
+                    </p>
+                </div>
+                <div>
+                    {% if object %}
+                        <a href="{% url 'portal:product_detail' object.pk %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times me-1"></i>Cancel
+                        </a>
+                    {% else %}
+                        <a href="{% url 'portal:product_list' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times me-1"></i>Cancel
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <form method="post" enctype="multipart/form-data" id="productForm">
+        {% csrf_token %}
+        
+        <div class="row">
+            <!-- Left Column - Basic Information -->
+            <div class="col-md-8">
+                <!-- Basic Information -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h6 class="mb-0">Basic Information</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-8 mb-3">
+                                <label for="{{ form.name.id_for_label }}" class="form-label">
+                                    {% trans "Product Name" %} <span class="text-danger">*</span>
+                                </label>
+                                {{ form.name }}
+                                {% if form.name.errors %}
+                                    <div class="text-danger small">{{ form.name.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-8 mb-3">
+                                <label for="{{ form.name_ar.id_for_label }}" class="form-label">
+                                    {% trans "Product Name (Arabic)" %}
+                                </label>
+                                {{ form.name_ar }}
+                                {% if form.name_ar.errors %}
+                                    <div class="text-danger small">{{ form.name_ar.errors.0 }}</div>
+                                {% endif %}
+                                <small class="form-text text-muted">{% trans "Optional - Arabic translation of the product name" %}</small>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.category.id_for_label }}" class="form-label">
+                                    Category <span class="text-danger">*</span>
+                                </label>
+                                {{ form.category }}
+                                {% if form.category.errors %}
+                                    <div class="text-danger small">{{ form.category.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.sku.id_for_label }}" class="form-label">
+                                    SKU <span class="text-danger">*</span>
+                                </label>
+                                {{ form.sku }}
+                                {% if form.sku.errors %}
+                                    <div class="text-danger small">{{ form.sku.errors.0 }}</div>
+                                {% endif %}
+                                <small class="form-text text-muted">Unique product identifier</small>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.barcode.id_for_label }}" class="form-label">
+                                    Barcode
+                                </label>
+                                {{ form.barcode }}
+                                {% if form.barcode.errors %}
+                                    <div class="text-danger small">{{ form.barcode.errors.0 }}</div>
+                                {% endif %}
+                                <small class="form-text text-muted">UPC, EAN, or other barcode number</small>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.description.id_for_label }}" class="form-label">
+                                {% trans "Description" %} <span class="text-danger">*</span>
+                            </label>
+                            {{ form.description }}
+                            {% if form.description.errors %}
+                                <div class="text-danger small">{{ form.description.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="mb-3">
+                            <label for="{{ form.description_ar.id_for_label }}" class="form-label">
+                                {% trans "Description (Arabic)" %}
+                            </label>
+                            {{ form.description_ar }}
+                            {% if form.description_ar.errors %}
+                                <div class="text-danger small">{{ form.description_ar.errors.0 }}</div>
+                            {% endif %}
+                            <small class="form-text text-muted">{% trans "Optional - Arabic translation of the product description" %}</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pricing Information -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h6 class="mb-0">Pricing Information</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.cost_price.id_for_label }}" class="form-label">
+                                    Cost Price <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text">QAR</span>
+                                    {{ form.cost_price }}
+                                </div>
+                                {% if form.cost_price.errors %}
+                                    <div class="text-danger small">{{ form.cost_price.errors.0 }}</div>
+                                {% endif %}
+                                <small class="form-text text-muted">What you pay for this product</small>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.unit_price.id_for_label }}" class="form-label">
+                                    Unit Price <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text">QAR</span>
+                                    {{ form.unit_price }}
+                                </div>
+                                {% if form.unit_price.errors %}
+                                    <div class="text-danger small">{{ form.unit_price.errors.0 }}</div>
+                                {% endif %}
+                                <small class="form-text text-muted">What customers pay</small>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Profit Margin</label>
+                                <div class="form-control-plaintext">
+                                    <span id="profit-margin" class="text-success fw-bold">-</span>
+                                </div>
+                                <small class="form-text text-muted">Calculated automatically</small>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-12">
+                                <div id="profit-alert" class="alert" style="display: none;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Inventory Information -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h6 class="mb-0">Inventory Information</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.stock.id_for_label }}" class="form-label">
+                                    Stock Quantity <span class="text-danger">*</span>
+                                </label>
+                                {{ form.stock }}
+                                {% if form.stock.errors %}
+                                    <div class="text-danger small">{{ form.stock.errors.0 }}</div>
+                                {% endif %}
+                                <small class="form-text text-muted">Current number of units in stock</small>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.warranty_period.id_for_label }}" class="form-label">
+                                    Warranty Period <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group">
+                                    {{ form.warranty_period }}
+                                    <span class="input-group-text">months</span>
+                                </div>
+                                {% if form.warranty_period.errors %}
+                                    <div class="text-danger small">{{ form.warranty_period.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column - Image and Settings -->
+            <div class="col-md-4">
+                <!-- Product Image -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h6 class="mb-0">Product Image</h6>
+                    </div>
+                    <div class="card-body text-center">
+                        <div id="image-preview" class="mb-3">
+                            {% if object.image %}
+                                <img src="{{ object.image.url }}" alt="{{ object.name }}" 
+                                     class="img-fluid rounded" style="max-height: 200px; object-fit: cover;">
+                            {% else %}
+                                <div class="d-flex align-items-center justify-content-center rounded bg-light" 
+                                     style="height: 200px;">
+                                    <i class="fas fa-image fa-3x text-muted"></i>
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        {{ form.image }}
+                        {% if form.image.errors %}
+                            <div class="text-danger small">{{ form.image.errors.0 }}</div>
+                        {% endif %}
+                        <small class="form-text text-muted">Upload a product image (optional)</small>
+                    </div>
+                </div>
+
+                <!-- Product Settings -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h6 class="mb-0">Product Settings</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-check form-switch">
+                            {{ form.is_active }}
+                            <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                                Product is Active
+                            </label>
+                            {% if form.is_active.errors %}
+                                <div class="text-danger small">{{ form.is_active.errors.0 }}</div>
+                            {% endif %}
+                            <small class="form-text text-muted d-block">
+                                Active products are visible to customers and can be sold
+                            </small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Summary Card -->
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0">Summary</h6>
+                    </div>
+                    <div class="card-body">
+                        <div id="form-summary">
+                            <p class="text-muted">Fill in the form to see product summary</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="d-flex justify-content-end gap-2">
+                    {% if object %}
+                        <a href="{% url 'portal:product_detail' object.pk %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times me-1"></i>Cancel
+                        </a>
+                    {% else %}
+                        <a href="{% url 'portal:product_list' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times me-1"></i>Cancel
+                        </a>
+                    {% endif %}
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-1"></i>{{ form_action }} Product
+                    </button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add classes to form fields
+    const fields = {
+        'id_name': 'form-control',
+        'id_name_ar': 'form-control',
+        'id_sku': 'form-control',
+        'id_barcode': 'form-control',
+        'id_description': 'form-control',
+        'id_description_ar': 'form-control',
+        'id_cost_price': 'form-control',
+        'id_unit_price': 'form-control',
+        'id_stock': 'form-control',
+        'id_warranty_period': 'form-control',
+        'id_category': 'form-select',
+        'id_image': 'form-control',
+        'id_is_active': 'form-check-input'
+    };
+    
+    Object.keys(fields).forEach(fieldId => {
+        const element = document.getElementById(fieldId);
+        if (element) {
+            element.className = fields[fieldId];
+        }
+    });
+    
+    // Calculate profit margin
+    function calculateProfit() {
+        const costPrice = parseFloat(document.getElementById('id_cost_price').value) || 0;
+        const unitPrice = parseFloat(document.getElementById('id_unit_price').value) || 0;
+        
+        if (costPrice > 0 && unitPrice > 0) {
+            const profitAmount = unitPrice - costPrice;
+            const profitMargin = ((profitAmount / costPrice) * 100);
+            
+            document.getElementById('profit-margin').textContent = 
+                `QAR ${profitAmount.toFixed(2)} (${profitMargin.toFixed(1)}%)`;
+            
+            // Show profit alert
+            const alertDiv = document.getElementById('profit-alert');
+            alertDiv.style.display = 'block';
+            
+            if (profitMargin >= 20) {
+                alertDiv.className = 'alert alert-success';
+                alertDiv.innerHTML = '<i class="fas fa-check-circle me-2"></i>Good profit margin';
+            } else if (profitMargin >= 10) {
+                alertDiv.className = 'alert alert-warning';
+                alertDiv.innerHTML = '<i class="fas fa-exclamation-triangle me-2"></i>Moderate profit margin';
+            } else if (profitMargin >= 0) {
+                alertDiv.className = 'alert alert-danger';
+                alertDiv.innerHTML = '<i class="fas fa-exclamation-circle me-2"></i>Low profit margin';
+            } else {
+                alertDiv.className = 'alert alert-danger';
+                alertDiv.innerHTML = '<i class="fas fa-times-circle me-2"></i>Loss! Unit price is less than cost price';
+            }
+        } else {
+            document.getElementById('profit-margin').textContent = '-';
+            document.getElementById('profit-alert').style.display = 'none';
+        }
+        
+        updateSummary();
+    }
+    
+    // Update form summary
+    function updateSummary() {
+        const name = document.getElementById('id_name').value || 'Product Name';
+        const sku = document.getElementById('id_sku').value || 'SKU';
+        const stock = document.getElementById('id_stock').value || '0';
+        const costPrice = document.getElementById('id_cost_price').value || '0';
+        const unitPrice = document.getElementById('id_unit_price').value || '0';
+        const isActive = document.getElementById('id_is_active').checked;
+        
+        const stockValue = (parseInt(stock) * parseFloat(costPrice)).toFixed(2);
+        const potentialRevenue = (parseInt(stock) * parseFloat(unitPrice)).toFixed(2);
+        
+        document.getElementById('form-summary').innerHTML = `
+            <div class="mb-2">
+                <strong>${name}</strong><br>
+                <small class="text-muted">SKU: ${sku}</small>
+            </div>
+            <div class="mb-2">
+                <small class="text-muted">Stock:</small> ${stock} units<br>
+                <small class="text-muted">Stock Value:</small> QAR ${stockValue}<br>
+                <small class="text-muted">Potential Revenue:</small> QAR ${potentialRevenue}
+            </div>
+            <div>
+                <span class="badge ${isActive ? 'bg-success' : 'bg-secondary'}">
+                    ${isActive ? 'Active' : 'Inactive'}
+                </span>
+            </div>
+        `;
+    }
+    
+    // Image preview
+    function handleImagePreview(event) {
+        const file = event.target.files[0];
+        const preview = document.getElementById('image-preview');
+        
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                preview.innerHTML = `
+                    <img src="${e.target.result}" alt="Preview" 
+                         class="img-fluid rounded" style="max-height: 200px; object-fit: cover;">
+                `;
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+    
+    // Event listeners
+    document.getElementById('id_cost_price').addEventListener('input', calculateProfit);
+    document.getElementById('id_unit_price').addEventListener('input', calculateProfit);
+    document.getElementById('id_name').addEventListener('input', updateSummary);
+    document.getElementById('id_sku').addEventListener('input', updateSummary);
+    document.getElementById('id_stock').addEventListener('input', updateSummary);
+    document.getElementById('id_is_active').addEventListener('change', updateSummary);
+    document.getElementById('id_image').addEventListener('change', handleImagePreview);
+    
+    // Initial calculations
+    calculateProfit();
+    updateSummary();
+    
+    // Form validation
+    document.getElementById('productForm').addEventListener('submit', function(e) {
+        const costPrice = parseFloat(document.getElementById('id_cost_price').value) || 0;
+        const unitPrice = parseFloat(document.getElementById('id_unit_price').value) || 0;
+        
+        if (unitPrice < costPrice) {
+            if (!confirm('Unit price is less than cost price. This will result in a loss. Do you want to continue?')) {
+                e.preventDefault();
+                return false;
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

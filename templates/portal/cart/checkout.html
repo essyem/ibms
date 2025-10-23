@@ -1,0 +1,598 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% load static %}
+{% load i18n %}
+{% load cart_filters %}
+{% load crispy_forms_tags %}
+
+{% block title %}{% trans "Checkout" %} - TrendzApps{% endblock %}
+
+{% block extra_css %}
+<style>
+.checkout-header {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    color: white;
+    padding: 2rem 0;
+    margin-bottom: 2rem;
+}
+
+.checkout-form {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    padding: 2rem;
+}
+
+.order-summary {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    padding: 2rem;
+    position: sticky;
+    top: 20px;
+}
+
+.order-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 0;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.order-item:last-child {
+    border-bottom: none;
+}
+
+.place-order-btn {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    border: none;
+    color: white;
+    padding: 1rem 2rem;
+    border-radius: 25px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    width: 100%;
+    transition: all 0.3s ease;
+}
+
+.place-order-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(40, 167, 69, 0.3);
+    color: white;
+}
+
+.whatsapp-order-btn {
+    background: #25d366;
+    border: none;
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 25px;
+    font-weight: 600;
+    width: 100%;
+    margin-top: 1rem;
+    transition: all 0.3s ease;
+}
+
+.whatsapp-order-btn:hover {
+    background: #20c75a;
+    color: white;
+}
+
+.form-floating label {
+    font-weight: 500;
+}
+
+.required-field::after {
+    content: " *";
+    color: #dc3545;
+}
+
+.checkout-step {
+    display: flex;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.step-number {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #28a745, #20c997);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    margin-right: 1rem;
+}
+
+.security-badge {
+    background: #e8f5e8;
+    border: 1px solid #28a745;
+    border-radius: 8px;
+    padding: 1rem;
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.back-to-cart-btn {
+    background: #6c757d;
+    border: none;
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 25px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.back-to-cart-btn:hover {
+    background: #5a6268;
+    color: white;
+}
+
+@media (max-width: 768px) {
+    .checkout-form,
+    .order-summary {
+        margin-bottom: 2rem;
+    }
+}
+
+/* Payment Methods Styles */
+.payment-methods {
+    padding: 1.5rem;
+    background: #f8f9fa;
+    border-radius: 15px;
+    margin-bottom: 1.5rem;
+}
+
+.payment-option {
+    position: relative;
+    border: 2px solid #e9ecef;
+    border-radius: 12px;
+    padding: 1rem;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    height: 100%;
+}
+
+.payment-option:hover {
+    border-color: #28a745;
+    background: rgba(40, 167, 69, 0.05);
+}
+
+.payment-option input[type="radio"] {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+}
+
+.payment-option input[type="radio"]:checked + .payment-label {
+    color: #28a745;
+}
+
+.payment-option input[type="radio"]:checked {
+    accent-color: #28a745;
+}
+
+.payment-option.selected {
+    border-color: #28a745;
+    background: rgba(40, 167, 69, 0.1);
+}
+
+.payment-label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    margin: 0;
+    padding-right: 2rem;
+}
+
+.transfer-upload {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: rgba(13, 110, 253, 0.1);
+    border-radius: 8px;
+    border-left: 4px solid #0d6efd;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Checkout Header -->
+<div class="checkout-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="mb-2"><i class="fas fa-credit-card me-2"></i>{% trans "Checkout" %}</h1>
+                <p class="mb-0">{% trans "Complete your order details below" %}</p>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <div class="h4 mb-0">{{ cart_items|length }} Item{{ cart_items|length|pluralize }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <div class="row">
+        <!-- Checkout Form -->
+        <div class="col-lg-8">
+            <div class="checkout-form">
+                <div class="checkout-step">
+                    <div class="step-number">1</div>
+                    <div>
+                        <h5 class="mb-0">Customer Information</h5>
+                        <p class="text-muted small mb-0">Please provide your contact details</p>
+                    </div>
+                </div>
+                
+                <form method="post" id="checkout-form">
+                    {% csrf_token %}
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="form-floating">
+                                <input type="text" class="form-control" id="customer_name" name="customer_name" 
+                                       placeholder="Your Full Name" required>
+                                <label for="customer_name" class="required-field">Full Name</label>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <div class="form-floating">
+                                <input type="email" class="form-control" id="customer_email" name="customer_email" 
+                                       placeholder="your.email@example.com" required>
+                                <label for="customer_email" class="required-field">Email Address</label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="form-floating">
+                                <input type="tel" class="form-control" id="customer_phone" name="customer_phone" 
+                                       placeholder="+974 xxxx xxxx" required>
+                                <label for="customer_phone" class="required-field">Phone Number</label>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <div class="form-floating">
+                                <select class="form-select" id="preferred_contact" name="preferred_contact">
+                                    <option value="phone">Phone Call</option>
+                                    <option value="whatsapp">WhatsApp</option>
+                                    <option value="email">Email</option>
+                                </select>
+                                <label for="preferred_contact">Preferred Contact Method</label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="checkout-step mt-4">
+                        <div class="step-number">2</div>
+                        <div>
+                            <h5 class="mb-0">Payment Method</h5>
+                            <p class="text-muted small mb-0">Select your preferred payment method</p>
+                        </div>
+                    </div>
+                    
+                    <div class="payment-methods mb-4">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <div class="payment-option">
+                                    <input type="radio" class="form-check-input" id="cod" name="payment_method" value="cod" checked>
+                                    <label class="form-check-label payment-label" for="cod">
+                                        <i class="fas fa-money-bill-wave text-success me-2"></i>
+                                        <div>
+                                            <h6 class="mb-1">Cash on Delivery</h6>
+                                            <small class="text-muted">Pay when you receive your order</small>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="payment-option">
+                                    <input type="radio" class="form-check-input" id="bank_transfer" name="payment_method" value="bank_transfer">
+                                    <label class="form-check-label payment-label" for="bank_transfer">
+                                        <i class="fas fa-university text-primary me-2"></i>
+                                        <div>
+                                            <h6 class="mb-1">Bank Transfer/Fawran</h6>
+                                            <small class="text-muted">Transfer to our bank account</small>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Bank Transfer Upload Section -->
+                        <div id="transfer-upload-section" class="transfer-upload" style="display: none;">
+                            <div class="alert alert-info">
+                                <h6><i class="fas fa-info-circle me-2"></i>Bank Transfer Details</h6>
+                                <p class="mb-2"><strong>Bank:</strong> Commercial Bank of Qatar (CBQ)</p>
+                                <p class="mb-2"><strong>Account Number:</strong> 123456789</p>
+                                <p class="mb-2"><strong>IBAN:</strong> QA12CBQA123456789012345</p>
+                                <p class="mb-0"><strong>Account Name:</strong> TRENDZ Trading & Services</p>
+                            </div>
+                            
+                            <div class="form-floating mb-3">
+                                <input type="file" class="form-control" id="transfer_receipt" name="transfer_receipt" 
+                                       accept=".jpg,.jpeg,.png,.pdf,.doc,.docx">
+                                <label for="transfer_receipt" class="required-field">Upload Transfer Receipt</label>
+                                <div class="form-text">Please upload a copy of your bank transfer receipt (JPG, PNG, PDF, DOC formats accepted)</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="checkout-step mt-4">
+                        <div class="step-number">3</div>
+                        <div>
+                            <h5 class="mb-0">Delivery Information</h5>
+                            <p class="text-muted small mb-0">Provide detailed delivery address for accurate delivery</p>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="form-floating">
+                                <input type="text" class="form-control" id="delivery_zone" name="delivery_zone" 
+                                       placeholder="e.g., Al Sadd, West Bay, Doha" required>
+                                <label for="delivery_zone" class="required-field">Zone/Area</label>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <div class="form-floating">
+                                <input type="text" class="form-control" id="delivery_street" name="delivery_street" 
+                                       placeholder="e.g., Al Rayyan Road, Street 45" required>
+                                <label for="delivery_street" class="required-field">Street Name/Number</label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="form-floating">
+                                <input type="text" class="form-control" id="delivery_building" name="delivery_building" 
+                                       placeholder="e.g., Building 25, Al Manara Tower" required>
+                                <label for="delivery_building" class="required-field">Building Name/Number</label>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <div class="form-floating">
+                                <input type="text" class="form-control" id="delivery_flat" name="delivery_flat" 
+                                       placeholder="e.g., Flat 12, Apartment 3A (Optional)">
+                                <label for="delivery_flat">Flat/Apartment Number</label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-floating">
+                            <textarea class="form-control" id="delivery_additional_info" name="delivery_additional_info" 
+                                     placeholder="Any additional delivery instructions, landmarks, or special notes" 
+                                     style="height: 80px"></textarea>
+                            <label for="delivery_additional_info">Additional Delivery Instructions (Optional)</label>
+                        </div>
+                    </div>
+                    
+                    <div class="security-badge">
+                        <i class="fas fa-shield-alt text-success fa-2x mb-2"></i>
+                        <h6>Secure Order Processing</h6>
+                        <p class="mb-0 small">Your information is safe with us. We'll contact you to confirm order details and payment method.</p>
+                    </div>
+                    
+                    <div class="d-flex gap-3">
+                        <a href="{% url 'portal:cart' %}" class="back-to-cart-btn">
+                            <i class="fas fa-arrow-left me-2"></i>Back to Cart
+                        </a>
+                        
+                        <button type="submit" class="place-order-btn flex-fill">
+                            <i class="fas fa-check me-2"></i>Place Order
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Order Summary -->
+        <div class="col-lg-4">
+            <div class="order-summary">
+                <h5 class="mb-4"><i class="fas fa-receipt me-2"></i>Order Summary</h5>
+                
+                <!-- Order Items -->
+                {% for item in cart_items %}
+                <div class="order-item">
+                    <div>
+                        <h6 class="mb-1">{{ item.product.name }}</h6>
+                        <p class="text-muted small mb-0">
+                            SKU: {{ item.product.sku }} | Qty: {{ item.quantity }}
+                        </p>
+                    </div>
+                    <div class="text-end">
+                        <div class="fw-bold">QAR {{ item.quantity|mul:item.product.unit_price|floatformat:2 }}</div>
+                        <div class="small text-muted">QAR {{ item.product.unit_price|floatformat:2 }} each</div>
+                    </div>
+                </div>
+                {% endfor %}
+                
+                <hr>
+                
+                <!-- Totals -->
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Subtotal ({{ cart_items|length }} items)</span>
+                    <span>QAR {{ total_amount|floatformat:2 }}</span>
+                </div>
+                
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Delivery</span>
+                    <span class="text-success">FREE</span>
+                </div>
+                
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Tax</span>
+                    <span>QAR 0.00</span>
+                </div>
+                
+                <hr>
+                
+                <div class="d-flex justify-content-between mb-4">
+                    <strong>Total</strong>
+                    <strong class="text-danger h5">QAR {{ total_amount|floatformat:2 }}</strong>
+                </div>
+                
+                <!-- Alternative Order Methods -->
+                <div class="mt-3">
+                    <p class="small text-muted mb-2">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Prefer to order directly? Contact us via WhatsApp
+                    </p>
+                    
+                    <a href="https://wa.me/{{ whatsapp_number|cut:'+' }}?text=Hi! I would like to place an order with the following items:{% for item in cart_items %}%0A- {{ item.product.name }} ({{ item.quantity }}x){% endfor %}%0A%0ATotal: QAR {{ total_amount|floatformat:2 }}%0A%0APlease confirm availability and payment options." 
+                       target="_blank" class="whatsapp-order-btn">
+                        <i class="fab fa-whatsapp me-2"></i>Order via WhatsApp
+                    </a>
+                </div>
+                
+                <div class="text-center mt-3">
+                    <small class="text-muted">
+                        <i class="fas fa-phone me-1"></i>
+                        Need help? Call us at {{ whatsapp_number|format_phone }}
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Payment method handling
+    const codRadio = document.getElementById('cod');
+    const bankTransferRadio = document.getElementById('bank_transfer');
+    const transferUploadSection = document.getElementById('transfer-upload-section');
+    const transferReceipt = document.getElementById('transfer_receipt');
+    
+    function updatePaymentMethod() {
+        if (bankTransferRadio.checked) {
+            transferUploadSection.style.display = 'block';
+            transferReceipt.required = true;
+            
+            // Update payment option styling
+            bankTransferRadio.closest('.payment-option').classList.add('selected');
+            codRadio.closest('.payment-option').classList.remove('selected');
+        } else {
+            transferUploadSection.style.display = 'none';
+            transferReceipt.required = false;
+            
+            // Update payment option styling
+            codRadio.closest('.payment-option').classList.add('selected');
+            bankTransferRadio.closest('.payment-option').classList.remove('selected');
+        }
+    }
+    
+    // Initialize payment method
+    updatePaymentMethod();
+    
+    // Payment method change listeners
+    codRadio.addEventListener('change', updatePaymentMethod);
+    bankTransferRadio.addEventListener('change', updatePaymentMethod);
+    
+    // Form submission validation
+    document.getElementById('checkout-form').addEventListener('submit', function(e) {
+        const requiredFields = [
+            'customer_name', 'customer_email', 'customer_phone', 
+            'delivery_zone', 'delivery_street', 'delivery_building'
+        ];
+        let isValid = true;
+        
+        // Check required fields
+        requiredFields.forEach(fieldId => {
+            const field = document.getElementById(fieldId);
+            if (!field.value.trim()) {
+                field.classList.add('is-invalid');
+                isValid = false;
+            } else {
+                field.classList.remove('is-invalid');
+            }
+        });
+        
+        // Check transfer receipt if bank transfer is selected
+        if (bankTransferRadio.checked && !transferReceipt.files.length) {
+            transferReceipt.classList.add('is-invalid');
+            alert('Please upload your bank transfer receipt.');
+            isValid = false;
+        } else {
+            transferReceipt.classList.remove('is-invalid');
+        }
+        
+        // Email validation
+        const email = document.getElementById('customer_email');
+        const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (email.value && !emailPattern.test(email.value)) {
+            email.classList.add('is-invalid');
+            isValid = false;
+        }
+        
+        // Phone validation (Qatar format)
+        const phone = document.getElementById('customer_phone');
+        const phonePattern = /^(\+974|974)?\s?\d{8}$/;
+        if (phone.value && !phonePattern.test(phone.value.replace(/\s+/g, ''))) {
+            phone.classList.add('is-invalid');
+            isValid = false;
+        }
+        
+        if (!isValid) {
+            e.preventDefault();
+            alert('Please fill in all required fields correctly.');
+        }
+    });
+    
+    // Remove validation classes on input
+    document.querySelectorAll('.form-control, .form-select').forEach(input => {
+        input.addEventListener('input', function() {
+            this.classList.remove('is-invalid');
+        });
+    });
+    
+    // Auto-format phone number (Qatar format)
+    document.getElementById('customer_phone').addEventListener('input', function(e) {
+        let value = e.target.value.replace(/\D/g, '');
+        
+        if (value.startsWith('974')) {
+            if (value.length > 3) {
+                value = '+974 ' + value.substring(3);
+            }
+        } else if (value.length === 8) {
+            value = '+974 ' + value;
+        }
+        
+        e.target.value = value;
+    });
+    
+    // File upload validation
+    transferReceipt.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const allowedTypes = ['image/jpeg', 'image/png', 'application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+            const maxSize = 5 * 1024 * 1024; // 5MB
+            
+            if (!allowedTypes.includes(file.type)) {
+                alert('Please upload a valid file format (JPG, PNG, PDF, DOC, DOCX)');
+                e.target.value = '';
+                return;
+            }
+            
+            if (file.size > maxSize) {
+                alert('File size must be less than 5MB');
+                e.target.value = '';
+                return;
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

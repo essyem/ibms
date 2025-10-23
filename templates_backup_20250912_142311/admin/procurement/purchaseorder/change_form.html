@@ -1,0 +1,142 @@
+{% extends "admin/change_form.html" %}
+{% load i18n admin_urls static admin_modify %}
+
+{% block extrahead %}
+    {{ block.super }}
+    <style>
+        .purchase-order-help {
+            background: #e8f4fd;
+            border: 1px solid #bee5eb;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        
+        .purchase-order-help h3 {
+            color: #0c5460;
+            margin-top: 0;
+        }
+        
+        .inline-group .tabular {
+            overflow-x: auto;
+        }
+        
+        .totals-section {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        
+        .totals-section h3 {
+            color: #495057;
+            margin-bottom: 15px;
+        }
+        
+        .total-display {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            padding: 5px 0;
+        }
+        
+        .total-display.grand-total {
+            border-top: 2px solid #007bff;
+            font-weight: bold;
+            font-size: 1.1em;
+            color: #007bff;
+        }
+        
+        /* Highlight tax field for manual entry */
+        .field-tax input {
+            border: 2px solid #ffc107;
+            background-color: #fff3cd;
+        }
+        
+        .field-tax label::after {
+            content: " (Manual Entry for International Purchases)";
+            color: #856404;
+            font-size: 0.85em;
+            font-style: italic;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <div class="purchase-order-help">
+        <h3>📦 Purchase Order Management</h3>
+        <p><strong>How to add multiple items:</strong></p>
+        <ul>
+            <li>Use the "Purchase Items" section below to add multiple products to this purchase order</li>
+            <li>Click "Add another Purchase item" to add more rows</li>
+            <li>Subtotal and Total will be automatically calculated when you save</li>
+            <li><strong>Tax field is manual</strong> - only enter tax amount for international purchases</li>
+            <li>You can edit quantities and unit costs inline</li>
+        </ul>
+        {% if original %}
+        <p><strong>Current Status:</strong> 
+            <span style="padding: 3px 8px; background: {% if original.status == 'draft' %}#ffc107{% elif original.status == 'ordered' %}#17a2b8{% elif original.status == 'received' %}#28a745{% else %}#dc3545{% endif %}; color: white; border-radius: 3px;">
+                {{ original.get_status_display }}
+            </span>
+        </p>
+        {% endif %}
+    </div>
+
+    {{ block.super }}
+
+    {% if original and original.items.exists %}
+    <div class="totals-section">
+        <h3>💰 Order Summary</h3>
+        <div class="total-display">
+            <span>Subtotal:</span>
+            <span>QAR {{ original.subtotal|floatformat:2 }}</span>
+        </div>
+        <div class="total-display">
+            <span>Tax (Manual Entry):</span>
+            <span>QAR {{ original.tax|floatformat:2|default:"0.00" }}</span>
+        </div>
+        <div class="total-display grand-total">
+            <span>Grand Total:</span>
+            <span>QAR {{ original.total|floatformat:2 }}</span>
+        </div>
+        <div class="total-display">
+            <span>Total Items:</span>
+            <span>{{ original.items.count }} item{{ original.items.count|pluralize }}</span>
+        </div>
+    </div>
+    {% endif %}
+{% endblock %}
+
+{% block submit_buttons_bottom %}
+    {{ block.super }}
+    {% if original %}
+    <div style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 4px;">
+        <h4>Quick Actions:</h4>
+        <p>
+            <a href="{% url 'admin:procurement_purchaseorder_changelist' %}" class="button">
+                📋 Back to Purchase Orders
+            </a>
+            {% if original.status == 'draft' %}
+            <button type="button" onclick="updateStatus('ordered')" class="button" style="background: #17a2b8; color: white;">
+                📤 Mark as Ordered
+            </button>
+            {% endif %}
+            {% if original.status == 'ordered' %}
+            <button type="button" onclick="updateStatus('received')" class="button" style="background: #28a745; color: white;">
+                📦 Mark as Received
+            </button>
+            {% endif %}
+        </p>
+    </div>
+    
+    <script>
+    function updateStatus(newStatus) {
+        if (confirm('Are you sure you want to update the status to "' + newStatus + '"?')) {
+            document.getElementById('id_status').value = newStatus;
+            document.querySelector('input[name="_save"]').click();
+        }
+    }
+    </script>
+    {% endif %}
+{% endblock %}

@@ -1,0 +1,504 @@
+{% extends "portal/invoice_base.html" %}
+{% load i18n admin_urls static %}
+
+{% block title %}Barcode Generator Dashboard{% endblock %}
+{% block content %}
+
+<style>
+    .barcode-dashboard {
+        padding: 20px;
+        background-color: #f8f9fa;
+        border-radius: 8px;
+    }
+    .barcode-stats {
+        display: flex;
+        justify-content: space-around;
+        margin-bottom: 20px;
+    }
+    .stat-card {
+        background-color: #ffffff;
+        padding: 15px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        text-align: center;
+    }
+    .stat-number {
+        font-size: 24px;
+        font-weight: bold;
+    }
+    .stat-label {
+        color: #6c757d;
+    }
+    .barcode-actions {  
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 20px;
+    }
+    .barcode-actions button {
+        padding: 10px 15px;
+        font-size: 16px;
+        border-radius: 5px;
+    }
+    .filter-section {
+        margin-bottom: 20px;
+    }
+    .filter-section select {
+        padding: 10px;
+        font-size: 16px;
+        border-radius: 5px;
+        border: 1px solid #ced4da;
+    }
+    .products-table {
+        margin-top: 20px;
+    }
+    .products-table table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .products-table th, .products-table td {
+        padding: 10px;
+        border: 1px solid #dee2e6;
+        text-align: left;
+    }
+    .products-table th {
+        background-color: #f1f1f1;
+    }
+    .products-table tbody tr:hover {
+        background-color: #f8f9fa;
+    }   
+    .no-products {
+        text-align: center;
+        padding: 50px;
+        background-color: #ffffff;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .no-products h3 {
+        color: #28a745;
+    }
+    .no-products p {
+        color: #6c757d;
+    }
+    .loading {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;    
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.5);
+        z-index: 1000;
+        color: #ffffff;
+        text-align: center;
+        padding-top: 20%;
+    }
+    .loading.show {
+        display: block;
+    }
+    .barcode-preview {
+        max-width: 100%;
+        height: auto;
+        margin-top: 20px;
+    }
+</style>
+<div class="barcode-dashboard">
+    <h1>📊 Barcode Generator Dashboard</h1>
+    
+    <!-- Stats Cards -->
+    <div class="barcode-stats">
+        <div class="stat-card">
+            <div class="stat-number">{{ total_products_without_barcode }}</div>
+            <div class="stat-label">Products Without Barcodes</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ categories.count }}</div>
+            <div class="stat-label">Total Categories</div>
+        </div>
+    </div>
+    
+    {% if products_without_barcode %}
+    <!-- Actions -->
+    <div class="barcode-actions">
+        <button type="button" class="btn btn-primary" onclick="selectAll()">
+            📋 Select All
+        </button>
+        <button type="button" class="btn btn-primary" onclick="deselectAll()">
+            🚫 Deselect All
+        </button>
+        <button type="button" class="btn btn-success" onclick="generateSelected()">
+            🏷️ Generate Barcodes for Selected
+        </button>
+        <button type="button" class="btn btn-info" onclick="printSelected()">
+            🖨️ Print Labels for Selected
+        </button>
+    </div>
+    
+    <!-- Filter Section -->
+    <div class="filter-section">
+        <h3>🔍 Filter Products</h3>
+        <select id="categoryFilter" onchange="filterByCategory()">
+            <option value="">All Categories</option>
+            {% for category in categories %}
+            <option value="{{ category.id }}">{{ category.name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    
+    <!-- Products Table -->
+    <div class="products-table">
+        <form id="barcodeForm" method="post" action="{% url 'admin:generate_bulk_barcodes' %}">
+            {% csrf_token %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>
+                            <input type="checkbox" id="selectAllCheckbox" onchange="toggleAll()">
+                        </th>
+                        <th>Product Name & Price</th>
+                        <th>Category</th>
+                        <th>SKU</th>
+                        <th>Current Barcode</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for product in products_without_barcode %}
+                    <tr class="product-row" data-category="{{ product.category.id }}">
+                        <td>
+                            <input type="checkbox" name="selected_products" value="{{ product.id }}" class="product-checkbox">
+                        </td>
+                        <td>
+                            <strong>{{ product.name }}</strong>
+                            <br>
+                            <small style="color: #6c757d;">ID: {{ product.id }}</small>
+                            <br>
+                            <small style="color: #28a745; font-weight: bold;">QAR {{ product.unit_price|floatformat:2 }}</small>
+                        </td>
+                        <td>
+                            <span class="badge" style="background: #e9ecef; color: #495057; padding: 3px 8px; border-radius: 3px;">
+                                {{ product.category.name }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if product.sku %}
+                                <code>{{ product.sku }}</code>
+                            {% else %}
+                                <span style="color: #dc3545;">No SKU</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if product.barcode %}
+                                <code>{{ product.barcode }}</code>
+                            {% else %}
+                                <span style="color: #dc3545;">No Barcode</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <button type="button" class="btn btn-primary btn-sm" onclick="generateSingle({{ product.id }})">
+                                🏷️ Generate
+                            </button>
+                            {% if product.barcode %}
+                            <button type="button" class="btn btn-info btn-sm" onclick="previewBarcode({{ product.id }})">
+                                👁️ Preview
+                            </button>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </form>
+    </div>
+    
+    {% else %}
+    <div class="no-products">
+        <h3>🎉 Great! All products have barcodes!</h3>
+        <p>All your products already have barcodes assigned. No action needed.</p>
+        <a href="{% url 'admin:portal_product_changelist' %}" class="btn btn-primary">
+            📦 Manage Products
+        </a>
+    </div>
+    {% endif %}
+    
+    <!-- Loading indicator -->
+    <div id="loading" class="loading">
+        <h3>⏳ Generating barcodes...</h3>
+        <p>Please wait while we generate barcodes for your products.</p>
+    </div>
+</div>
+
+<!-- Barcode Preview Modal -->
+<div id="barcodeModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+    <div style="background: white; margin: 50px auto; max-width: 500px; padding: 20px; border-radius: 8px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3>📋 Barcode Preview</h3>
+            <button onclick="closeBarcodeModal()" style="background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
+        </div>
+        <div id="barcodeModalContent"></div>
+    </div>
+</div>
+
+<script>
+function selectAll() {
+    const checkboxes = document.querySelectorAll('.product-checkbox');
+    const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+    
+    checkboxes.forEach(cb => cb.checked = true);
+    selectAllCheckbox.checked = true;
+    
+    console.log(`✅ Selected all ${checkboxes.length} products`);
+}
+
+function deselectAll() {
+    const checkboxes = document.querySelectorAll('.product-checkbox');
+    const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+    
+    checkboxes.forEach(cb => cb.checked = false);
+    selectAllCheckbox.checked = false;
+    
+    console.log('✅ Deselected all products');
+}
+
+function toggleAll() {
+    const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+    const isChecked = selectAllCheckbox.checked;
+    const checkboxes = document.querySelectorAll('.product-checkbox');
+    
+    checkboxes.forEach(cb => cb.checked = isChecked);
+    
+    const action = isChecked ? 'Selected' : 'Deselected';
+    console.log(`✅ ${action} all ${checkboxes.length} products`);
+}
+
+function filterByCategory() {
+    const categoryId = document.getElementById('categoryFilter').value;
+    const rows = document.querySelectorAll('.product-row');
+    let visibleCount = 0;
+    
+    rows.forEach(row => {
+        if (!categoryId || row.dataset.category === categoryId) {
+            row.style.display = '';
+            visibleCount++;
+        } else {
+            row.style.display = 'none';
+        }
+    });
+    
+    console.log(`✅ Filtered products: ${visibleCount} visible`);
+    updateSelectionCount();
+}
+
+function updateSelectionCount() {
+    const selectedCheckboxes = document.querySelectorAll('.product-checkbox:checked');
+    const totalCheckboxes = document.querySelectorAll('.product-checkbox');
+    const visibleCheckboxes = Array.from(totalCheckboxes).filter(cb => 
+        cb.closest('.product-row').style.display !== 'none'
+    );
+    
+    console.log(`📊 Selection: ${selectedCheckboxes.length} selected out of ${visibleCheckboxes.length} visible products`);
+}
+
+// Add event listeners for checkboxes to update count
+document.addEventListener('DOMContentLoaded', function() {
+    const checkboxes = document.querySelectorAll('.product-checkbox');
+    checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', updateSelectionCount);
+    });
+    
+    const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+    if (selectAllCheckbox) {
+        selectAllCheckbox.addEventListener('change', function() {
+            setTimeout(updateSelectionCount, 50); // Small delay to ensure DOM is updated
+        });
+    }
+});
+
+function generateSelected() {
+    const selected = document.querySelectorAll('.product-checkbox:checked');
+    
+    // Validate selection
+    if (selected.length === 0) {
+        alert('❌ Please select at least one product to generate barcodes');
+        return;
+    }
+    
+    // Confirm action
+    if (!confirm(`🏷️ Generate barcodes for ${selected.length} selected product(s)?`)) {
+        return;
+    }
+    
+    try {
+        // Show loading indicator
+        document.getElementById('loading').classList.add('show');
+        
+        // Submit form
+        document.getElementById('barcodeForm').submit();
+        
+    } catch (error) {
+        console.error('Error in generateSelected:', error);
+        document.getElementById('loading').classList.remove('show');
+        alert(`❌ Error submitting barcode generation: ${error.message}`);
+    }
+}
+
+function generateSingle(productId) {
+    // Validate product ID
+    if (!productId || isNaN(productId)) {
+        alert('❌ Invalid product ID');
+        return;
+    }
+    
+    // Confirm action
+    if (!confirm('🏷️ Generate barcode for this product?')) {
+        return;
+    }
+    
+    try {
+        // Get CSRF token
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+        if (!csrfToken) {
+            throw new Error('CSRF token not found');
+        }
+        
+        // Make API call
+        fetch(`/admin/barcode/generate-single/${productId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken.value,
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                alert(`✅ Barcode generated successfully: ${data.barcode_number}`);
+                location.reload();
+            } else {
+                alert(`❌ Error: ${data.error || 'Unknown error occurred'}`);
+            }
+        })
+        .catch(error => {
+            console.error('Error generating barcode:', error);
+            alert(`❌ Error generating barcode: ${error.message}`);
+        });
+        
+    } catch (error) {
+        console.error('Error in generateSingle:', error);
+        alert(`❌ Error: ${error.message}`);
+    }
+}
+
+function previewBarcode(productId) {
+    // Validate product ID
+    if (!productId || isNaN(productId)) {
+        alert('❌ Invalid product ID');
+        return;
+    }
+    
+    try {
+        // Make API call to preview barcode
+        fetch(`/admin/barcode/preview/${productId}/`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    // Display barcode preview in modal
+                    document.getElementById('barcodeModalContent').innerHTML = `
+                        <div style="text-align: center;">
+                            <h4>📦 ${data.product_name}</h4>
+                            <p><strong>Category:</strong> ${data.category}</p>
+                            <p><strong>Barcode:</strong> <code>${data.barcode_number}</code></p>
+                            <img src="data:image/png;base64,${data.image_base64}" 
+                                 class="barcode-preview" 
+                                 alt="Barcode Preview"
+                                 style="max-width: 100%; height: auto;">
+                        </div>
+                    `;
+                    document.getElementById('barcodeModal').style.display = 'block';
+                } else {
+                    alert(`❌ Error: ${data.error || 'Unable to preview barcode'}`);
+                }
+            })
+            .catch(error => {
+                console.error('Error previewing barcode:', error);
+                alert(`❌ Error previewing barcode: ${error.message}`);
+            });
+            
+    } catch (error) {
+        console.error('Error in previewBarcode:', error);
+        alert(`❌ Error: ${error.message}`);
+    }
+}
+
+function closeBarcodeModal() {
+    document.getElementById('barcodeModal').style.display = 'none';
+}
+
+function printSelected() {
+    const selected = document.querySelectorAll('.product-checkbox:checked');
+    
+    // Validate selection
+    if (selected.length === 0) {
+        alert('❌ Please select at least one product to print labels');
+        return;
+    }
+    
+    // Confirm action
+    if (!confirm(`🖨️ Print barcode labels for ${selected.length} selected product(s)?`)) {
+        return;
+    }
+    
+    try {
+        // Extract product IDs and validate they exist
+        const productIds = Array.from(selected).map(cb => {
+            const id = cb.value;
+            if (!id || isNaN(id)) {
+                throw new Error(`Invalid product ID: ${id}`);
+            }
+            return id;
+        });
+        
+        // Build URL with proper encoding
+        const params = productIds.map(id => `products=${encodeURIComponent(id)}`).join('&');
+        const url = `/admin/barcode/print-labels/?${params}`;
+        
+        // Show loading feedback
+        console.log(`🖨️ Printing labels for products: ${productIds.join(', ')}`);
+        
+        // Open in new tab/window
+        const printWindow = window.open(url, '_blank', 'width=800,height=600,scrollbars=yes');
+        
+        // Check if popup was blocked
+        if (!printWindow || printWindow.closed || typeof printWindow.closed === 'undefined') {
+            alert('❌ Popup blocked! Please allow popups for this site to print labels.');
+            return;
+        }
+        
+        // Optional: Show success message after a delay
+        setTimeout(() => {
+            console.log('✅ Label printing window opened successfully');
+        }, 500);
+        
+    } catch (error) {
+        console.error('Error in printSelected:', error);
+        alert(`❌ Error preparing labels for printing: ${error.message}`);
+    }
+}
+
+// Close modal when clicking outside
+document.getElementById('barcodeModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeBarcodeModal();
+    }
+});
+</script>
+{% endblock %}

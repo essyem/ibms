@@ -1,5 +1,4 @@
 # Django
-*/settings.py
 *.pyc
 __pycache__/
 *.log
@@ -47,6 +46,14 @@ logs/
 .env.test
 .env.production
 
+# Virtual environments
+env/
+venv/
+env-ibms/
+.venv/
+ENV/
+env.bak/
+
 # Import directory
 import/
 
@@ -63,3 +70,26 @@ import/
 # OS
 .DS_Store
 Thumbs.db
+# Runtime files
+runserver.pid
+logs/*.log
+# Editor / VSCode server
+.vscode-server/
+.vscode/
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+env-*/
+*/env-*/
+# Virtualenvs
+venv/
+ENV/
+env/
+.env
+.venv
+# Distribution
+*.egg-info/
+dist/
+build/

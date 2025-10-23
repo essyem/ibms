@@ -1,0 +1,231 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Quotation {{ quotation.quotation_number }} - Trendz Portal{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-lg" style="background: rgba(255,255,255,0.95); border: none; border-radius: 15px;">
+                
+                <!-- Header -->
+                <div class="card-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 15px 15px 0 0;">
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <h2 class="mb-0">
+                                <i class="fas fa-file-invoice me-2"></i>{{ quotation.quotation_number }}
+                            </h2>
+                            <small>Quotation Details</small>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <span class="badge 
+                                {% if quotation.status == 'draft' %}bg-secondary
+                                {% elif quotation.status == 'sent' %}bg-primary
+                                {% elif quotation.status == 'accepted' %}bg-success
+                                {% elif quotation.status == 'rejected' %}bg-danger
+                                {% elif quotation.status == 'expired' %}bg-warning
+                                {% elif quotation.status == 'converted' %}bg-info
+                                {% endif %} fs-6 me-2">
+                                {{ quotation.get_status_display }}
+                            </span>
+                            <div class="btn-group">
+                                <a href="{% url 'portal:quotation_update' quotation.pk %}" class="btn btn-light btn-sm">
+                                    <i class="fas fa-edit me-1"></i>Edit
+                                </a>
+                                <a href="{% url 'portal:quotation_pdf' quotation.pk %}" class="btn btn-success btn-sm" target="_blank">
+                                    <i class="fas fa-file-pdf me-1"></i>PDF
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card-body p-4">
+                    
+                    <!-- Quotation Info -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h5><i class="fas fa-user me-2"></i>Customer Information</h5>
+                            {% if quotation.customer %}
+                                <div class="border rounded p-3 bg-light">
+                                    <strong>{{ quotation.customer.full_name }}</strong><br>
+                                    <i class="fas fa-phone me-1"></i>{{ quotation.customer.phone }}<br>
+                                    {% if quotation.customer.company_name %}
+                                        <i class="fas fa-building me-1"></i>{{ quotation.customer.company_name }}<br>
+                                    {% endif %}
+                                    {% if quotation.customer.address %}
+                                        <i class="fas fa-map-marker-alt me-1"></i>{{ quotation.customer.address }}
+                                    {% endif %}
+                                </div>
+                            {% else %}
+                                <div class="border rounded p-3 bg-light">
+                                    <span class="text-muted">Walk-in Customer</span>
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <h5><i class="fas fa-info-circle me-2"></i>Quotation Details</h5>
+                            <div class="border rounded p-3 bg-light">
+                                <div class="row">
+                                    <div class="col-6"><strong>Date:</strong></div>
+                                    <div class="col-6">{{ quotation.date|date:"M d, Y" }}</div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-6"><strong>Valid Until:</strong></div>
+                                    <div class="col-6">
+                                        <span class="{% if quotation.valid_until < today %}text-danger{% endif %}">
+                                            {{ quotation.valid_until|date:"M d, Y" }}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-6"><strong>Created:</strong></div>
+                                    <div class="col-6">{{ quotation.created_at|date:"M d, Y H:i" }}</div>
+                                </div>
+                                {% if quotation.converted_invoice %}
+                                <div class="row">
+                                    <div class="col-6"><strong>Invoice:</strong></div>
+                                    <div class="col-6">
+                                        <a href="{% url 'portal:invoice_detail' quotation.converted_invoice.pk %}">
+                                            {{ quotation.converted_invoice.invoice_number }}
+                                        </a>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Items -->
+                    <h5><i class="fas fa-box me-2"></i>Items</h5>
+                    {% if quotation.items.all %}
+                        <div class="table-responsive mb-4">
+                            <table class="table table-striped">
+                                <thead class="table-primary">
+                                    <tr>
+                                        <th>Product</th>
+                                        <th>Quantity</th>
+                                        <th>Unit Price</th>
+                                        <th>Subtotal</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in quotation.items.all %}
+                                    <tr>
+                                        <td>
+                                            <strong>{{ item.product.name }}</strong><br>
+                                            <small class="text-muted">SKU: {{ item.product.sku }}</small>
+                                        </td>
+                                        <td>{{ item.quantity }}</td>
+                                        <td>QAR {{ item.unit_price|floatformat:2 }}</td>
+                                        <td><strong>QAR {{ item.subtotal|floatformat:2 }}</strong></td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <!-- Totals -->
+                        <div class="row">
+                            <div class="col-md-6 offset-md-6">
+                                <div class="border rounded p-3 bg-light">
+                                    <div class="row">
+                                        <div class="col-6"><strong>Subtotal:</strong></div>
+                                        <div class="col-6 text-end">QAR {{ quotation.subtotal|floatformat:2 }}</div>
+                                    </div>
+                                    {% if quotation.discount_value > 0 %}
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <strong>Discount ({{ quotation.get_discount_type_display }}):</strong>
+                                        </div>
+                                        <div class="col-6 text-end">
+                                            {% if quotation.discount_type == 'percent' %}
+                                                {{ quotation.discount_value }}%
+                                            {% else %}
+                                                -QAR {{ quotation.discount_value|floatformat:2 }}
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                    {% if quotation.tax > 0 %}
+                                    <div class="row">
+                                        <div class="col-6"><strong>Tax ({{ quotation.tax_rate }}%):</strong></div>
+                                        <div class="col-6 text-end">QAR {{ quotation.tax|floatformat:2 }}</div>
+                                    </div>
+                                    {% endif %}
+                                    <hr>
+                                    <div class="row">
+                                        <div class="col-6"><h5><strong>Total:</strong></h5></div>
+                                        <div class="col-6 text-end"><h5><strong>QAR {{ quotation.total|floatformat:2 }}</strong></h5></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No items added yet</h5>
+                            <a href="{% url 'portal:quotation_update' quotation.pk %}" class="btn btn-primary">
+                                <i class="fas fa-plus me-2"></i>Add Items
+                            </a>
+                        </div>
+                    {% endif %}
+                    
+                    <!-- Notes and Terms -->
+                    {% if quotation.notes or quotation.terms_conditions %}
+                    <div class="row mt-4">
+                        {% if quotation.notes %}
+                        <div class="col-md-6">
+                            <h5><i class="fas fa-sticky-note me-2"></i>Notes</h5>
+                            <div class="border rounded p-3 bg-light">
+                                {{ quotation.notes|linebreaks }}
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        {% if quotation.terms_conditions %}
+                        <div class="col-md-6">
+                            <h5><i class="fas fa-file-contract me-2"></i>Terms & Conditions</h5>
+                            <div class="border rounded p-3 bg-light">
+                                {{ quotation.terms_conditions|linebreaks }}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Actions -->
+                    <div class="d-flex justify-content-between pt-3 border-top mt-4">
+                        <a href="{% url 'portal:quotation_list' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-1"></i>Back to Quotations
+                        </a>
+                        <div>
+                            {% if quotation.status == 'accepted' and not quotation.converted_invoice %}
+                            <a href="#" class="btn btn-info me-2" onclick="convertToInvoice({{ quotation.pk }})">
+                                <i class="fas fa-exchange-alt me-1"></i>Convert to Invoice
+                            </a>
+                            {% endif %}
+                            <a href="{% url 'portal:quotation_pdf' quotation.pk %}" class="btn btn-success" target="_blank">
+                                <i class="fas fa-file-pdf me-1"></i>Download PDF
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function convertToInvoice(quotationId) {
+        if (confirm('Are you sure you want to convert this quotation to an invoice?')) {
+            // This would need to be implemented as a separate view
+            alert('Convert to Invoice functionality needs to be implemented.');
+        }
+    }
+</script>
+{% endblock %}

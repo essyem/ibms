@@ -1,0 +1,19 @@
+<!-- templates/portal/widgets/icon_picker.html -->
+<div class="icon-picker-container">
+    {% include "django/forms/widgets/input.html" %}
+    <div class="icon-preview">
+        <i class="fas {% if widget.value %}{{ widget.value }}{% else %}fa-box{% endif %}"></i>
+    </div>
+    <button type="button" class="toggle-picker">Choose Icon</button>
+    <div class="icon-grid" style="display:none">
+        <!-- Popular IT icons -->
+        <i class="fas fa-server" data-value="fa-server"></i>
+        <i class="fas fa-microchip" data-value="fa-microchip"></i>
+        <i class="fas fa-laptop" data-value="fa-laptop"></i>
+        <i class="fas fa-network-wired" data-value="fa-network-wired"></i>
+        <i class="fas fa-hdd" data-value="fa-hdd"></i>
+        <i class="fas fa-memory" data-value="fa-memory"></i>
+        <i class="fas fa-print" data-value="fa-print"></i>
+        <i class="fas fa-search" data-value="fa-search"></i>
+    </div>
+</div>

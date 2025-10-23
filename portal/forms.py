@@ -1,6 +1,9 @@
 from django import forms
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Layout, Submit, Row, Column, Field, Div, HTML
+from crispy_forms.bootstrap import FormActions
 from .models import(ProductEnquiry, Invoice, InvoiceItem, 
-    Product, Customer)
+    Product, Customer, Quotation, QuotationItem, PaymentReceipt)
 
 
 class InvoiceForm(forms.ModelForm):
@@ -73,7 +76,7 @@ class InvoiceItemForm(forms.ModelForm):
         })
         
         if self.instance and self.instance.product:
-            self.fields['unit_price'].initial = self.instance.product.selling_price
+            self.fields['unit_price'].initial = self.instance.product.unit_price
 
 
 class InvoiceAdminForm(forms.ModelForm):
@@ -106,25 +109,27 @@ class ProductForm(forms.ModelForm):
                 'step': '0.01',
                 'required': 'required'
             }),
-            'selling_price': forms.NumberInput(attrs={
+            'unit_price': forms.NumberInput(attrs={
                 'step': '0.01',
                 'required': 'required'
             }),
             'stock': forms.NumberInput(attrs={'class': 'form-control', 'min': 0}),
-            'warranty_period': forms.TextInput(attrs={'class': 'form-control'}),
+            'warranty_period': forms.NumberInput(attrs={'class': 'form-control', 'min': 0}),
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'image': forms.ClearableFileInput(attrs={'class': 'form-control', 'accept': 'image/*'}),
             'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-            
+            'barcode': forms.TextInput(attrs={'class': 'form-control'}),
         }
+    
     def clean(self):
         cleaned_data = super().clean()
         cost_price = cleaned_data.get('cost_price')
-        selling_price = cleaned_data.get('selling_price')
+        unit_price = cleaned_data.get('unit_price')
         
-        if cost_price is not None and selling_price is not None:
-            if selling_price < cost_price:
-                self.add_error('selling_price', 
-                    "Selling price cannot be less than cost price")
+        if cost_price is not None and unit_price is not None:
+            if unit_price < cost_price:
+                self.add_error('unit_price', 
+                    "Unit price cannot be less than cost price")
         
         return cleaned_data
 
@@ -147,6 +152,36 @@ class ProductEnquiryForm(forms.ModelForm):
         label='I agree to Trendz\'s Terms & Conditions',
         widget=forms.CheckboxInput(attrs={'class': 'form-check-input'})
     )
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.layout = Layout(
+            Row(
+                Column('name', css_class='form-group col-md-6 mb-3'),
+                Column('company', css_class='form-group col-md-6 mb-3'),
+                css_class='form-row'
+            ),
+            Row(
+                Column('email', css_class='form-group col-md-6 mb-3'),
+                Column('phone', css_class='form-group col-md-6 mb-3'),
+                css_class='form-row'
+            ),
+            Row(
+                Column('product_interest', css_class='form-group col-md-6 mb-3'),
+                Column('subject', css_class='form-group col-md-6 mb-3'),
+                css_class='form-row'
+            ),
+            Field('message', css_class='form-group mb-3'),
+            Div(
+                Field('terms_agreed', css_class='form-check-input'),
+                css_class='form-check mb-3'
+            ),
+            FormActions(
+                Submit('submit', 'Send Enquiry', css_class='btn btn-primary btn-lg'),
+                css_class='text-center'
+            )
+        )
 
 
 class CustomerForm(forms.ModelForm):
@@ -192,3 +227,142 @@ class CustomerForm(forms.ModelForm):
         self.fields['address'].required = False
         self.fields['tax_number'].required = False
         self.fields['preferred_contact_method'].required = False
+        
+        # Add crispy forms helper
+        self.helper = FormHelper()
+        self.helper.layout = Layout(
+            Row(
+                Column('full_name', css_class='form-group col-md-6 mb-3'),
+                Column('phone', css_class='form-group col-md-6 mb-3'),
+                css_class='form-row'
+            ),
+            Row(
+                Column('company_name', css_class='form-group col-md-6 mb-3'),
+                Column('tax_number', css_class='form-group col-md-6 mb-3'),
+                css_class='form-row'
+            ),
+            Row(
+                Column('preferred_contact_method', css_class='form-group col-md-6 mb-3'),
+                css_class='form-row'
+            ),
+            Field('address', css_class='form-group mb-3'),
+            FormActions(
+                Submit('submit', 'Save Customer', css_class='btn btn-success'),
+                css_class='text-end'
+            )
+        )
+
+
+# =============================================================================
+# QUOTATION FORMS
+# =============================================================================
+
+class QuotationForm(forms.ModelForm):
+    class Meta:
+        model = Quotation
+        fields = [
+            'customer', 'valid_until', 'status', 'notes', 'terms_conditions',
+            'discount_type', 'discount_value', 'tax_rate'
+        ]
+        widgets = {
+            'customer': forms.Select(attrs={'class': 'form-control'}),
+            'valid_until': forms.DateInput(attrs={
+                'class': 'form-control',
+                'type': 'date'
+            }),
+            'status': forms.Select(attrs={'class': 'form-control'}),
+            'notes': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'Additional notes or special instructions'
+            }),
+            'terms_conditions': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 4,
+                'placeholder': 'Terms and conditions for this quotation'
+            }),
+            'discount_type': forms.Select(attrs={'class': 'form-control'}),
+            'discount_value': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.01',
+                'min': '0'
+            }),
+            'tax_rate': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.01',
+                'min': '0',
+                'placeholder': 'Tax rate (%)'
+            }),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Set default validity date (30 days from now)
+        from datetime import date, timedelta
+        if not self.instance.pk:
+            self.fields['valid_until'].initial = date.today() + timedelta(days=30)
+
+
+class QuotationItemForm(forms.ModelForm):
+    class Meta:
+        model = QuotationItem
+        fields = ['product', 'quantity', 'unit_price', 'use_product_price']
+        widgets = {
+            'product': forms.Select(attrs={'class': 'form-control'}),
+            'quantity': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'min': '1'
+            }),
+            'unit_price': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.01',
+                'min': '0'
+            }),
+            'use_product_price': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+
+
+# =============================================================================
+# PAYMENT RECEIPT FORMS
+# =============================================================================
+
+class PaymentReceiptForm(forms.ModelForm):
+    # Remove customer from visible fields - it will be auto-populated from invoice
+    class Meta:
+        model = PaymentReceipt
+        fields = [
+            'invoice', 'payment_method', 'amount_received', 
+            'amount_due', 'reference_number', 'notes'
+        ]
+        widgets = {
+            # Invoice field will be replaced with search functionality in template
+            'invoice': forms.HiddenInput(),
+            'payment_method': forms.Select(attrs={'class': 'form-control'}),
+            'amount_received': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.01',
+                'min': '0',
+                'placeholder': 'Amount received from customer'
+            }),
+            'amount_due': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.01',
+                'min': '0',
+                'placeholder': 'Total amount due',
+                'readonly': True  # Will be auto-populated from invoice
+            }),
+            'reference_number': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Transaction/Reference number (optional)'
+            }),
+            'notes': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'Additional notes (optional)'
+            }),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Make invoice optional (can be cash payment without invoice)
+        self.fields['invoice'].required = False

@@ -3,15 +3,23 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path, include
 from portal import barcode_views, ajax_views
+from portal.views import custom_logout
 from django.shortcuts import redirect
 from django.contrib.auth import views as auth_views
 from django.views.generic import TemplateView
+from django.http import FileResponse
+from django.shortcuts import redirect
+import os
 
 urlpatterns = [
     path('', TemplateView.as_view(template_name='portal/index.html'), name='index'),
+    
+    # Favicon handling
+    path('favicon.ico', lambda request: FileResponse(open(os.path.join(settings.BASE_DIR, 'static', 'favicon', 'favicon.ico'), 'rb'), content_type='image/x-icon')),
+    
     # Authentication URLs
     path('accounts/login/', auth_views.LoginView.as_view(template_name='registration/login.html'), name='login'),
-    path('accounts/logout/', auth_views.LogoutView.as_view(template_name='registration/logged_out.html'), name='logout'),
+    path('accounts/logout/', custom_logout, name='logout'),
     #path('accounts/registration/', auth_views.RegistrationView.as_view(template_name='registration/registration.html'), name='registration'),
     #path('accounts/password_change/', auth_views.PasswordChangeView.as_view(template_name='registration/password_change_form.html'), name='password_change'),
 

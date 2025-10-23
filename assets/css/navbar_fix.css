@@ -1,0 +1,12 @@
+/* Navbar / dropdown stacking fix - placed under assets to be tracked in git */
+.navbar, .navbar-fixed-top, nav.navbar {
+    z-index: 2000;
+}
+
+.navbar .dropdown-menu {
+    z-index: 3000 !important;
+}
+
+.dropdown, .dropdown-menu {
+    position: relative;
+}
