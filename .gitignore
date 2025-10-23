@@ -93,3 +93,5 @@ env/
 *.egg-info/
 dist/
 build/
+trendzportal/settings.py
+*.local_backup
